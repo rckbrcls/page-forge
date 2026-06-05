@@ -2,12 +2,15 @@
 
 # PageForge
 
-PageForge is a macOS-only terminal app for repairing EPUB files, converting
-EPUB/MOBI books, editing metadata, and sending ebooks to Kindle.
+PageForge is a macOS terminal app for preparing and managing ebook workflows.
 
-It is TUI-first: running `page-forge` without arguments opens the interactive
-terminal app. Command-line shortcuts remain available for automation,
-scripting, support, and fast one-off tasks.
+It helps turn scattered ebook files into clean, ready-to-use books by combining
+conversion, repair, metadata editing, batch processing, and Kindle delivery in a
+TUI-first experience.
+
+Under the hood, PageForge wraps Calibre-powered EPUB/MOBI operations with a
+focused terminal interface, while keeping command-line shortcuts available for
+automation and one-off tasks.
 
 ## Table of Contents
 
@@ -256,5 +259,5 @@ uv run page-forge --help
 Use this GitHub description:
 
 ```text
-macOS-only terminal app for repairing, converting, and sending ebooks to Kindle.
+macOS terminal app for preparing and managing ebook workflows, from conversion and metadata cleanup to EPUB repair and Kindle delivery.
 ```
