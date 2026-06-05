@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 from textual.app import App, ComposeResult
 from textual.containers import Grid, Horizontal, Vertical
@@ -24,7 +25,7 @@ from .config import (
     set_profile_password,
     upsert_profile,
 )
-from .conversion import convert_book, convert_folder, repair_epub, repair_folder
+from .conversion import RepairMode, convert_book, convert_folder, repair_epub, repair_folder
 from .errors import PageForgeError
 from .kindle import send_to_kindle
 from .metadata import inspect_book, update_book_metadata
@@ -113,6 +114,15 @@ class PageForgeApp(App[None]):
                         id="convert-operation",
                         value="repair",
                     )
+                    yield Label("Repair mode")
+                    yield Select(
+                        [
+                            ("Safe", "safe"),
+                            ("Aggressive", "aggressive"),
+                        ],
+                        id="convert-repair-mode",
+                        value="safe",
+                    )
                     yield Label("Input file")
                     yield Input(placeholder="/path/to/book.epub", id="convert-source")
                     yield Label("Output file (optional)")
@@ -133,6 +143,15 @@ class PageForgeApp(App[None]):
                         id="batch-operation",
                         value="repair",
                     )
+                    yield Label("Repair mode")
+                    yield Select(
+                        [
+                            ("Safe", "safe"),
+                            ("Aggressive", "aggressive"),
+                        ],
+                        id="batch-repair-mode",
+                        value="safe",
+                    )
                     yield Label("Input folder")
                     yield Input(placeholder="/path/to/folder", id="batch-source")
                     yield Label("Output folder")
@@ -148,6 +167,15 @@ class PageForgeApp(App[None]):
                     yield Label("Profile")
                     yield Input(value="default", id="send-profile")
                     yield Checkbox("Overwrite repaired output", id="send-force")
+                    yield Label("Repair mode")
+                    yield Select(
+                        [
+                            ("Safe", "safe"),
+                            ("Aggressive", "aggressive"),
+                        ],
+                        id="send-repair-mode",
+                        value="safe",
+                    )
                     with Horizontal(classes="actions"):
                         yield Button("Send", id="run-send", variant="primary")
                         yield Button("Repair and Send", id="run-repair-send")
@@ -206,7 +234,8 @@ class PageForgeApp(App[None]):
                     "Calibre status: Ready\n"
                     "Platform: macOS-only\n"
                     f"ebook-convert: {status.ebook_convert}\n"
-                    f"ebook-meta: {status.ebook_meta}"
+                    f"ebook-meta: {status.ebook_meta}\n"
+                    f"ebook-polish: {status.ebook_polish}"
                 )
             else:
                 missing = ", ".join(status.missing_tools)
@@ -221,7 +250,7 @@ class PageForgeApp(App[None]):
                 "Calibre status: Setup required\n"
                 "Platform: macOS-only\n"
                 f"Error: {error}\n"
-                "Check EBOOK_CONVERT_PATH or EBOOK_META_PATH."
+                "Check EBOOK_CONVERT_PATH, EBOOK_META_PATH, or EBOOK_POLISH_PATH."
             )
         self.query_one("#calibre-status", Static).update(calibre_text)
 
@@ -266,6 +295,12 @@ class PageForgeApp(App[None]):
         if not value:
             raise ValueError(f"{label} is required.")
         return Path(value).expanduser()
+
+    def read_repair_mode(self, widget_id: str) -> RepairMode:
+        value = str(self.query_one(widget_id, Select).value)
+        if value not in ("safe", "aggressive"):
+            raise ValueError("Repair mode must be safe or aggressive.")
+        return cast(RepairMode, value)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         button_id = event.button.id
@@ -331,7 +366,8 @@ class PageForgeApp(App[None]):
         output = Path(output_value) if output_value else None
         force = self.query_one("#convert-force", Checkbox).value
         if operation == "repair":
-            result = repair_epub(source, output=output, force=force)
+            mode = self.read_repair_mode("#convert-repair-mode")
+            result = repair_epub(source, output=output, force=force, mode=mode)
         elif operation == "to-epub":
             result = convert_book(source, target_format="epub", output=output, force=force)
         else:
@@ -345,7 +381,8 @@ class PageForgeApp(App[None]):
         output = self.read_path("#batch-output", "Output folder")
         force = self.query_one("#batch-force", Checkbox).value
         if operation == "repair":
-            result = repair_folder(source, output_dir=output, force=force)
+            mode = self.read_repair_mode("#batch-repair-mode")
+            result = repair_folder(source, output_dir=output, force=force, mode=mode)
         elif operation == "to-epub":
             result = convert_folder(source, output_dir=output, target_format="epub", force=force)
         else:
@@ -364,7 +401,8 @@ class PageForgeApp(App[None]):
         source = self.read_path("#send-source", "Input file")
         profile = self.query_one("#send-profile", Input).value or "default"
         force = self.query_one("#send-force", Checkbox).value
-        repaired = repair_epub(source, force=force)
+        mode = self.read_repair_mode("#send-repair-mode")
+        repaired = repair_epub(source, force=force, mode=mode)
         result = send_to_kindle(repaired.output_path, profile_name=profile)
         self.write_log(f"Repaired and sent: {result.input_path} -> {result.kindle_email}")
 

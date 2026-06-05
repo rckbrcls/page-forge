@@ -8,10 +8,15 @@ from pathlib import Path
 class CalibreStatus:
     ebook_convert: Path | None
     ebook_meta: Path | None
+    ebook_polish: Path | None
 
     @property
     def is_ready(self) -> bool:
-        return self.ebook_convert is not None and self.ebook_meta is not None
+        return (
+            self.ebook_convert is not None
+            and self.ebook_meta is not None
+            and self.ebook_polish is not None
+        )
 
     @property
     def missing_tools(self) -> list[str]:
@@ -20,6 +25,8 @@ class CalibreStatus:
             missing.append("ebook-convert")
         if self.ebook_meta is None:
             missing.append("ebook-meta")
+        if self.ebook_polish is None:
+            missing.append("ebook-polish")
         return missing
 
 

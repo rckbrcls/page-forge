@@ -16,8 +16,8 @@ def homebrew_path() -> str | None:
 
 def calibre_explanation() -> str:
     return (
-        "Calibre provides the `ebook-convert` engine used for reliable EPUB/MOBI "
-        "conversion."
+        "Calibre provides `ebook-convert`, `ebook-meta`, and `ebook-polish` for "
+        "reliable ebook conversion, metadata, and EPUB cleanup."
     )
 
 

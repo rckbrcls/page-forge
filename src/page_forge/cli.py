@@ -22,6 +22,7 @@ from .config import (
     upsert_profile,
 )
 from .conversion import (
+    RepairMode,
     convert_book,
     convert_folder,
     repair_epub as repair_epub_service,
@@ -236,6 +237,7 @@ def doctor() -> None:
         ("Platform", "macOS-only"),
         ("ebook-convert", str(status.ebook_convert or "Missing")),
         ("ebook-meta", str(status.ebook_meta or "Missing")),
+        ("ebook-polish", str(status.ebook_polish or "Missing")),
     ]
     if status.is_ready:
         _render_rows("Ready", rows)
@@ -265,6 +267,7 @@ def setup(
                 ("Platform", "macOS-only"),
                 ("ebook-convert", str(status.ebook_convert)),
                 ("ebook-meta", str(status.ebook_meta)),
+                ("ebook-polish", str(status.ebook_polish)),
             ],
         )
         return
@@ -546,10 +549,20 @@ def repair_epub(
     ] = False,
     keep_temp: Annotated[
         bool,
-        typer.Option("--keep-temp", help="Keep the intermediate MOBI file."),
+        typer.Option(
+            "--keep-temp",
+            help="Keep the intermediate MOBI file when using --mode aggressive.",
+        ),
     ] = False,
+    mode: Annotated[
+        RepairMode,
+        typer.Option(
+            "--mode",
+            help="Repair mode: safe preserves EPUB; aggressive uses EPUB to MOBI to EPUB.",
+        ),
+    ] = "safe",
 ) -> None:
-    """Repair an EPUB by converting EPUB -> MOBI -> EPUB."""
+    """Repair an EPUB with safe structural repair by default."""
     try:
         result = _run_with_progress(
             "Repairing EPUB",
@@ -558,6 +571,7 @@ def repair_epub(
                 output=output,
                 force=force,
                 keep_temp=keep_temp,
+                mode=mode,
                 on_progress=update,
             ),
         )
@@ -578,6 +592,13 @@ def repair_folder(
         bool,
         typer.Option("--force", "-f", help="Overwrite output files if they exist."),
     ] = False,
+    mode: Annotated[
+        RepairMode,
+        typer.Option(
+            "--mode",
+            help="Repair mode: safe preserves EPUB; aggressive uses EPUB to MOBI to EPUB.",
+        ),
+    ] = "safe",
 ) -> None:
     """Repair every EPUB file in a folder."""
     try:
@@ -587,6 +608,7 @@ def repair_folder(
                 folder,
                 output_dir=output,
                 force=force,
+                mode=mode,
                 on_progress=update,
             ),
         )
@@ -685,6 +707,13 @@ def repair_and_send(
         bool,
         typer.Option("--force", "-f", help="Overwrite the output file if it exists."),
     ] = False,
+    mode: Annotated[
+        RepairMode,
+        typer.Option(
+            "--mode",
+            help="Repair mode: safe preserves EPUB; aggressive uses EPUB to MOBI to EPUB.",
+        ),
+    ] = "safe",
 ) -> None:
     """Repair an EPUB, then send the repaired file to Kindle."""
     try:
@@ -694,6 +723,7 @@ def repair_and_send(
                 source,
                 output=output,
                 force=force,
+                mode=mode,
                 on_progress=update,
             ),
         )

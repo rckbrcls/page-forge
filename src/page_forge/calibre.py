@@ -13,6 +13,7 @@ EPUB_SUFFIX = ".epub"
 MOBI_SUFFIX = ".mobi"
 EBOOK_CONVERT_ENV_VAR = "EBOOK_CONVERT_PATH"
 EBOOK_META_ENV_VAR = "EBOOK_META_PATH"
+EBOOK_POLISH_ENV_VAR = "EBOOK_POLISH_PATH"
 
 CALIBRE_DIRECTORIES = (
     Path("/Applications/calibre.app/Contents/MacOS"),
@@ -51,6 +52,7 @@ def get_calibre_status() -> CalibreStatus:
     return CalibreStatus(
         ebook_convert=find_tool("ebook-convert", EBOOK_CONVERT_ENV_VAR),
         ebook_meta=find_tool("ebook-meta", EBOOK_META_ENV_VAR),
+        ebook_polish=find_tool("ebook-polish", EBOOK_POLISH_ENV_VAR),
     )
 
 
@@ -71,6 +73,16 @@ def require_ebook_meta() -> Path:
             "`page-forge setup`."
         )
     return status.ebook_meta
+
+
+def require_ebook_polish() -> Path:
+    status = get_calibre_status()
+    if status.ebook_polish is None:
+        raise DependencyError(
+            "Calibre polish command not found. Install Calibre or run "
+            "`page-forge setup`."
+        )
+    return status.ebook_polish
 
 
 def run_calibre_command(command: list[str]) -> str:

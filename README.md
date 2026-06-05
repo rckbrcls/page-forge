@@ -33,13 +33,13 @@ This app intentionally supports macOS only.
 It depends on:
 
 - Homebrew for installing and updating Calibre
-- Calibre macOS app paths for `ebook-convert` and `ebook-meta`
+- Calibre macOS app paths for `ebook-convert`, `ebook-meta`, and `ebook-polish`
 - macOS Keychain through `keyring` for SMTP passwords or app tokens
 
 ## Features
 
 - Interactive Textual TUI: `page-forge`
-- EPUB repair workflow: `EPUB -> MOBI -> EPUB`
+- Safe EPUB repair workflow with an optional aggressive `EPUB -> MOBI -> EPUB` mode
 - Direct conversion: `MOBI -> EPUB` and `EPUB -> MOBI`
 - Folder batch repair and conversion
 - Metadata inspection and title/author updates
@@ -53,13 +53,13 @@ It depends on:
 This project has two layers:
 
 - `page-forge`: the Python TUI/CLI installed with `uv`
-- Calibre: the native conversion engine that provides `ebook-convert` and
-  `ebook-meta`
+- Calibre: the native ebook engine that provides `ebook-convert`, `ebook-meta`,
+  and `ebook-polish`
 
 Calibre is required because EPUB and MOBI files contain structured HTML,
 metadata, images, tables of contents, and format-specific quirks. The Python app
-handles the experience and workflow; Calibre performs the actual ebook
-conversion and metadata operations.
+handles the experience and workflow; Calibre performs conversion, metadata, and
+EPUB polish operations.
 
 ## Install
 
@@ -136,6 +136,7 @@ If Calibre is already installed in a custom location, point the app to it:
 ```bash
 export EBOOK_CONVERT_PATH="/path/to/ebook-convert"
 export EBOOK_META_PATH="/path/to/ebook-meta"
+export EBOOK_POLISH_PATH="/path/to/ebook-polish"
 ```
 
 ## Update
@@ -166,6 +167,12 @@ Repair an EPUB for Send to Kindle:
 
 ```bash
 page-forge repair-epub ./book.epub
+```
+
+Use the aggressive MOBI roundtrip only when the safe repair is not enough:
+
+```bash
+page-forge repair-epub ./book.epub --mode aggressive
 ```
 
 Convert MOBI to EPUB:
