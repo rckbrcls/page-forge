@@ -1,149 +1,244 @@
 # convert-books
 
-A small local CLI for ebook conversion workflows that usually happen on online
-converter websites.
+macOS-only terminal app for repairing EPUB files, converting EPUB/MOBI books,
+editing metadata, and sending ebooks to Kindle.
 
-It supports:
+`convert-books` is TUI-first: running the command without arguments opens the
+interactive terminal app. Command-line shortcuts are still available for
+automation, scripting, support, and fast one-off tasks.
 
-- `repair-epub`: converts `EPUB -> MOBI -> EPUB`
-- `to-epub`: converts `MOBI -> EPUB`
-- `to-mobi`: converts `EPUB -> MOBI`
-- `doctor`: checks whether Calibre is available
-- `setup`: helps install or verify Calibre
+## macOS Only
+
+This app intentionally supports macOS only.
+
+It depends on:
+
+- Homebrew for installing and updating Calibre
+- Calibre macOS app paths for `ebook-convert` and `ebook-meta`
+- macOS Keychain through `keyring` for SMTP passwords or app tokens
+
+## Features
+
+- Interactive Textual TUI: `convert-books`
+- EPUB repair workflow: `EPUB -> MOBI -> EPUB`
+- Direct conversion: `MOBI -> EPUB` and `EPUB -> MOBI`
+- Folder batch repair and conversion
+- Metadata inspection and title/author updates
+- Send to Kindle through SMTP and a configured Kindle email
+- Calibre setup checks with visual feedback
+- App and Calibre update commands
+- Command-line shortcuts for automation
 
 ## Requirements
 
-Calibre is the conversion engine. This CLI provides the friendly command-line
-experience, file checks, output naming, and repair workflow, while Calibre's
-`ebook-convert` does the actual EPUB/MOBI conversion.
+This project has two layers:
 
-This split matters because EPUB and MOBI files contain structured HTML,
-metadata, images, tables of contents, and format-specific quirks. Calibre is a
-mature native tool for that conversion work; the Python package keeps the usage
-simple.
+- `convert-books`: the Python TUI/CLI installed with `uv`
+- Calibre: the native conversion engine that provides `ebook-convert` and
+  `ebook-meta`
 
-The global `uv` install includes the Python dependencies for this CLI. Calibre is
-a native macOS app, so it must be installed separately.
+Calibre is required because EPUB and MOBI files contain structured HTML,
+metadata, images, tables of contents, and format-specific quirks. The Python app
+handles the experience and workflow; Calibre performs the actual ebook
+conversion and metadata operations.
 
-The easiest setup path is:
+## Install
 
-```bash
-convert-books setup --install
-```
-
-That shows an installation panel, uses Homebrew to install Calibre, then
-verifies that `ebook-convert` can be found.
-
-If you prefer to install Calibre yourself:
+Install `uv` first if you do not already have it:
 
 ```bash
-brew install --cask calibre
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-You can also download it manually from:
+Then use the one-line installer:
 
-```text
-https://calibre-ebook.com/download_osx
+```bash
+curl -fsSL https://raw.githubusercontent.com/rckbrcls/convert-books/main/install.sh | sh
 ```
 
-After installing Calibre, check the setup:
+The installer does not install `uv` for you. If `uv` is missing, it prints the
+official install command and exits.
+
+You can also install directly with `uv`:
+
+```bash
+uv tool install --force git+https://github.com/rckbrcls/convert-books.git
+```
+
+For local editable development:
+
+```bash
+uv tool install --force --editable /Users/erickpatrickbarcelos/Documents/convert-books
+```
+
+## Terminal UI
+
+Open the app:
+
+```bash
+convert-books
+```
+
+Or explicitly:
+
+```bash
+convert-books tui
+```
+
+The TUI includes:
+
+- Dashboard
+- Convert
+- Batch
+- Send to Kindle
+- Metadata
+- Settings
+- Logs
+
+The Dashboard is the main control center for Calibre status, Kindle profile
+status, update actions, and recent logs.
+
+## Setup
+
+Check local dependencies:
 
 ```bash
 convert-books doctor
 ```
 
-The CLI also searches for Calibre in common macOS locations, so you usually do
-not need to edit your shell `PATH`.
-
-If you want to check Calibre manually, run:
+Install Calibre with Homebrew and show installation feedback:
 
 ```bash
-/Applications/calibre.app/Contents/MacOS/ebook-convert --version
+convert-books setup --install
 ```
 
-If Calibre is in a custom location, point the CLI to it:
+If Calibre is already installed in a custom location, point the app to it:
 
 ```bash
 export EBOOK_CONVERT_PATH="/path/to/ebook-convert"
+export EBOOK_META_PATH="/path/to/ebook-meta"
 ```
 
-## Install dependencies
+## Update
+
+Update only `convert-books`:
 
 ```bash
-uv sync
+convert-books update
 ```
 
-## Install as a global CLI
-
-For day-to-day use, install the project as a global `uv` tool:
+Update only Calibre:
 
 ```bash
-uv tool install --editable /Users/erickpatrickbarcelos/Documents/convert-books
+convert-books update --calibre-only
 ```
 
-Then run it from anywhere:
+Update both `convert-books` and Calibre:
 
 ```bash
-convert-books repair-epub ./book.epub
-convert-books to-epub ./book.mobi
-convert-books to-mobi ./book.epub
+convert-books update --include-calibre
 ```
 
-If the command is not found after installing, make sure the `uv` tools
-directory is on your shell `PATH`:
+Calibre is not updated by default because it is a separate native macOS app.
 
-```bash
-uv tool update-shell
-```
-
-After changing the shell configuration, restart the terminal.
-
-To remove the global command:
-
-```bash
-uv tool uninstall convert-books
-```
-
-## Usage
+## Command-Line Shortcuts
 
 Repair an EPUB for Send to Kindle:
 
 ```bash
-uv run convert-books repair-epub ./book.epub
-```
-
-Write to a specific path:
-
-```bash
-uv run convert-books repair-epub ./book.epub --output ./book-fixed.epub
+convert-books repair-epub ./book.epub
 ```
 
 Convert MOBI to EPUB:
 
 ```bash
-uv run convert-books to-epub ./book.mobi
+convert-books to-epub ./book.mobi
 ```
 
 Convert EPUB to MOBI:
 
 ```bash
-uv run convert-books to-mobi ./book.epub
+convert-books to-mobi ./book.epub
 ```
 
-Overwrite an existing output file:
+Repair every EPUB in a folder:
 
 ```bash
-uv run convert-books repair-epub ./book.epub --force
+convert-books repair-folder ./books --output ./fixed
 ```
 
-Check local setup:
+Convert every MOBI in a folder to EPUB:
 
 ```bash
-uv run convert-books doctor
+convert-books convert-folder ./books --output ./converted --to epub
 ```
 
-Install or verify Calibre:
+Inspect metadata:
 
 ```bash
-uv run convert-books setup --install
+convert-books inspect ./book.epub
+```
+
+Update title or author:
+
+```bash
+convert-books metadata ./book.epub --title "Book Title" --author "Author Name"
+```
+
+## Send to Kindle
+
+First, authorize your sender email in Amazon's Kindle personal document settings.
+Then configure a local profile:
+
+```bash
+convert-books configure
+```
+
+The SMTP password or app token is stored through macOS Keychain via `keyring`;
+it is not written to the config file.
+
+Send a file:
+
+```bash
+convert-books send ./book.epub
+```
+
+Repair and send:
+
+```bash
+convert-books repair-and-send ./book.epub
+```
+
+Use a named profile:
+
+```bash
+convert-books send ./book.epub --profile personal
+```
+
+List profiles:
+
+```bash
+convert-books profiles
+```
+
+## Development
+
+Install dependencies:
+
+```bash
+uv sync
+```
+
+Run command help locally:
+
+```bash
+uv run convert-books --help
+```
+
+## Repository Description
+
+Use this GitHub description:
+
+```text
+macOS-only terminal app for repairing, converting, and sending ebooks to Kindle.
 ```

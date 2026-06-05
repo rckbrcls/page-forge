@@ -1,12 +1,19 @@
 [project]
 name = "convert-books"
 version = "0.1.0"
-description = "A small CLI for repairing EPUB files and converting books locally."
+description = "A macOS-only terminal app for repairing, converting, and sending ebooks."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "keyring>=25.6.0",
     "rich>=13.9.4",
+    "textual>=1.0.0",
     "typer>=0.15.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
 ]
 
 [project.scripts]
