@@ -8,7 +8,7 @@ from pathlib import Path
 from .errors import DependencyError
 from .models import CalibreStatus
 
-APP_NAME = "convert-books"
+APP_NAME = "page-forge"
 EPUB_SUFFIX = ".epub"
 MOBI_SUFFIX = ".mobi"
 EBOOK_CONVERT_ENV_VAR = "EBOOK_CONVERT_PATH"
@@ -58,7 +58,7 @@ def require_ebook_convert() -> Path:
     status = get_calibre_status()
     if status.ebook_convert is None:
         raise DependencyError(
-            "Calibre command not found. Install Calibre or run `convert-books setup`."
+            "Calibre command not found. Install Calibre or run `page-forge setup`."
         )
     return status.ebook_convert
 
@@ -68,7 +68,7 @@ def require_ebook_meta() -> Path:
     if status.ebook_meta is None:
         raise DependencyError(
             "Calibre metadata command not found. Install Calibre or run "
-            "`convert-books setup`."
+            "`page-forge setup`."
         )
     return status.ebook_meta
 

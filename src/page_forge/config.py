@@ -11,14 +11,14 @@ import keyring
 from .errors import ConfigurationError
 from .models import AppConfig, Profile
 
-KEYRING_SERVICE = "convert-books"
+KEYRING_SERVICE = "page-forge"
 
 
 def config_dir() -> Path:
     root = os.environ.get("XDG_CONFIG_HOME")
     if root:
-        return Path(root).expanduser().resolve() / "convert-books"
-    return Path.home() / ".config" / "convert-books"
+        return Path(root).expanduser().resolve() / "page-forge"
+    return Path.home() / ".config" / "page-forge"
 
 
 def config_path() -> Path:
@@ -112,7 +112,7 @@ def get_profile_password(profile_name: str) -> str:
     if not password:
         raise ConfigurationError(
             f"SMTP password is missing for profile `{profile_name}`. "
-            "Run `convert-books configure`."
+            "Run `page-forge configure`."
         )
     return password
 

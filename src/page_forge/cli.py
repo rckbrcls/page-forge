@@ -27,7 +27,7 @@ from .conversion import (
     repair_epub as repair_epub_service,
     repair_folder as repair_folder_service,
 )
-from .errors import ConvertBooksError
+from .errors import PageForgeError
 from .installer import calibre_explanation, install_calibre_with_homebrew
 from .kindle import send_to_kindle
 from .metadata import inspect_book, update_book_metadata
@@ -35,7 +35,7 @@ from .models import BatchResult, BookMetadata, ConversionResult, Profile, SendRe
 from .platform import platform_support_message
 from .updater import update_app, update_calibre
 
-APP_NAME = "convert-books"
+APP_NAME = "page-forge"
 INSTALL_LOG_LINES = 8
 
 app = typer.Typer(
@@ -228,7 +228,7 @@ def doctor() -> None:
     """Check whether local conversion dependencies are available."""
     try:
         status = get_calibre_status()
-    except ConvertBooksError as error:
+    except PageForgeError as error:
         _render_error("Missing dependency", error)
         raise typer.Exit(code=1) from error
 
@@ -241,7 +241,7 @@ def doctor() -> None:
         _render_rows("Ready", rows)
         return
 
-    rows.append(("Next step", "convert-books setup --install"))
+    rows.append(("Next step", "page-forge setup --install"))
     _render_rows("Setup required", rows, style="yellow")
     raise typer.Exit(code=1)
 
@@ -276,7 +276,7 @@ def setup(
                 ("Status", "Calibre is not installed or was not found."),
                 ("Platform", platform_support_message()),
                 ("Why", calibre_explanation()),
-                ("Fast install", "convert-books setup --install"),
+                ("Fast install", "page-forge setup --install"),
                 ("Manual install", "brew install --cask calibre"),
                 ("Manual download", "https://calibre-ebook.com/download_osx"),
             ],
@@ -313,7 +313,7 @@ def setup(
 
         try:
             install_calibre_with_homebrew(on_output=on_output)
-        except ConvertBooksError as error:
+        except PageForgeError as error:
             live.update(
                 _install_panel(
                     status="Homebrew install failed",
@@ -345,7 +345,7 @@ def update(
         bool,
         typer.Option(
             "--include-calibre",
-            help="Update convert-books, then update Calibre with Homebrew.",
+            help="Update page-forge, then update Calibre with Homebrew.",
         ),
     ] = False,
     calibre_only: Annotated[
@@ -356,7 +356,7 @@ def update(
         ),
     ] = False,
 ) -> None:
-    """Update convert-books and optionally Calibre."""
+    """Update page-forge and optionally Calibre."""
     if include_calibre and calibre_only:
         _render_error(
             "Update failed",
@@ -369,7 +369,7 @@ def update(
     first_command = (
         "brew upgrade --cask calibre"
         if calibre_only
-        else "uv tool install --force git+https://github.com/rckbrcls/convert-books.git"
+        else "uv tool install --force git+https://github.com/rckbrcls/page-forge.git"
     )
     completed_steps: list[str] = []
 
@@ -388,14 +388,14 @@ def update(
         try:
             if not calibre_only:
                 _run_live_update_step(
-                    title="Updating convert-books",
-                    command="uv tool install --force git+https://github.com/rckbrcls/convert-books.git",
+                    title="Updating page-forge",
+                    command="uv tool install --force git+https://github.com/rckbrcls/page-forge.git",
                     started_at=started_at,
                     lines=lines,
                     live=live,
                     operation=update_app,
                 )
-                completed_steps.append("convert-books")
+                completed_steps.append("page-forge")
 
             if include_calibre or calibre_only:
                 _run_live_update_step(
@@ -407,7 +407,7 @@ def update(
                     operation=update_calibre,
                 )
                 completed_steps.append("Calibre")
-        except ConvertBooksError as error:
+        except PageForgeError as error:
             live.update(
                 _operation_panel(
                     title="Updating",
@@ -498,7 +498,7 @@ def to_epub(
             ),
         )
         _render_conversion("Conversion complete", result)
-    except ConvertBooksError as error:
+    except PageForgeError as error:
         _render_error("Conversion failed", error)
         raise typer.Exit(code=1) from error
 
@@ -528,7 +528,7 @@ def to_mobi(
             ),
         )
         _render_conversion("Conversion complete", result)
-    except ConvertBooksError as error:
+    except PageForgeError as error:
         _render_error("Conversion failed", error)
         raise typer.Exit(code=1) from error
 
@@ -562,7 +562,7 @@ def repair_epub(
             ),
         )
         _render_conversion("EPUB repaired", result)
-    except ConvertBooksError as error:
+    except PageForgeError as error:
         _render_error("Repair failed", error)
         raise typer.Exit(code=1) from error
 
@@ -591,7 +591,7 @@ def repair_folder(
             ),
         )
         _render_batch("Folder repaired", result)
-    except ConvertBooksError as error:
+    except PageForgeError as error:
         _render_error("Batch failed", error)
         raise typer.Exit(code=1) from error
 
@@ -625,7 +625,7 @@ def convert_folder_command(
             ),
         )
         _render_batch("Folder converted", result)
-    except ConvertBooksError as error:
+    except PageForgeError as error:
         _render_error("Batch failed", error)
         raise typer.Exit(code=1) from error
 
@@ -637,7 +637,7 @@ def inspect(
     """Inspect ebook metadata with Calibre."""
     try:
         _render_metadata(inspect_book(source))
-    except ConvertBooksError as error:
+    except PageForgeError as error:
         _render_error("Inspect failed", error)
         raise typer.Exit(code=1) from error
 
@@ -651,7 +651,7 @@ def metadata(
     """Update ebook title or author metadata."""
     try:
         _render_metadata(update_book_metadata(source, title=title, author=author))
-    except ConvertBooksError as error:
+    except PageForgeError as error:
         _render_error("Metadata update failed", error)
         raise typer.Exit(code=1) from error
 
@@ -668,7 +668,7 @@ def send(
             lambda _update: send_to_kindle(source, profile_name=profile),
         )
         _render_send(result)
-    except ConvertBooksError as error:
+    except PageForgeError as error:
         _render_error("Send failed", error)
         raise typer.Exit(code=1) from error
 
@@ -703,7 +703,7 @@ def repair_and_send(
             lambda _update: send_to_kindle(result.output_path, profile_name=profile),
         )
         _render_send(send_result)
-    except ConvertBooksError as error:
+    except PageForgeError as error:
         _render_error("Repair and send failed", error)
         raise typer.Exit(code=1) from error
 

@@ -1,5 +1,5 @@
 [project]
-name = "convert-books"
+name = "page-forge"
 version = "0.1.0"
 description = "A macOS-only terminal app for repairing, converting, and sending ebooks."
 readme = "README.md"
@@ -17,7 +17,7 @@ dev = [
 ]
 
 [project.scripts]
-convert-books = "convert_books.cli:app"
+page-forge = "page_forge.cli:app"
 
 [build-system]
 requires = ["hatchling"]

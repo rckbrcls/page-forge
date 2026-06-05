@@ -1,9 +1,9 @@
-# convert-books
+# page-forge
 
 macOS-only terminal app for repairing EPUB files, converting EPUB/MOBI books,
 editing metadata, and sending ebooks to Kindle.
 
-`convert-books` is TUI-first: running the command without arguments opens the
+`page-forge` is TUI-first: running the command without arguments opens the
 interactive terminal app. Command-line shortcuts are still available for
 automation, scripting, support, and fast one-off tasks.
 
@@ -19,7 +19,7 @@ It depends on:
 
 ## Features
 
-- Interactive Textual TUI: `convert-books`
+- Interactive Textual TUI: `page-forge`
 - EPUB repair workflow: `EPUB -> MOBI -> EPUB`
 - Direct conversion: `MOBI -> EPUB` and `EPUB -> MOBI`
 - Folder batch repair and conversion
@@ -33,7 +33,7 @@ It depends on:
 
 This project has two layers:
 
-- `convert-books`: the Python TUI/CLI installed with `uv`
+- `page-forge`: the Python TUI/CLI installed with `uv`
 - Calibre: the native conversion engine that provides `ebook-convert` and
   `ebook-meta`
 
@@ -53,7 +53,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 Then use the one-line installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rckbrcls/convert-books/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/rckbrcls/page-forge/main/install.sh | sh
 ```
 
 The installer does not install `uv` for you. If `uv` is missing, it prints the
@@ -62,13 +62,13 @@ official install command and exits.
 You can also install directly with `uv`:
 
 ```bash
-uv tool install --force git+https://github.com/rckbrcls/convert-books.git
+uv tool install --force git+https://github.com/rckbrcls/page-forge.git
 ```
 
 For local editable development:
 
 ```bash
-uv tool install --force --editable /Users/erickpatrickbarcelos/Documents/convert-books
+uv tool install --force --editable /Users/erickpatrickbarcelos/Documents/page-forge
 ```
 
 ## Terminal UI
@@ -76,13 +76,13 @@ uv tool install --force --editable /Users/erickpatrickbarcelos/Documents/convert
 Open the app:
 
 ```bash
-convert-books
+page-forge
 ```
 
 Or explicitly:
 
 ```bash
-convert-books tui
+page-forge tui
 ```
 
 The TUI includes:
@@ -103,13 +103,13 @@ status, update actions, and recent logs.
 Check local dependencies:
 
 ```bash
-convert-books doctor
+page-forge doctor
 ```
 
 Install Calibre with Homebrew and show installation feedback:
 
 ```bash
-convert-books setup --install
+page-forge setup --install
 ```
 
 If Calibre is already installed in a custom location, point the app to it:
@@ -121,22 +121,22 @@ export EBOOK_META_PATH="/path/to/ebook-meta"
 
 ## Update
 
-Update only `convert-books`:
+Update only `page-forge`:
 
 ```bash
-convert-books update
+page-forge update
 ```
 
 Update only Calibre:
 
 ```bash
-convert-books update --calibre-only
+page-forge update --calibre-only
 ```
 
-Update both `convert-books` and Calibre:
+Update both `page-forge` and Calibre:
 
 ```bash
-convert-books update --include-calibre
+page-forge update --include-calibre
 ```
 
 Calibre is not updated by default because it is a separate native macOS app.
@@ -146,43 +146,43 @@ Calibre is not updated by default because it is a separate native macOS app.
 Repair an EPUB for Send to Kindle:
 
 ```bash
-convert-books repair-epub ./book.epub
+page-forge repair-epub ./book.epub
 ```
 
 Convert MOBI to EPUB:
 
 ```bash
-convert-books to-epub ./book.mobi
+page-forge to-epub ./book.mobi
 ```
 
 Convert EPUB to MOBI:
 
 ```bash
-convert-books to-mobi ./book.epub
+page-forge to-mobi ./book.epub
 ```
 
 Repair every EPUB in a folder:
 
 ```bash
-convert-books repair-folder ./books --output ./fixed
+page-forge repair-folder ./books --output ./fixed
 ```
 
 Convert every MOBI in a folder to EPUB:
 
 ```bash
-convert-books convert-folder ./books --output ./converted --to epub
+page-forge convert-folder ./books --output ./converted --to epub
 ```
 
 Inspect metadata:
 
 ```bash
-convert-books inspect ./book.epub
+page-forge inspect ./book.epub
 ```
 
 Update title or author:
 
 ```bash
-convert-books metadata ./book.epub --title "Book Title" --author "Author Name"
+page-forge metadata ./book.epub --title "Book Title" --author "Author Name"
 ```
 
 ## Send to Kindle
@@ -191,7 +191,7 @@ First, authorize your sender email in Amazon's Kindle personal document settings
 Then configure a local profile:
 
 ```bash
-convert-books configure
+page-forge configure
 ```
 
 The SMTP password or app token is stored through macOS Keychain via `keyring`;
@@ -200,25 +200,25 @@ it is not written to the config file.
 Send a file:
 
 ```bash
-convert-books send ./book.epub
+page-forge send ./book.epub
 ```
 
 Repair and send:
 
 ```bash
-convert-books repair-and-send ./book.epub
+page-forge repair-and-send ./book.epub
 ```
 
 Use a named profile:
 
 ```bash
-convert-books send ./book.epub --profile personal
+page-forge send ./book.epub --profile personal
 ```
 
 List profiles:
 
 ```bash
-convert-books profiles
+page-forge profiles
 ```
 
 ## Development
@@ -232,7 +232,7 @@ uv sync
 Run command help locally:
 
 ```bash
-uv run convert-books --help
+uv run page-forge --help
 ```
 
 ## Repository Description

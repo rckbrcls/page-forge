@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-import convert_books.updater as updater
-from convert_books.errors import DependencyError
+import page_forge.updater as updater
+from page_forge.errors import DependencyError
 
 
 def test_build_app_update_command():
@@ -14,7 +14,7 @@ def test_build_app_update_command():
         "tool",
         "install",
         "--force",
-        "git+https://github.com/rckbrcls/convert-books.git",
+        "git+https://github.com/rckbrcls/page-forge.git",
     ]
 
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import convert_books.platform as app_platform
+import page_forge.platform as app_platform
 
 
 def test_is_macos_when_platform_is_darwin(monkeypatch):
