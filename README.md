@@ -9,24 +9,62 @@ It supports:
 - `to-epub`: converts `MOBI -> EPUB`
 - `to-mobi`: converts `EPUB -> MOBI`
 - `doctor`: checks whether Calibre is available
+- `setup`: helps install or verify Calibre
 
 ## Requirements
 
-Install Calibre first. The CLI calls Calibre's `ebook-convert` command, because
-EPUB and MOBI conversion is more reliable through Calibre than through a small
-pure-Python converter.
+Calibre is the conversion engine. This CLI provides the friendly command-line
+experience, file checks, output naming, and repair workflow, while Calibre's
+`ebook-convert` does the actual EPUB/MOBI conversion.
 
-On macOS, after installing Calibre, make sure the command is available:
+This split matters because EPUB and MOBI files contain structured HTML,
+metadata, images, tables of contents, and format-specific quirks. Calibre is a
+mature native tool for that conversion work; the Python package keeps the usage
+simple.
+
+The global `uv` install includes the Python dependencies for this CLI. Calibre is
+a native macOS app, so it must be installed separately.
+
+The easiest setup path is:
+
+```bash
+convert-books setup --install
+```
+
+That shows an installation panel, uses Homebrew to install Calibre, then
+verifies that `ebook-convert` can be found.
+
+If you prefer to install Calibre yourself:
+
+```bash
+brew install --cask calibre
+```
+
+You can also download it manually from:
+
+```text
+https://calibre-ebook.com/download_osx
+```
+
+After installing Calibre, check the setup:
+
+```bash
+convert-books doctor
+```
+
+The CLI also searches for Calibre in common macOS locations, so you usually do
+not need to edit your shell `PATH`.
+
+If you want to check Calibre manually, run:
 
 ```bash
 /Applications/calibre.app/Contents/MacOS/ebook-convert --version
 ```
 
-If that works but `ebook-convert` is not found in your terminal, add this to
-your shell profile:
+If Calibre is in a custom location, point the CLI to it:
 
 ```bash
-export PATH="/Applications/calibre.app/Contents/MacOS:$PATH"
+export EBOOK_CONVERT_PATH="/path/to/ebook-convert"
 ```
 
 ## Install dependencies
@@ -102,4 +140,10 @@ Check local setup:
 
 ```bash
 uv run convert-books doctor
+```
+
+Install or verify Calibre:
+
+```bash
+uv run convert-books setup --install
 ```
