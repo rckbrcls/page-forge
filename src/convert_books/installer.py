@@ -5,6 +5,7 @@ import subprocess
 from typing import Callable
 
 from .errors import DependencyError
+from .platform import platform_support_message
 
 InstallOutputCallback = Callable[[str], None]
 
@@ -24,7 +25,8 @@ def install_calibre_with_homebrew(on_output: InstallOutputCallback | None = None
     brew = homebrew_path()
     if brew is None:
         raise DependencyError(
-            "Homebrew command not found. Install Calibre manually from "
+            f"{platform_support_message()} Homebrew command not found. "
+            "Install Calibre manually from "
             "https://calibre-ebook.com/download_osx"
         )
 

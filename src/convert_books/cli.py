@@ -32,13 +32,15 @@ from .installer import calibre_explanation, install_calibre_with_homebrew
 from .kindle import send_to_kindle
 from .metadata import inspect_book, update_book_metadata
 from .models import BatchResult, BookMetadata, ConversionResult, Profile, SendResult
+from .platform import platform_support_message
+from .updater import update_app, update_calibre
 
 APP_NAME = "convert-books"
 INSTALL_LOG_LINES = 8
 
 app = typer.Typer(
     name=APP_NAME,
-    help="Repair EPUB files, convert ebooks, and send them to Kindle.",
+    help="macOS-only terminal app for repairing, converting, and sending ebooks.",
     no_args_is_help=False,
 )
 console = Console()
@@ -134,12 +136,81 @@ def _install_panel(
     table.add_row("Status", status)
     table.add_row("Command", command)
     table.add_row("Elapsed", f"{elapsed:0.1f}s")
+    table.add_row("Platform", "macOS-only")
     table.add_row("Why", calibre_explanation())
     table.add_row(
         "Output",
         Text("\n".join(lines) if lines else "Waiting for Homebrew output..."),
     )
     return Panel(table, title="Installing Calibre", border_style=border_style)
+
+
+def _operation_panel(
+    *,
+    title: str,
+    status: str,
+    command: str,
+    started_at: float,
+    lines: deque[str],
+    border_style: str = "cyan",
+) -> Panel:
+    elapsed = time.monotonic() - started_at
+    table = Table(show_header=False, box=None, padding=(0, 1))
+    table.add_column("Label", style="bold cyan", no_wrap=True)
+    table.add_column("Value", overflow="fold")
+    table.add_row("Status", status)
+    table.add_row("Command", command)
+    table.add_row("Elapsed", f"{elapsed:0.1f}s")
+    table.add_row("Platform", "macOS-only")
+    table.add_row(
+        "Output",
+        Text("\n".join(lines) if lines else "Waiting for output..."),
+    )
+    return Panel(table, title=title, border_style=border_style)
+
+
+def _run_live_update_step(
+    *,
+    title: str,
+    command: str,
+    started_at: float,
+    lines: deque[str],
+    live: Live,
+    operation: Callable[[Callable[[str], None]], None],
+) -> None:
+    live.update(
+        _operation_panel(
+            title=title,
+            status="Starting",
+            command=command,
+            started_at=started_at,
+            lines=lines,
+        )
+    )
+
+    def on_output(line: str) -> None:
+        lines.append(line)
+        live.update(
+            _operation_panel(
+                title=title,
+                status="Running",
+                command=command,
+                started_at=started_at,
+                lines=lines,
+            )
+        )
+
+    operation(on_output)
+    live.update(
+        _operation_panel(
+            title=title,
+            status="Finished",
+            command=command,
+            started_at=started_at,
+            lines=lines,
+            border_style="green",
+        )
+    )
 
 
 @app.callback(invoke_without_command=True)
@@ -162,6 +233,7 @@ def doctor() -> None:
         raise typer.Exit(code=1) from error
 
     rows = [
+        ("Platform", "macOS-only"),
         ("ebook-convert", str(status.ebook_convert or "Missing")),
         ("ebook-meta", str(status.ebook_meta or "Missing")),
     ]
@@ -190,6 +262,7 @@ def setup(
         _render_rows(
             "Setup complete",
             [
+                ("Platform", "macOS-only"),
                 ("ebook-convert", str(status.ebook_convert)),
                 ("ebook-meta", str(status.ebook_meta)),
             ],
@@ -201,6 +274,7 @@ def setup(
             "Setup required",
             [
                 ("Status", "Calibre is not installed or was not found."),
+                ("Platform", platform_support_message()),
                 ("Why", calibre_explanation()),
                 ("Fast install", "convert-books setup --install"),
                 ("Manual install", "brew install --cask calibre"),
@@ -263,6 +337,94 @@ def setup(
         )
 
     doctor()
+
+
+@app.command("update")
+def update(
+    include_calibre: Annotated[
+        bool,
+        typer.Option(
+            "--include-calibre",
+            help="Update convert-books, then update Calibre with Homebrew.",
+        ),
+    ] = False,
+    calibre_only: Annotated[
+        bool,
+        typer.Option(
+            "--calibre-only",
+            help="Update only Calibre with Homebrew.",
+        ),
+    ] = False,
+) -> None:
+    """Update convert-books and optionally Calibre."""
+    if include_calibre and calibre_only:
+        _render_error(
+            "Update failed",
+            ValueError("Use either --include-calibre or --calibre-only, not both."),
+        )
+        raise typer.Exit(code=1)
+
+    lines: deque[str] = deque(maxlen=INSTALL_LOG_LINES)
+    started_at = time.monotonic()
+    first_command = (
+        "brew upgrade --cask calibre"
+        if calibre_only
+        else "uv tool install --force git+https://github.com/rckbrcls/convert-books.git"
+    )
+    completed_steps: list[str] = []
+
+    with Live(
+        _operation_panel(
+            title="Updating",
+            status="Preparing",
+            command=first_command,
+            started_at=started_at,
+            lines=lines,
+        ),
+        console=console,
+        refresh_per_second=6,
+        transient=False,
+    ) as live:
+        try:
+            if not calibre_only:
+                _run_live_update_step(
+                    title="Updating convert-books",
+                    command="uv tool install --force git+https://github.com/rckbrcls/convert-books.git",
+                    started_at=started_at,
+                    lines=lines,
+                    live=live,
+                    operation=update_app,
+                )
+                completed_steps.append("convert-books")
+
+            if include_calibre or calibre_only:
+                _run_live_update_step(
+                    title="Updating Calibre",
+                    command="brew upgrade --cask calibre",
+                    started_at=started_at,
+                    lines=lines,
+                    live=live,
+                    operation=update_calibre,
+                )
+                completed_steps.append("Calibre")
+        except ConvertBooksError as error:
+            live.update(
+                _operation_panel(
+                    title="Updating",
+                    status="Failed",
+                    command=first_command,
+                    started_at=started_at,
+                    lines=lines,
+                    border_style="red",
+                )
+            )
+            _render_error("Update failed", error)
+            raise typer.Exit(code=1) from error
+
+    _render_rows(
+        "Update complete",
+        [("Updated", ", ".join(completed_steps) or "Nothing")],
+    )
 
 
 @app.command("configure")

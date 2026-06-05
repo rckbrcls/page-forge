@@ -29,6 +29,7 @@ from .errors import ConvertBooksError
 from .kindle import send_to_kindle
 from .metadata import inspect_book, update_book_metadata
 from .models import Profile
+from .updater import update_app, update_calibre
 
 
 class ConvertBooksApp(App[None]):
@@ -40,7 +41,7 @@ class ConvertBooksApp(App[None]):
     }
 
     #dashboard-grid {
-        grid-size: 2 2;
+        grid-size: 2 3;
         grid-gutter: 1 2;
         margin: 1;
     }
@@ -88,9 +89,16 @@ class ConvertBooksApp(App[None]):
                 with Grid(id="dashboard-grid"):
                     yield Static("", id="calibre-status", classes="panel")
                     yield Static("", id="kindle-status", classes="panel")
+                    yield Static(
+                        "Recent logs\nNo activity yet.",
+                        id="recent-logs",
+                        classes="panel",
+                    )
                     yield Static("Quick actions", classes="panel")
                     with Vertical(classes="panel"):
                         yield Button("Refresh Status", id="refresh-status")
+                        yield Button("Update App", id="update-app")
+                        yield Button("Update Calibre", id="update-calibre")
                         yield Button("Open Logs", id="open-logs")
 
             with TabPane("Convert", id="convert"):
@@ -196,6 +204,7 @@ class ConvertBooksApp(App[None]):
             if status.is_ready:
                 calibre_text = (
                     "Calibre status: Ready\n"
+                    "Platform: macOS-only\n"
                     f"ebook-convert: {status.ebook_convert}\n"
                     f"ebook-meta: {status.ebook_meta}"
                 )
@@ -203,12 +212,14 @@ class ConvertBooksApp(App[None]):
                 missing = ", ".join(status.missing_tools)
                 calibre_text = (
                     "Calibre status: Setup required\n"
+                    "Platform: macOS-only\n"
                     f"Missing: {missing}\n"
                     "Run: convert-books setup --install"
                 )
         except ConvertBooksError as error:
             calibre_text = (
                 "Calibre status: Setup required\n"
+                "Platform: macOS-only\n"
                 f"Error: {error}\n"
                 "Check EBOOK_CONVERT_PATH or EBOOK_META_PATH."
             )
@@ -247,6 +258,8 @@ class ConvertBooksApp(App[None]):
             self.log_lines = []
         self.log_lines.append(message)
         self.query_one("#log-output", Static).update("\n".join(self.log_lines[-100:]))
+        recent = "\n".join(self.log_lines[-5:])
+        self.query_one("#recent-logs", Static).update(f"Recent logs\n{recent}")
 
     def read_path(self, widget_id: str, label: str) -> Path:
         value = self.query_one(widget_id, Input).value.strip()
@@ -261,6 +274,10 @@ class ConvertBooksApp(App[None]):
                 self.action_refresh()
             elif button_id == "open-logs":
                 self.query_one(TabbedContent).active = "logs"
+            elif button_id == "update-app":
+                self.start_app_update()
+            elif button_id == "update-calibre":
+                self.start_calibre_update()
             elif button_id == "run-convert":
                 self.run_convert()
             elif button_id == "run-batch":
@@ -279,6 +296,33 @@ class ConvertBooksApp(App[None]):
             self.write_log(f"Error: {error}")
         except ValueError as error:
             self.write_log(f"Error: {error}")
+
+    def start_app_update(self) -> None:
+        self.query_one(TabbedContent).active = "logs"
+        self.write_log("Starting convert-books update.")
+        self.run_worker(self.run_app_update_worker, thread=True)
+
+    def start_calibre_update(self) -> None:
+        self.query_one(TabbedContent).active = "logs"
+        self.write_log("Starting Calibre update.")
+        self.run_worker(self.run_calibre_update_worker, thread=True)
+
+    def run_app_update_worker(self) -> None:
+        try:
+            update_app(on_output=lambda line: self.call_from_thread(self.write_log, line))
+            self.call_from_thread(self.write_log, "convert-books update finished.")
+        except ConvertBooksError as error:
+            self.call_from_thread(self.write_log, f"Update error: {error}")
+
+    def run_calibre_update_worker(self) -> None:
+        try:
+            update_calibre(
+                on_output=lambda line: self.call_from_thread(self.write_log, line)
+            )
+            self.call_from_thread(self.write_log, "Calibre update finished.")
+            self.call_from_thread(self.refresh_dashboard)
+        except ConvertBooksError as error:
+            self.call_from_thread(self.write_log, f"Update error: {error}")
 
     def run_convert(self) -> None:
         operation = str(self.query_one("#convert-operation", Select).value)
