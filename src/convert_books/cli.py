@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-import os
-import shutil
-import subprocess
-import tempfile
 import time
 from collections import deque
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Callable, Literal, TypeVar
 
 import typer
 from rich.console import Console
@@ -17,119 +13,60 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.table import Table
 from rich.text import Text
 
-APP_NAME = "convert-books"
-EPUB_SUFFIX = ".epub"
-MOBI_SUFFIX = ".mobi"
-EBOOK_CONVERT_ENV_VAR = "EBOOK_CONVERT_PATH"
-INSTALL_LOG_LINES = 8
-EBOOK_CONVERT_CANDIDATES = (
-    Path("/Applications/calibre.app/Contents/MacOS/ebook-convert"),
-    Path.home() / "Applications/calibre.app/Contents/MacOS/ebook-convert",
-    Path("/opt/homebrew/bin/ebook-convert"),
-    Path("/usr/local/bin/ebook-convert"),
+from .calibre import get_calibre_status
+from .config import (
+    config_path,
+    load_config,
+    profile_has_password,
+    set_profile_password,
+    upsert_profile,
 )
+from .conversion import (
+    convert_book,
+    convert_folder,
+    repair_epub as repair_epub_service,
+    repair_folder as repair_folder_service,
+)
+from .errors import ConvertBooksError
+from .installer import calibre_explanation, install_calibre_with_homebrew
+from .kindle import send_to_kindle
+from .metadata import inspect_book, update_book_metadata
+from .models import BatchResult, BookMetadata, ConversionResult, Profile, SendResult
+
+APP_NAME = "convert-books"
+INSTALL_LOG_LINES = 8
 
 app = typer.Typer(
     name=APP_NAME,
-    help="Repair EPUB files and convert ebooks locally with Calibre.",
-    no_args_is_help=True,
+    help="Repair EPUB files, convert ebooks, and send them to Kindle.",
+    no_args_is_help=False,
 )
 console = Console()
+T = TypeVar("T")
 
 
-class ConversionError(RuntimeError):
-    """Raised when the external converter cannot finish the requested work."""
-
-
-def _is_executable(path: Path) -> bool:
-    return path.exists() and path.is_file() and os.access(path, os.X_OK)
-
-
-def _ebook_convert_path() -> Path:
-    configured = os.environ.get(EBOOK_CONVERT_ENV_VAR)
-    if configured:
-        configured_path = Path(configured).expanduser().resolve()
-        if _is_executable(configured_path):
-            return configured_path
-        raise ConversionError(
-            f"{EBOOK_CONVERT_ENV_VAR} points to a missing file: {configured_path}"
-        )
-
-    executable = shutil.which("ebook-convert")
-    if executable is not None:
-        return Path(executable)
-
-    for candidate in EBOOK_CONVERT_CANDIDATES:
-        if _is_executable(candidate):
-            return candidate
-
-    raise ConversionError(
-        "Calibre command not found. Install Calibre or run `convert-books setup`."
-    )
-
-
-def _require_existing_file(path: Path) -> Path:
-    resolved = path.expanduser().resolve()
-    if not resolved.exists():
-        raise ConversionError(f"Input file does not exist: {resolved}")
-    if not resolved.is_file():
-        raise ConversionError(f"Input path is not a file: {resolved}")
-    return resolved
-
-
-def _require_suffix(path: Path, expected_suffix: str) -> None:
-    if path.suffix.lower() != expected_suffix:
-        raise ConversionError(
-            f"Expected a {expected_suffix.upper()} file, got: {path.name}"
-        )
-
-
-def _default_output_path(source: Path, suffix: str, marker: str | None = None) -> Path:
-    stem = source.stem if marker is None else f"{source.stem}-{marker}"
-    return source.with_name(f"{stem}{suffix}")
-
-
-def _prepare_output_path(path: Path, force: bool) -> Path:
-    resolved = path.expanduser().resolve()
-    resolved.parent.mkdir(parents=True, exist_ok=True)
-    if resolved.exists():
-        if resolved.is_dir():
-            raise ConversionError(f"Output path is a directory: {resolved}")
-        if not force:
-            raise ConversionError(
-                f"Output file already exists: {resolved}. Use --force to overwrite it."
-            )
-        resolved.unlink()
-    return resolved
-
-
-def _run_ebook_convert(source: Path, output: Path) -> None:
-    executable = _ebook_convert_path()
-    command = [str(executable), str(source), str(output)]
-    completed = subprocess.run(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        check=False,
-    )
-    if completed.returncode != 0:
-        details = completed.stderr.strip() or completed.stdout.strip()
-        raise ConversionError(details or "Calibre failed without an error message.")
-
-
-def _render_success(title: str, rows: list[tuple[str, Path]]) -> None:
+def _render_rows(title: str, rows: list[tuple[str, str]], style: str = "green") -> None:
     table = Table(show_header=False, box=None, padding=(0, 1))
-    table.add_column("Label", style="bold cyan")
-    table.add_column("Path", overflow="fold")
-    for label, path in rows:
-        table.add_row(label, str(path))
-
+    table.add_column("Label", style="bold cyan", no_wrap=True)
+    table.add_column("Value", overflow="fold")
+    for label, value in rows:
+        table.add_row(label, value)
     console.print()
-    console.print(Panel(table, title=title, border_style="green"))
+    console.print(Panel(table, title=title, border_style=style))
 
 
-def _convert_with_progress(source: Path, output: Path, label: str) -> None:
+def _render_error(title: str, error: Exception) -> None:
+    console.print(Panel(str(error), title=title, border_style="red"))
+
+
+def _run_with_progress(label: str, task: Callable[[Callable[[str], None]], T]) -> T:
+    current_label = label
+
+    def update_label(value: str) -> None:
+        nonlocal current_label
+        current_label = value
+        progress.update(progress_task, description=current_label)
+
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -137,19 +74,48 @@ def _convert_with_progress(source: Path, output: Path, label: str) -> None:
         console=console,
         transient=True,
     ) as progress:
-        task = progress.add_task(label, total=None)
-        _run_ebook_convert(source, output)
-        progress.update(task, completed=1)
+        progress_task = progress.add_task(current_label, total=None)
+        return task(update_label)
 
 
-def _homebrew_path() -> str | None:
-    return shutil.which("brew")
+def _render_conversion(title: str, result: ConversionResult) -> None:
+    rows = [("Input", str(result.input_path)), ("Output", str(result.output_path))]
+    if result.intermediate_path is not None:
+        rows.append(("Intermediate", str(result.intermediate_path)))
+    _render_rows(title, rows)
 
 
-def _calibre_explanation() -> str:
-    return (
-        "Calibre provides the `ebook-convert` engine used for reliable EPUB/MOBI "
-        "conversion."
+def _render_batch(title: str, result: BatchResult) -> None:
+    rows = [
+        ("Converted", str(len(result.results))),
+        ("Skipped", str(len(result.skipped))),
+    ]
+    for item in result.results[:10]:
+        rows.append((item.input_path.name, str(item.output_path)))
+    _render_rows(title, rows)
+
+
+def _render_metadata(metadata: BookMetadata) -> None:
+    rows = [("Path", str(metadata.path))]
+    interesting = ("Title", "Author(s)", "Authors", "Publisher", "Tags", "Languages")
+    for key in interesting:
+        value = metadata.fields.get(key)
+        if value:
+            rows.append((key, value))
+    if len(rows) == 1:
+        rows.append(("Raw", metadata.raw or "No metadata returned."))
+    _render_rows("Book metadata", rows)
+
+
+def _render_send(result: SendResult) -> None:
+    _render_rows(
+        "Sent to Kindle",
+        [
+            ("Input", str(result.input_path)),
+            ("Profile", result.profile_name),
+            ("From", result.sender_email),
+            ("To", result.kindle_email),
+        ],
     )
 
 
@@ -168,7 +134,7 @@ def _install_panel(
     table.add_row("Status", status)
     table.add_row("Command", command)
     table.add_row("Elapsed", f"{elapsed:0.1f}s")
-    table.add_row("Why", _calibre_explanation())
+    table.add_row("Why", calibre_explanation())
     table.add_row(
         "Output",
         Text("\n".join(lines) if lines else "Waiting for Homebrew output..."),
@@ -176,88 +142,36 @@ def _install_panel(
     return Panel(table, title="Installing Calibre", border_style=border_style)
 
 
-def _install_calibre_with_homebrew() -> None:
-    brew = _homebrew_path()
-    if brew is None:
-        raise ConversionError(
-            "Homebrew command not found. Install Calibre manually from "
-            "https://calibre-ebook.com/download_osx"
-        )
+@app.callback(invoke_without_command=True)
+def main(ctx: typer.Context) -> None:
+    """Open the TUI when no command is provided."""
+    if ctx.invoked_subcommand is not None:
+        return
+    from .tui_app import run_tui
 
-    command = [brew, "install", "--cask", "calibre"]
-    command_text = "brew install --cask calibre"
-    lines: deque[str] = deque(maxlen=INSTALL_LOG_LINES)
-    started_at = time.monotonic()
-
-    process = subprocess.Popen(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        bufsize=1,
-    )
-
-    with Live(
-        _install_panel(
-            status="Starting Homebrew",
-            command=command_text,
-            started_at=started_at,
-            lines=lines,
-        ),
-        console=console,
-        refresh_per_second=6,
-        transient=False,
-    ) as live:
-        if process.stdout is not None:
-            for raw_line in process.stdout:
-                line = raw_line.strip()
-                if line:
-                    lines.append(line)
-                live.update(
-                    _install_panel(
-                        status="Installing Calibre",
-                        command=command_text,
-                        started_at=started_at,
-                        lines=lines,
-                    )
-                )
-
-        returncode = process.wait()
-        if returncode == 0:
-            live.update(
-                _install_panel(
-                    status="Homebrew install finished",
-                    command=command_text,
-                    started_at=started_at,
-                    lines=lines,
-                    border_style="green",
-                )
-            )
-            return
-
-        live.update(
-            _install_panel(
-                status="Homebrew install failed",
-                command=command_text,
-                started_at=started_at,
-                lines=lines,
-                border_style="red",
-            )
-        )
-        details = "\n".join(lines)
-        raise ConversionError(details or "Homebrew failed without an error message.")
+    run_tui()
 
 
 @app.command("doctor")
 def doctor() -> None:
     """Check whether local conversion dependencies are available."""
     try:
-        executable = _ebook_convert_path()
-    except ConversionError as error:
-        console.print(Panel(str(error), title="Missing dependency", border_style="red"))
+        status = get_calibre_status()
+    except ConvertBooksError as error:
+        _render_error("Missing dependency", error)
         raise typer.Exit(code=1) from error
 
-    _render_success("Ready", [("ebook-convert", Path(executable))])
+    rows = [
+        ("ebook-convert", str(status.ebook_convert or "Missing")),
+        ("ebook-meta", str(status.ebook_meta or "Missing")),
+    ]
+    if status.is_ready:
+        _render_rows("Ready", rows)
+        return
+
+    rows.append(("Next step", "convert-books setup --install"))
+    _render_rows("Setup required", rows, style="yellow")
+    raise typer.Exit(code=1)
 
 
 @app.command("setup")
@@ -271,41 +185,135 @@ def setup(
     ] = False,
 ) -> None:
     """Help install and verify external conversion dependencies."""
-    try:
-        executable = _ebook_convert_path()
-    except ConversionError:
-        if not install:
-            table = Table(show_header=False, box=None, padding=(0, 1))
-            table.add_column("Label", style="bold cyan")
-            table.add_column("Value", overflow="fold")
-            table.add_row("Status", "Calibre is not installed or was not found.")
-            table.add_row("Why", _calibre_explanation())
-            table.add_row("Fast install", "convert-books setup --install")
-            table.add_row("Manual install", "brew install --cask calibre")
-            table.add_row(
-                "Manual download",
-                "https://calibre-ebook.com/download_osx",
+    status = get_calibre_status()
+    if status.is_ready:
+        _render_rows(
+            "Setup complete",
+            [
+                ("ebook-convert", str(status.ebook_convert)),
+                ("ebook-meta", str(status.ebook_meta)),
+            ],
+        )
+        return
+
+    if not install:
+        _render_rows(
+            "Setup required",
+            [
+                ("Status", "Calibre is not installed or was not found."),
+                ("Why", calibre_explanation()),
+                ("Fast install", "convert-books setup --install"),
+                ("Manual install", "brew install --cask calibre"),
+                ("Manual download", "https://calibre-ebook.com/download_osx"),
+            ],
+            style="yellow",
+        )
+        raise typer.Exit(code=1)
+
+    lines: deque[str] = deque(maxlen=INSTALL_LOG_LINES)
+    started_at = time.monotonic()
+    command_text = "brew install --cask calibre"
+
+    with Live(
+        _install_panel(
+            status="Starting Homebrew",
+            command=command_text,
+            started_at=started_at,
+            lines=lines,
+        ),
+        console=console,
+        refresh_per_second=6,
+        transient=False,
+    ) as live:
+
+        def on_output(line: str) -> None:
+            lines.append(line)
+            live.update(
+                _install_panel(
+                    status="Installing Calibre",
+                    command=command_text,
+                    started_at=started_at,
+                    lines=lines,
+                )
             )
-            console.print()
-            console.print(Panel(table, title="Setup required", border_style="yellow"))
-            raise typer.Exit(code=1)
 
         try:
-            _install_calibre_with_homebrew()
-            executable = _ebook_convert_path()
-        except ConversionError as error:
-            console.print(Panel(str(error), title="Setup failed", border_style="red"))
+            install_calibre_with_homebrew(on_output=on_output)
+        except ConvertBooksError as error:
+            live.update(
+                _install_panel(
+                    status="Homebrew install failed",
+                    command=command_text,
+                    started_at=started_at,
+                    lines=lines,
+                    border_style="red",
+                )
+            )
+            _render_error("Setup failed", error)
             raise typer.Exit(code=1) from error
 
-    _render_success("Setup complete", [("ebook-convert", Path(executable))])
+        live.update(
+            _install_panel(
+                status="Homebrew install finished",
+                command=command_text,
+                started_at=started_at,
+                lines=lines,
+                border_style="green",
+            )
+        )
+
+    doctor()
+
+
+@app.command("configure")
+def configure(
+    profile: Annotated[str, typer.Option("--profile", "-p")] = "default",
+    sender_email: Annotated[str | None, typer.Option("--sender-email")] = None,
+    kindle_email: Annotated[str | None, typer.Option("--kindle-email")] = None,
+    smtp_host: Annotated[str, typer.Option("--smtp-host")] = "smtp.gmail.com",
+    smtp_port: Annotated[int, typer.Option("--smtp-port")] = 587,
+    smtp_username: Annotated[str | None, typer.Option("--smtp-username")] = None,
+    default_output_dir: Annotated[
+        Path | None,
+        typer.Option("--default-output-dir"),
+    ] = None,
+    skip_password: Annotated[
+        bool,
+        typer.Option("--skip-password", help="Do not prompt for the SMTP password."),
+    ] = False,
+) -> None:
+    """Configure a Kindle delivery profile."""
+    sender = sender_email or typer.prompt("Sender email")
+    kindle = kindle_email or typer.prompt("Kindle email")
+    username = smtp_username or sender
+    saved_profile = Profile(
+        name=profile,
+        sender_email=sender,
+        kindle_email=kindle,
+        smtp_host=smtp_host,
+        smtp_port=smtp_port,
+        smtp_username=username,
+        default_output_dir=str(default_output_dir.expanduser()) if default_output_dir else "",
+    )
+    path = upsert_profile(saved_profile, make_default=True)
+
+    if not skip_password:
+        password = typer.prompt("SMTP password or app token", hide_input=True)
+        set_profile_password(profile, password)
+
+    _render_rows(
+        "Profile saved",
+        [
+            ("Profile", profile),
+            ("Config", str(path)),
+            ("Password", "Stored in Keychain" if not skip_password else "Skipped"),
+        ],
+    )
 
 
 @app.command("to-epub")
 def to_epub(
-    source: Annotated[
-        Path,
-        typer.Argument(help="Path to the MOBI file to convert."),
-    ],
+    source: Annotated[Path, typer.Argument(help="Path to the MOBI file to convert.")],
     output: Annotated[
         Path | None,
         typer.Option("--output", "-o", help="Where to write the EPUB file."),
@@ -317,28 +325,25 @@ def to_epub(
 ) -> None:
     """Convert a MOBI file to EPUB."""
     try:
-        input_path = _require_existing_file(source)
-        _require_suffix(input_path, MOBI_SUFFIX)
-        output_path = _prepare_output_path(
-            output or _default_output_path(input_path, EPUB_SUFFIX),
-            force=force,
+        result = _run_with_progress(
+            "Converting MOBI to EPUB",
+            lambda update: convert_book(
+                source,
+                target_format="epub",
+                output=output,
+                force=force,
+                on_progress=update,
+            ),
         )
-        _convert_with_progress(input_path, output_path, "Converting MOBI to EPUB")
-        _render_success(
-            "Conversion complete",
-            [("Input", input_path), ("Output", output_path)],
-        )
-    except ConversionError as error:
-        console.print(Panel(str(error), title="Conversion failed", border_style="red"))
+        _render_conversion("Conversion complete", result)
+    except ConvertBooksError as error:
+        _render_error("Conversion failed", error)
         raise typer.Exit(code=1) from error
 
 
 @app.command("to-mobi")
 def to_mobi(
-    source: Annotated[
-        Path,
-        typer.Argument(help="Path to the EPUB file to convert."),
-    ],
+    source: Annotated[Path, typer.Argument(help="Path to the EPUB file to convert.")],
     output: Annotated[
         Path | None,
         typer.Option("--output", "-o", help="Where to write the MOBI file."),
@@ -350,28 +355,25 @@ def to_mobi(
 ) -> None:
     """Convert an EPUB file to MOBI."""
     try:
-        input_path = _require_existing_file(source)
-        _require_suffix(input_path, EPUB_SUFFIX)
-        output_path = _prepare_output_path(
-            output or _default_output_path(input_path, MOBI_SUFFIX),
-            force=force,
+        result = _run_with_progress(
+            "Converting EPUB to MOBI",
+            lambda update: convert_book(
+                source,
+                target_format="mobi",
+                output=output,
+                force=force,
+                on_progress=update,
+            ),
         )
-        _convert_with_progress(input_path, output_path, "Converting EPUB to MOBI")
-        _render_success(
-            "Conversion complete",
-            [("Input", input_path), ("Output", output_path)],
-        )
-    except ConversionError as error:
-        console.print(Panel(str(error), title="Conversion failed", border_style="red"))
+        _render_conversion("Conversion complete", result)
+    except ConvertBooksError as error:
+        _render_error("Conversion failed", error)
         raise typer.Exit(code=1) from error
 
 
 @app.command("repair-epub")
 def repair_epub(
-    source: Annotated[
-        Path,
-        typer.Argument(help="Path to the EPUB file to repair."),
-    ],
+    source: Annotated[Path, typer.Argument(help="Path to the EPUB file to repair.")],
     output: Annotated[
         Path | None,
         typer.Option("--output", "-o", help="Where to write the repaired EPUB file."),
@@ -387,33 +389,180 @@ def repair_epub(
 ) -> None:
     """Repair an EPUB by converting EPUB -> MOBI -> EPUB."""
     try:
-        input_path = _require_existing_file(source)
-        _require_suffix(input_path, EPUB_SUFFIX)
-        output_path = _prepare_output_path(
-            output or _default_output_path(input_path, EPUB_SUFFIX, marker="repaired"),
-            force=force,
-        )
-        kept_mobi = None
-        if keep_temp:
-            kept_mobi = _prepare_output_path(
-                output_path.with_suffix(MOBI_SUFFIX),
+        result = _run_with_progress(
+            "Repairing EPUB",
+            lambda update: repair_epub_service(
+                source,
+                output=output,
                 force=force,
-            )
-
-        with tempfile.TemporaryDirectory(prefix=f"{APP_NAME}-") as temp_dir:
-            temp_mobi = Path(temp_dir) / f"{input_path.stem}.mobi"
-            _convert_with_progress(input_path, temp_mobi, "Step 1/2: EPUB to MOBI")
-            _convert_with_progress(temp_mobi, output_path, "Step 2/2: MOBI to EPUB")
-
-            rows = [("Input", input_path), ("Output", output_path)]
-            if kept_mobi is not None:
-                shutil.copy2(temp_mobi, kept_mobi)
-                rows.append(("Intermediate", kept_mobi))
-
-        _render_success("EPUB repaired", rows)
-    except ConversionError as error:
-        console.print(Panel(str(error), title="Repair failed", border_style="red"))
+                keep_temp=keep_temp,
+                on_progress=update,
+            ),
+        )
+        _render_conversion("EPUB repaired", result)
+    except ConvertBooksError as error:
+        _render_error("Repair failed", error)
         raise typer.Exit(code=1) from error
+
+
+@app.command("repair-folder")
+def repair_folder(
+    folder: Annotated[Path, typer.Argument(help="Folder with EPUB files to repair.")],
+    output: Annotated[
+        Path,
+        typer.Option("--output", "-o", help="Where to write repaired EPUB files."),
+    ],
+    force: Annotated[
+        bool,
+        typer.Option("--force", "-f", help="Overwrite output files if they exist."),
+    ] = False,
+) -> None:
+    """Repair every EPUB file in a folder."""
+    try:
+        result = _run_with_progress(
+            "Repairing folder",
+            lambda update: repair_folder_service(
+                folder,
+                output_dir=output,
+                force=force,
+                on_progress=update,
+            ),
+        )
+        _render_batch("Folder repaired", result)
+    except ConvertBooksError as error:
+        _render_error("Batch failed", error)
+        raise typer.Exit(code=1) from error
+
+
+@app.command("convert-folder")
+def convert_folder_command(
+    folder: Annotated[Path, typer.Argument(help="Folder with ebook files to convert.")],
+    output: Annotated[
+        Path,
+        typer.Option("--output", "-o", help="Where to write converted files."),
+    ],
+    target: Annotated[
+        Literal["epub", "mobi"],
+        typer.Option("--to", help="Target format."),
+    ] = "epub",
+    force: Annotated[
+        bool,
+        typer.Option("--force", "-f", help="Overwrite output files if they exist."),
+    ] = False,
+) -> None:
+    """Convert every supported ebook in a folder."""
+    try:
+        result = _run_with_progress(
+            "Converting folder",
+            lambda update: convert_folder(
+                folder,
+                output_dir=output,
+                target_format=target,
+                force=force,
+                on_progress=update,
+            ),
+        )
+        _render_batch("Folder converted", result)
+    except ConvertBooksError as error:
+        _render_error("Batch failed", error)
+        raise typer.Exit(code=1) from error
+
+
+@app.command("inspect")
+def inspect(
+    source: Annotated[Path, typer.Argument(help="Path to the ebook to inspect.")],
+) -> None:
+    """Inspect ebook metadata with Calibre."""
+    try:
+        _render_metadata(inspect_book(source))
+    except ConvertBooksError as error:
+        _render_error("Inspect failed", error)
+        raise typer.Exit(code=1) from error
+
+
+@app.command("metadata")
+def metadata(
+    source: Annotated[Path, typer.Argument(help="Path to the ebook to update.")],
+    title: Annotated[str | None, typer.Option("--title")] = None,
+    author: Annotated[str | None, typer.Option("--author")] = None,
+) -> None:
+    """Update ebook title or author metadata."""
+    try:
+        _render_metadata(update_book_metadata(source, title=title, author=author))
+    except ConvertBooksError as error:
+        _render_error("Metadata update failed", error)
+        raise typer.Exit(code=1) from error
+
+
+@app.command("send")
+def send(
+    source: Annotated[Path, typer.Argument(help="Path to the ebook to send.")],
+    profile: Annotated[str | None, typer.Option("--profile", "-p")] = None,
+) -> None:
+    """Send an ebook to Kindle through the configured SMTP profile."""
+    try:
+        result = _run_with_progress(
+            "Sending to Kindle",
+            lambda _update: send_to_kindle(source, profile_name=profile),
+        )
+        _render_send(result)
+    except ConvertBooksError as error:
+        _render_error("Send failed", error)
+        raise typer.Exit(code=1) from error
+
+
+@app.command("repair-and-send")
+def repair_and_send(
+    source: Annotated[Path, typer.Argument(help="Path to the EPUB file to repair/send.")],
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", "-o", help="Where to write the repaired EPUB file."),
+    ] = None,
+    profile: Annotated[str | None, typer.Option("--profile", "-p")] = None,
+    force: Annotated[
+        bool,
+        typer.Option("--force", "-f", help="Overwrite the output file if it exists."),
+    ] = False,
+) -> None:
+    """Repair an EPUB, then send the repaired file to Kindle."""
+    try:
+        result = _run_with_progress(
+            "Repairing EPUB",
+            lambda update: repair_epub_service(
+                source,
+                output=output,
+                force=force,
+                on_progress=update,
+            ),
+        )
+        _render_conversion("EPUB repaired", result)
+        send_result = _run_with_progress(
+            "Sending to Kindle",
+            lambda _update: send_to_kindle(result.output_path, profile_name=profile),
+        )
+        _render_send(send_result)
+    except ConvertBooksError as error:
+        _render_error("Repair and send failed", error)
+        raise typer.Exit(code=1) from error
+
+
+@app.command("tui")
+def tui() -> None:
+    """Open the interactive terminal interface."""
+    from .tui_app import run_tui
+
+    run_tui()
+
+
+@app.command("profiles")
+def profiles() -> None:
+    """List configured Kindle delivery profiles."""
+    config = load_config()
+    rows = [("Config", str(config_path())), ("Default", config.default_profile)]
+    for name, profile in sorted(config.profiles.items(), key=lambda item: item[0]):
+        status = "Ready" if profile.is_send_ready and profile_has_password(name) else "Incomplete"
+        rows.append((name, status))
+    _render_rows("Profiles", rows)
 
 
 if __name__ == "__main__":
