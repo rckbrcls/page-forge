@@ -1,0 +1,20 @@
+[project]
+name = "convert-books"
+version = "0.1.0"
+description = "A small CLI for repairing EPUB files and converting books locally."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "rich>=13.9.4",
+    "typer>=0.15.1",
+]
+
+[project.scripts]
+convert-books = "convert_books.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true
