@@ -16,7 +16,7 @@ def send_to_kindle(source: Path, *, profile_name: str | None = None) -> SendResu
     profile = get_profile(profile_name)
     if not profile.is_send_ready:
         raise ConfigurationError(
-            f"Profile `{profile.name}` is incomplete. Run `convert-books configure`."
+            f"Profile `{profile.name}` is incomplete. Run `page-forge configure`."
         )
 
     password = get_profile_password(profile.name)
@@ -24,7 +24,7 @@ def send_to_kindle(source: Path, *, profile_name: str | None = None) -> SendResu
     message["From"] = profile.sender_email
     message["To"] = profile.kindle_email
     message["Subject"] = input_path.stem
-    message.set_content("Attached ebook sent by convert-books.")
+    message.set_content("Attached ebook sent by page-forge.")
 
     content_type, _ = mimetypes.guess_type(input_path.name)
     maintype, subtype = (content_type or "application/octet-stream").split("/", 1)

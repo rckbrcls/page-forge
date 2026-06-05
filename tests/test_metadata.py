@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from convert_books.metadata import parse_ebook_meta_output
+from page_forge.metadata import parse_ebook_meta_output
 
 
 def test_parse_ebook_meta_output_extracts_fields():

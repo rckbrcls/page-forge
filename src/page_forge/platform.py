@@ -15,6 +15,6 @@ def is_macos() -> bool:
 
 def platform_support_message() -> str:
     return (
-        "convert-books is a macOS-only app because it uses Homebrew, Calibre "
+        "page-forge is a macOS-only app because it uses Homebrew, Calibre "
         "macOS app paths, and macOS Keychain."
     )

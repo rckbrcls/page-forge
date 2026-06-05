@@ -25,15 +25,15 @@ from .config import (
     upsert_profile,
 )
 from .conversion import convert_book, convert_folder, repair_epub, repair_folder
-from .errors import ConvertBooksError
+from .errors import PageForgeError
 from .kindle import send_to_kindle
 from .metadata import inspect_book, update_book_metadata
 from .models import Profile
 from .updater import update_app, update_calibre
 
 
-class ConvertBooksApp(App[None]):
-    """Interactive terminal app for convert-books."""
+class PageForgeApp(App[None]):
+    """Interactive terminal app for page-forge."""
 
     CSS = """
     Screen {
@@ -214,9 +214,9 @@ class ConvertBooksApp(App[None]):
                     "Calibre status: Setup required\n"
                     "Platform: macOS-only\n"
                     f"Missing: {missing}\n"
-                    "Run: convert-books setup --install"
+                    "Run: page-forge setup --install"
                 )
-        except ConvertBooksError as error:
+        except PageForgeError as error:
             calibre_text = (
                 "Calibre status: Setup required\n"
                 "Platform: macOS-only\n"
@@ -236,7 +236,7 @@ class ConvertBooksApp(App[None]):
         else:
             kindle_text = (
                 "Kindle profile: Incomplete\n"
-                "Open Settings or run: convert-books configure"
+                "Open Settings or run: page-forge configure"
             )
         self.query_one("#kindle-status", Static).update(kindle_text)
 
@@ -292,14 +292,14 @@ class ConvertBooksApp(App[None]):
                 self.run_metadata()
             elif button_id == "save-profile":
                 self.save_profile()
-        except ConvertBooksError as error:
+        except PageForgeError as error:
             self.write_log(f"Error: {error}")
         except ValueError as error:
             self.write_log(f"Error: {error}")
 
     def start_app_update(self) -> None:
         self.query_one(TabbedContent).active = "logs"
-        self.write_log("Starting convert-books update.")
+        self.write_log("Starting page-forge update.")
         self.run_worker(self.run_app_update_worker, thread=True)
 
     def start_calibre_update(self) -> None:
@@ -310,8 +310,8 @@ class ConvertBooksApp(App[None]):
     def run_app_update_worker(self) -> None:
         try:
             update_app(on_output=lambda line: self.call_from_thread(self.write_log, line))
-            self.call_from_thread(self.write_log, "convert-books update finished.")
-        except ConvertBooksError as error:
+            self.call_from_thread(self.write_log, "page-forge update finished.")
+        except PageForgeError as error:
             self.call_from_thread(self.write_log, f"Update error: {error}")
 
     def run_calibre_update_worker(self) -> None:
@@ -321,7 +321,7 @@ class ConvertBooksApp(App[None]):
             )
             self.call_from_thread(self.write_log, "Calibre update finished.")
             self.call_from_thread(self.refresh_dashboard)
-        except ConvertBooksError as error:
+        except PageForgeError as error:
             self.call_from_thread(self.write_log, f"Update error: {error}")
 
     def run_convert(self) -> None:
@@ -410,4 +410,4 @@ class ConvertBooksApp(App[None]):
 
 
 def run_tui() -> None:
-    ConvertBooksApp().run()
+    PageForgeApp().run()

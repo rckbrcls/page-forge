@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from convert_books.config import load_config, save_config
-from convert_books.models import AppConfig, Profile
+from page_forge.config import load_config, save_config
+from page_forge.models import AppConfig, Profile
 
 
 def test_save_and_load_profile(monkeypatch, tmp_path):

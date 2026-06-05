@@ -8,7 +8,7 @@ from .errors import DependencyError
 from .installer import homebrew_path
 from .platform import platform_support_message
 
-REPO_PACKAGE = "git+https://github.com/rckbrcls/convert-books.git"
+REPO_PACKAGE = "git+https://github.com/rckbrcls/page-forge.git"
 UV_INSTALL_COMMAND = "curl -LsSf https://astral.sh/uv/install.sh | sh"
 
 UpdateOutputCallback = Callable[[str], None]

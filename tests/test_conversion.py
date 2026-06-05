@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from convert_books.conversion import default_output_path, require_suffix
-from convert_books.errors import ConversionError
+from page_forge.conversion import default_output_path, require_suffix
+from page_forge.errors import ConversionError
 
 
 def test_default_output_path_adds_marker(tmp_path):

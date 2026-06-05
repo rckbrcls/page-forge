@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 
-class ConvertBooksError(RuntimeError):
+class PageForgeError(RuntimeError):
     """Base error for user-facing failures."""
 
 
-class ConversionError(ConvertBooksError):
+class ConversionError(PageForgeError):
     """Raised when ebook conversion cannot finish."""
 
 
-class ConfigurationError(ConvertBooksError):
+class ConfigurationError(PageForgeError):
     """Raised when the app configuration is missing or invalid."""
 
 
-class DependencyError(ConvertBooksError):
+class DependencyError(PageForgeError):
     """Raised when an external dependency is missing."""
