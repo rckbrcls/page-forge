@@ -1,11 +1,27 @@
-# page-forge
+![PageForge hero](docs/assets/pageforge-hero.png)
 
-macOS-only terminal app for repairing EPUB files, converting EPUB/MOBI books,
-editing metadata, and sending ebooks to Kindle.
+# PageForge
 
-`page-forge` is TUI-first: running the command without arguments opens the
-interactive terminal app. Command-line shortcuts are still available for
-automation, scripting, support, and fast one-off tasks.
+PageForge is a macOS-only terminal app for repairing EPUB files, converting
+EPUB/MOBI books, editing metadata, and sending ebooks to Kindle.
+
+It is TUI-first: running `page-forge` without arguments opens the interactive
+terminal app. Command-line shortcuts remain available for automation,
+scripting, support, and fast one-off tasks.
+
+## Table of Contents
+
+- [macOS Only](#macos-only)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Install](#install)
+- [Terminal UI](#terminal-ui)
+- [Setup](#setup)
+- [Update](#update)
+- [Command-Line Shortcuts](#command-line-shortcuts)
+- [Send to Kindle](#send-to-kindle)
+- [Development](#development)
+- [Repository Description](#repository-description)
 
 ## macOS Only
 
