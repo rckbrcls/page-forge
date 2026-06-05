@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import subprocess
+import sys
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
+from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import Grid, Horizontal, Vertical
+from textual.screen import ModalScreen
 from textual.widgets import (
     Button,
     Checkbox,
+    DirectoryTree,
     Footer,
     Header,
     Input,
@@ -31,6 +36,243 @@ from .kindle import send_to_kindle
 from .metadata import inspect_book, update_book_metadata
 from .models import Profile
 from .updater import update_app, update_calibre
+
+PathPickerMode = Literal["file", "directory", "save_file"]
+PathPickerConfig = tuple[str, PathPickerMode, str]
+
+
+PATH_PICKER_BUTTONS: dict[str, PathPickerConfig] = {
+    "convert-source-browse": ("convert-source", "file", "Select input file"),
+    "convert-output-browse": ("convert-output", "save_file", "Select output file"),
+    "batch-source-browse": ("batch-source", "directory", "Select input folder"),
+    "batch-output-browse": ("batch-output", "directory", "Select output folder"),
+    "send-source-browse": ("send-source", "file", "Select input file"),
+    "metadata-source-browse": ("metadata-source", "file", "Select input file"),
+    "settings-output-dir-browse": (
+        "settings-output-dir",
+        "directory",
+        "Select default output folder",
+    ),
+}
+
+FINDER_PICKER_BUTTONS: dict[str, PathPickerConfig] = {
+    "convert-source-finder": ("convert-source", "file", "Select input file"),
+    "convert-output-finder": ("convert-output", "save_file", "Select output file"),
+    "batch-source-finder": ("batch-source", "directory", "Select input folder"),
+    "batch-output-finder": ("batch-output", "directory", "Select output folder"),
+    "send-source-finder": ("send-source", "file", "Select input file"),
+    "metadata-source-finder": ("metadata-source", "file", "Select input file"),
+    "settings-output-dir-finder": (
+        "settings-output-dir",
+        "directory",
+        "Select default output folder",
+    ),
+}
+
+
+class FinderSelectionError(RuntimeError):
+    """Raised when the macOS Finder picker cannot be opened."""
+
+
+def _applescript_string(value: str) -> str:
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _start_directory(path: Path | None) -> Path:
+    if path is None:
+        return Path.home()
+    expanded = path.expanduser()
+    if expanded.exists():
+        return expanded if expanded.is_dir() else expanded.parent
+    if expanded.parent.exists():
+        return expanded.parent
+    return Path.home()
+
+
+def _initial_save_filename(path: Path | None) -> str:
+    if path is None:
+        return ""
+    expanded = path.expanduser()
+    if expanded.exists() and expanded.is_dir():
+        return ""
+    return expanded.name
+
+
+def choose_path_with_finder(
+    mode: PathPickerMode,
+    *,
+    default_directory: Path,
+) -> Path | None:
+    if sys.platform != "darwin":
+        raise FinderSelectionError("Finder picker is only available on macOS.")
+
+    command = "choose file" if mode == "file" else "choose folder"
+    default_location = _applescript_string(str(default_directory.expanduser()))
+    script = f"POSIX path of ({command} default location POSIX file {default_location})"
+
+    try:
+        completed = subprocess.run(
+            ["osascript", "-e", script],
+            capture_output=True,
+            check=False,
+            text=True,
+        )
+    except FileNotFoundError as error:
+        raise FinderSelectionError("osascript is not available.") from error
+
+    if completed.returncode != 0:
+        message = (completed.stderr or completed.stdout).strip()
+        if "User canceled" in message:
+            return None
+        raise FinderSelectionError(message or "Finder picker failed.")
+
+    output = completed.stdout.strip()
+    return Path(output).expanduser() if output else None
+
+
+class PathPickerScreen(ModalScreen[Path | None]):
+    """Modal path picker backed by Textual's DirectoryTree."""
+
+    BINDINGS = [("escape", "cancel", "Cancel")]
+
+    def __init__(
+        self,
+        *,
+        title: str,
+        mode: PathPickerMode,
+        initial_path: Path | None,
+        open_finder_on_mount: bool = False,
+    ) -> None:
+        super().__init__()
+        self.title = title
+        self.mode = mode
+        self.current_directory = _start_directory(initial_path)
+        self.selected_path: Path | None = None
+        self.filename = _initial_save_filename(initial_path) if mode == "save_file" else ""
+        self.open_finder_on_mount = open_finder_on_mount
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="path-picker-dialog"):
+            yield Label(self.title, id="path-picker-title")
+            yield Static("", id="path-picker-status")
+            if self.mode == "save_file":
+                yield Label("Filename")
+                yield Input(
+                    value=self.filename,
+                    placeholder="output.epub",
+                    id="path-picker-filename",
+                )
+            yield DirectoryTree(self.current_directory, id="path-picker-tree")
+            with Horizontal(classes="actions"):
+                yield Button("Select", id="path-picker-select", variant="primary")
+                if self.mode in ("directory", "save_file"):
+                    yield Button("Use current folder", id="path-picker-current")
+                yield Button("Finder", id="path-picker-finder")
+                yield Button("Cancel", id="path-picker-cancel")
+
+    def on_mount(self) -> None:
+        self.update_status(f"Current folder: {self.current_directory}")
+        if self.open_finder_on_mount:
+            self.open_finder()
+
+    def action_cancel(self) -> None:
+        self.dismiss(None)
+
+    def update_status(self, message: str) -> None:
+        self.query_one("#path-picker-status", Static).update(message)
+
+    @on(DirectoryTree.FileSelected)
+    def handle_file_selected(self, event: DirectoryTree.FileSelected) -> None:
+        if self.mode == "save_file":
+            self.current_directory = event.path.parent
+            self.selected_path = self.current_directory
+            self.query_one("#path-picker-filename", Input).value = event.path.name
+            self.update_status(f"Current folder: {self.current_directory}")
+            return
+        self.selected_path = event.path
+        self.update_status(f"Selected file: {event.path}")
+
+    @on(DirectoryTree.DirectorySelected)
+    def handle_directory_selected(self, event: DirectoryTree.DirectorySelected) -> None:
+        self.current_directory = event.path
+        self.selected_path = event.path
+        self.update_status(f"Selected folder: {event.path}")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        button_id = event.button.id
+        if button_id == "path-picker-select":
+            self.select_path()
+        elif button_id == "path-picker-current":
+            self.use_current_folder()
+        elif button_id == "path-picker-finder":
+            self.open_finder()
+        elif button_id == "path-picker-cancel":
+            self.dismiss(None)
+
+    def select_path(self) -> None:
+        if self.mode == "file":
+            if self.selected_path is not None and self.selected_path.is_file():
+                self.dismiss(self.selected_path)
+                return
+            self.update_status("Select a file.")
+            return
+
+        if self.mode == "directory":
+            directory = self.selected_directory()
+            self.dismiss(directory)
+            return
+
+        filename = self.query_one("#path-picker-filename", Input).value.strip()
+        if not filename:
+            self.update_status("Filename is required.")
+            return
+        filename_path = Path(filename)
+        if filename_path.is_absolute() or len(filename_path.parts) != 1:
+            self.update_status("Enter only a filename.")
+            return
+        self.dismiss(self.selected_directory() / filename)
+
+    def use_current_folder(self) -> None:
+        if self.mode == "directory":
+            self.dismiss(self.current_directory)
+            return
+        self.selected_path = self.current_directory
+        filename = self.query_one("#path-picker-filename", Input).value.strip()
+        if not filename:
+            self.update_status("Filename is required.")
+            return
+        filename_path = Path(filename)
+        if filename_path.is_absolute() or len(filename_path.parts) != 1:
+            self.update_status("Enter only a filename.")
+            return
+        self.dismiss(self.current_directory / filename)
+
+    def selected_directory(self) -> Path:
+        if self.selected_path is not None and self.selected_path.is_dir():
+            return self.selected_path
+        return self.current_directory
+
+    def open_finder(self) -> None:
+        try:
+            selected = choose_path_with_finder(
+                self.mode,
+                default_directory=self.current_directory,
+            )
+        except FinderSelectionError as error:
+            self.update_status(f"Finder error: {error}")
+            return
+
+        if selected is None:
+            self.update_status("Finder selection canceled.")
+            return
+
+        if self.mode == "save_file":
+            self.current_directory = selected if selected.is_dir() else selected.parent
+            self.selected_path = self.current_directory
+            self.update_status(f"Current folder: {self.current_directory}")
+            return
+
+        self.dismiss(selected)
 
 
 class PageForgeApp(App[None]):
@@ -63,6 +305,21 @@ class PageForgeApp(App[None]):
         margin-bottom: 1;
     }
 
+    .path-row {
+        height: auto;
+        margin-bottom: 1;
+    }
+
+    .path-row Input {
+        width: 1fr;
+        margin-bottom: 0;
+    }
+
+    .path-row Button {
+        width: 10;
+        margin-left: 1;
+    }
+
     .actions {
         height: auto;
         margin-top: 1;
@@ -74,6 +331,34 @@ class PageForgeApp(App[None]):
         border: solid $accent;
         height: 1fr;
         overflow: auto;
+    }
+
+    PathPickerScreen {
+        align: center middle;
+    }
+
+    #path-picker-dialog {
+        width: 90%;
+        height: 85%;
+        border: thick $primary;
+        background: $surface;
+        padding: 1 2;
+    }
+
+    #path-picker-title {
+        text-style: bold;
+        margin-bottom: 1;
+    }
+
+    #path-picker-status {
+        margin-bottom: 1;
+        color: $text-muted;
+    }
+
+    #path-picker-tree {
+        height: 1fr;
+        border: solid $accent;
+        margin-bottom: 1;
     }
     """
 
@@ -124,9 +409,15 @@ class PageForgeApp(App[None]):
                         value="safe",
                     )
                     yield Label("Input file")
-                    yield Input(placeholder="/path/to/book.epub", id="convert-source")
+                    with Horizontal(classes="path-row"):
+                        yield Input(placeholder="/path/to/book.epub", id="convert-source")
+                        yield Button("Browse", id="convert-source-browse")
+                        yield Button("Finder", id="convert-source-finder")
                     yield Label("Output file (optional)")
-                    yield Input(placeholder="/path/to/output.epub", id="convert-output")
+                    with Horizontal(classes="path-row"):
+                        yield Input(placeholder="/path/to/output.epub", id="convert-output")
+                        yield Button("Browse", id="convert-output-browse")
+                        yield Button("Finder", id="convert-output-finder")
                     yield Checkbox("Overwrite existing output", id="convert-force")
                     with Horizontal(classes="actions"):
                         yield Button("Run Conversion", id="run-convert", variant="primary")
@@ -153,9 +444,15 @@ class PageForgeApp(App[None]):
                         value="safe",
                     )
                     yield Label("Input folder")
-                    yield Input(placeholder="/path/to/folder", id="batch-source")
+                    with Horizontal(classes="path-row"):
+                        yield Input(placeholder="/path/to/folder", id="batch-source")
+                        yield Button("Browse", id="batch-source-browse")
+                        yield Button("Finder", id="batch-source-finder")
                     yield Label("Output folder")
-                    yield Input(placeholder="/path/to/output", id="batch-output")
+                    with Horizontal(classes="path-row"):
+                        yield Input(placeholder="/path/to/output", id="batch-output")
+                        yield Button("Browse", id="batch-output-browse")
+                        yield Button("Finder", id="batch-output-finder")
                     yield Checkbox("Overwrite existing outputs", id="batch-force")
                     with Horizontal(classes="actions"):
                         yield Button("Run Batch", id="run-batch", variant="primary")
@@ -163,7 +460,10 @@ class PageForgeApp(App[None]):
             with TabPane("Send to Kindle", id="send"):
                 with Vertical(classes="form"):
                     yield Label("Input file")
-                    yield Input(placeholder="/path/to/book.epub", id="send-source")
+                    with Horizontal(classes="path-row"):
+                        yield Input(placeholder="/path/to/book.epub", id="send-source")
+                        yield Button("Browse", id="send-source-browse")
+                        yield Button("Finder", id="send-source-finder")
                     yield Label("Profile")
                     yield Input(value="default", id="send-profile")
                     yield Checkbox("Overwrite repaired output", id="send-force")
@@ -183,7 +483,10 @@ class PageForgeApp(App[None]):
             with TabPane("Metadata", id="metadata"):
                 with Vertical(classes="form"):
                     yield Label("Input file")
-                    yield Input(placeholder="/path/to/book.epub", id="metadata-source")
+                    with Horizontal(classes="path-row"):
+                        yield Input(placeholder="/path/to/book.epub", id="metadata-source")
+                        yield Button("Browse", id="metadata-source-browse")
+                        yield Button("Finder", id="metadata-source-finder")
                     yield Label("Title")
                     yield Input(placeholder="Book title", id="metadata-title")
                     yield Label("Author")
@@ -209,7 +512,10 @@ class PageForgeApp(App[None]):
                     yield Label("SMTP password or app token")
                     yield Input(password=True, id="settings-password")
                     yield Label("Default output folder")
-                    yield Input(placeholder="/path/to/books", id="settings-output-dir")
+                    with Horizontal(classes="path-row"):
+                        yield Input(placeholder="/path/to/books", id="settings-output-dir")
+                        yield Button("Browse", id="settings-output-dir-browse")
+                        yield Button("Finder", id="settings-output-dir-finder")
                     with Horizontal(classes="actions"):
                         yield Button("Save Profile", id="save-profile", variant="primary")
 
@@ -296,6 +602,13 @@ class PageForgeApp(App[None]):
             raise ValueError(f"{label} is required.")
         return Path(value).expanduser()
 
+    def path_input_value(self, widget_id: str) -> Path | None:
+        value = self.query_one(f"#{widget_id}", Input).value.strip()
+        return Path(value).expanduser() if value else None
+
+    def set_path_input(self, widget_id: str, path: Path) -> None:
+        self.query_one(f"#{widget_id}", Input).value = str(path.expanduser())
+
     def read_repair_mode(self, widget_id: str) -> RepairMode:
         value = str(self.query_one(widget_id, Select).value)
         if value not in ("safe", "aggressive"):
@@ -327,10 +640,67 @@ class PageForgeApp(App[None]):
                 self.run_metadata()
             elif button_id == "save-profile":
                 self.save_profile()
+            elif button_id in PATH_PICKER_BUTTONS:
+                self.open_path_picker(*PATH_PICKER_BUTTONS[button_id])
+            elif button_id in FINDER_PICKER_BUTTONS:
+                self.open_finder_picker(*FINDER_PICKER_BUTTONS[button_id])
         except PageForgeError as error:
             self.write_log(f"Error: {error}")
         except ValueError as error:
             self.write_log(f"Error: {error}")
+
+    def open_path_picker(
+        self,
+        widget_id: str,
+        mode: PathPickerMode,
+        title: str,
+        *,
+        open_finder_on_mount: bool = False,
+    ) -> None:
+        initial_path = self.path_input_value(widget_id)
+
+        def apply_selection(selected: Path | None) -> None:
+            if selected is None:
+                return
+            self.set_path_input(widget_id, selected)
+
+        self.push_screen(
+            PathPickerScreen(
+                title=title,
+                mode=mode,
+                initial_path=initial_path,
+                open_finder_on_mount=open_finder_on_mount,
+            ),
+            apply_selection,
+        )
+
+    def open_finder_picker(
+        self,
+        widget_id: str,
+        mode: PathPickerMode,
+        title: str,
+    ) -> None:
+        initial_path = self.path_input_value(widget_id)
+        default_directory = _start_directory(initial_path)
+        if mode == "save_file":
+            self.open_path_picker(
+                widget_id,
+                mode,
+                title,
+                open_finder_on_mount=True,
+            )
+            return
+
+        try:
+            selected = choose_path_with_finder(mode, default_directory=default_directory)
+        except FinderSelectionError as error:
+            self.write_log(f"Finder error: {error}")
+            return
+
+        if selected is None:
+            self.write_log("Finder selection canceled.")
+            return
+        self.set_path_input(widget_id, selected)
 
     def start_app_update(self) -> None:
         self.query_one(TabbedContent).active = "logs"
