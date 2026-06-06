@@ -14,8 +14,17 @@ def test_build_app_update_command():
         "tool",
         "install",
         "--force",
-        "git+https://github.com/rckbrcls/page-forge.git",
+        "page-forge @ git+https://github.com/rckbrcls/page-forge.git",
     ]
+
+
+def test_command_text_quotes_direct_reference():
+    command = updater.command_text(updater.build_app_update_command("uv"))
+
+    assert (
+        command
+        == "uv tool install --force 'page-forge @ git+https://github.com/rckbrcls/page-forge.git'"
+    )
 
 
 def test_build_calibre_update_command():

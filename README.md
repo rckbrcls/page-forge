@@ -8,9 +8,9 @@ It helps turn scattered ebook files into clean, ready-to-use books by combining
 conversion, repair, metadata editing, batch processing, and Kindle delivery in a
 TUI-first experience.
 
-Under the hood, PageForge wraps Calibre-powered EPUB/MOBI operations with a
-focused terminal interface, while keeping command-line shortcuts available for
-automation and one-off tasks.
+Under the hood, PageForge wraps Calibre-powered EPUB, MOBI, and PDF conversion
+operations with a focused terminal interface, while keeping command-line
+shortcuts available for automation and one-off tasks.
 
 ## Table of Contents
 
@@ -21,6 +21,7 @@ automation and one-off tasks.
 - [Terminal UI](#terminal-ui)
 - [Setup](#setup)
 - [Update](#update)
+- [Readiness Doctor](#readiness-doctor)
 - [Command-Line Shortcuts](#command-line-shortcuts)
 - [Send to Kindle](#send-to-kindle)
 - [Development](#development)
@@ -39,11 +40,12 @@ It depends on:
 ## Features
 
 - Interactive Textual TUI: `page-forge`
+- Readiness Doctor for Kindle-focused EPUB/MOBI audits and safe fixes
 - Safe EPUB repair workflow with an optional aggressive `EPUB -> MOBI -> EPUB` mode
-- Direct conversion: `MOBI -> EPUB` and `EPUB -> MOBI`
+- Direct conversion: `MOBI -> EPUB`, `PDF -> EPUB`, and `EPUB -> MOBI`
 - Folder batch repair and conversion
 - Metadata inspection and title/author updates
-- Send to Kindle through SMTP and a configured Kindle email
+- Send to Kindle through SMTP or a Send to Kindle handoff
 - Calibre setup checks with visual feedback
 - App and Calibre update commands
 - Command-line shortcuts for automation
@@ -56,10 +58,10 @@ This project has two layers:
 - Calibre: the native ebook engine that provides `ebook-convert`, `ebook-meta`,
   and `ebook-polish`
 
-Calibre is required because EPUB and MOBI files contain structured HTML,
-metadata, images, tables of contents, and format-specific quirks. The Python app
-handles the experience and workflow; Calibre performs conversion, metadata, and
-EPUB polish operations.
+Calibre is required because ebook and document formats can carry metadata,
+images, tables of contents, embedded text, and format-specific quirks. The
+Python app handles the experience and workflow; Calibre performs conversion,
+metadata, and EPUB polish operations.
 
 ## Install
 
@@ -81,13 +83,13 @@ official install command and exits.
 You can also install directly with `uv`:
 
 ```bash
-uv tool install --force git+https://github.com/rckbrcls/page-forge.git
+uv tool install --force "page-forge @ git+https://github.com/rckbrcls/page-forge.git"
 ```
 
 For local editable development:
 
 ```bash
-uv tool install --force --editable /Users/erickpatrickbarcelos/Documents/page-forge
+uv tool install --force --editable /Users/erickpatrickbarcelos/codes/page-forge
 ```
 
 ## Terminal UI
@@ -107,6 +109,7 @@ page-forge tui
 The TUI includes:
 
 - Dashboard
+- Readiness
 - Convert
 - Batch
 - Send to Kindle
@@ -161,6 +164,47 @@ page-forge update --include-calibre
 
 Calibre is not updated by default because it is a separate native macOS app.
 
+## Readiness Doctor
+
+Readiness Doctor checks whether an EPUB is structurally ready for Kindle
+delivery and highlights issues that commonly cause Send to Kindle failures or
+poor conversion results. MOBI files are treated as legacy input: PageForge can
+convert them to EPUB before running the readiness workflow.
+
+Audit a book without writing a new file:
+
+```bash
+page-forge readiness ./book.epub
+```
+
+Apply safe fixes and write `book-kindle-ready.epub`:
+
+```bash
+page-forge readiness ./book.epub --fix
+```
+
+Prepare a MOBI file as a Kindle-ready EPUB:
+
+```bash
+page-forge readiness ./book.mobi --fix
+```
+
+Prepare and send through the configured SMTP profile:
+
+```bash
+page-forge readiness ./book.epub --fix --send --profile personal
+```
+
+Run the doctor across a folder:
+
+```bash
+page-forge readiness-folder ./books --output ./ready --fix
+```
+
+Use `--open-send-to-kindle` to open the Amazon Send to Kindle handoff page after
+the report. PageForge does not automate Amazon login or upload; it prepares the
+file and keeps SMTP delivery available when you configure a Kindle profile.
+
 ## Command-Line Shortcuts
 
 Repair an EPUB for Send to Kindle:
@@ -181,6 +225,16 @@ Convert MOBI to EPUB:
 page-forge to-epub ./book.mobi
 ```
 
+Convert PDF to EPUB:
+
+```bash
+page-forge to-epub ./book.pdf
+```
+
+PDF conversion uses Calibre directly and does not perform OCR. Scanned PDFs may
+produce poor or empty EPUB output unless the source PDF already contains
+extractable text.
+
 Convert EPUB to MOBI:
 
 ```bash
@@ -193,7 +247,7 @@ Repair every EPUB in a folder:
 page-forge repair-folder ./books --output ./fixed
 ```
 
-Convert every MOBI in a folder to EPUB:
+Convert every MOBI or PDF in a folder to EPUB:
 
 ```bash
 page-forge convert-folder ./books --output ./converted --to epub

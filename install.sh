@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-REPO_URL="git+https://github.com/rckbrcls/page-forge.git"
+REPO_PACKAGE="page-forge @ git+https://github.com/rckbrcls/page-forge.git"
 UV_INSTALL_URL="https://astral.sh/uv/install.sh"
 
 if [ "$(uname -s)" != "Darwin" ]; then
@@ -31,21 +31,23 @@ EOF
 fi
 
 echo "Installing page-forge globally with uv on macOS..."
-uv tool install --force "${REPO_URL}"
+uv tool install --force "${REPO_PACKAGE}"
+APP_PATH="$(uv tool dir --bin)/page-forge"
 
 echo
 echo "page-forge installed."
+echo "App path: ${APP_PATH}"
 echo
 echo "Checking Calibre setup..."
-page-forge setup || true
+"${APP_PATH}" setup || true
 
 cat <<EOF
 
 Next steps:
 
-  page-forge setup --install
-  page-forge configure
-  page-forge update
-  page-forge
+  "${APP_PATH}" setup --install
+  "${APP_PATH}" configure
+  "${APP_PATH}" update
+  "${APP_PATH}"
 
 EOF

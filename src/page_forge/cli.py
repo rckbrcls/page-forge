@@ -32,9 +32,31 @@ from .errors import PageForgeError
 from .installer import calibre_explanation, install_calibre_with_homebrew
 from .kindle import send_to_kindle
 from .metadata import inspect_book, update_book_metadata
-from .models import BatchResult, BookMetadata, ConversionResult, Profile, SendResult
+from .models import (
+    BatchResult,
+    BookMetadata,
+    ConversionResult,
+    Profile,
+    ReadinessBatchResult,
+    ReadinessReport,
+    SendResult,
+)
 from .platform import platform_support_message
-from .updater import update_app, update_calibre
+from .readiness import (
+    SEND_TO_KINDLE_URL,
+    audit_book,
+    open_send_to_kindle_handoff,
+    prepare_book_for_kindle,
+    readiness_folder as readiness_folder_service,
+    send_ready_book,
+)
+from .updater import (
+    build_app_update_command,
+    build_calibre_update_command,
+    command_text,
+    update_app,
+    update_calibre,
+)
 
 APP_NAME = "page-forge"
 INSTALL_LOG_LINES = 8
@@ -120,6 +142,65 @@ def _render_send(result: SendResult) -> None:
             ("To", result.kindle_email),
         ],
     )
+
+
+def _readiness_status_label(status: str) -> str:
+    return status.replace("_", " ").title()
+
+
+def _readiness_border_style(status: str) -> str:
+    if status == "ready":
+        return "green"
+    if status == "needs_fixes":
+        return "yellow"
+    return "red"
+
+
+def _render_readiness(report: ReadinessReport) -> None:
+    rows = [
+        ("Input", str(report.input_path)),
+        ("Status", _readiness_status_label(report.status)),
+    ]
+    if report.output_path is not None:
+        rows.append(("Output", str(report.output_path)))
+    if report.converted_from is not None:
+        rows.append(("Converted from", str(report.converted_from)))
+    rows.append(("Send to Kindle", report.handoff_url or SEND_TO_KINDLE_URL))
+    _render_rows(
+        "Kindle Readiness",
+        rows,
+        style=_readiness_border_style(report.status),
+    )
+
+    if not report.issues:
+        return
+
+    table = Table(show_header=True, header_style="bold cyan", padding=(0, 1))
+    table.add_column("Severity", no_wrap=True)
+    table.add_column("Code", no_wrap=True)
+    table.add_column("Path", overflow="fold")
+    table.add_column("Message", overflow="fold")
+    for issue in report.issues[:30]:
+        table.add_row(
+            issue.severity,
+            issue.code,
+            issue.path or "",
+            issue.message,
+        )
+    console.print()
+    console.print(Panel(table, title="Readiness issues", border_style="cyan"))
+
+
+def _render_readiness_batch(result: ReadinessBatchResult) -> None:
+    rows = [
+        ("Ready", str(result.ready_count)),
+        ("Needs fixes", str(result.needs_fixes_count)),
+        ("Blocked", str(result.blocked_count)),
+        ("Skipped", str(len(result.skipped))),
+    ]
+    for report in result.reports[:10]:
+        rows.append((report.input_path.name, _readiness_status_label(report.status)))
+    _render_rows("Readiness batch", rows)
 
 
 def _install_panel(
@@ -369,11 +450,9 @@ def update(
 
     lines: deque[str] = deque(maxlen=INSTALL_LOG_LINES)
     started_at = time.monotonic()
-    first_command = (
-        "brew upgrade --cask calibre"
-        if calibre_only
-        else "uv tool install --force git+https://github.com/rckbrcls/page-forge.git"
-    )
+    app_update_command = command_text(build_app_update_command("uv"))
+    calibre_update_command = command_text(build_calibre_update_command("brew"))
+    first_command = calibre_update_command if calibre_only else app_update_command
     completed_steps: list[str] = []
 
     with Live(
@@ -392,7 +471,7 @@ def update(
             if not calibre_only:
                 _run_live_update_step(
                     title="Updating page-forge",
-                    command="uv tool install --force git+https://github.com/rckbrcls/page-forge.git",
+                    command=app_update_command,
                     started_at=started_at,
                     lines=lines,
                     live=live,
@@ -403,7 +482,7 @@ def update(
             if include_calibre or calibre_only:
                 _run_live_update_step(
                     title="Updating Calibre",
-                    command="brew upgrade --cask calibre",
+                    command=calibre_update_command,
                     started_at=started_at,
                     lines=lines,
                     live=live,
@@ -476,9 +555,121 @@ def configure(
     )
 
 
+@app.command("readiness")
+def readiness_command(
+    source: Annotated[Path, typer.Argument(help="Path to the EPUB or MOBI file.")],
+    fix: Annotated[
+        bool,
+        typer.Option("--fix", help="Apply safe fixes and write a Kindle-ready EPUB."),
+    ] = False,
+    send: Annotated[
+        bool,
+        typer.Option("--send", help="Send the ready EPUB through the configured Kindle profile."),
+    ] = False,
+    profile: Annotated[str | None, typer.Option("--profile", "-p")] = None,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", "-o", help="Where to write the Kindle-ready EPUB."),
+    ] = None,
+    force: Annotated[
+        bool,
+        typer.Option("--force", "-f", help="Overwrite the output file if it exists."),
+    ] = False,
+    open_send_to_kindle: Annotated[
+        bool,
+        typer.Option(
+            "--open-send-to-kindle",
+            help="Open the Send to Kindle handoff page after the report.",
+        ),
+    ] = False,
+) -> None:
+    """Audit and optionally prepare an ebook for Kindle delivery."""
+    if output is not None and not fix:
+        _render_error("Readiness failed", ValueError("--output requires --fix."))
+        raise typer.Exit(code=1)
+
+    try:
+        if fix:
+            report = _run_with_progress(
+                "Preparing for Kindle",
+                lambda update: prepare_book_for_kindle(
+                    source,
+                    output=output,
+                    force=force,
+                    on_progress=update,
+                ),
+            )
+        else:
+            report = audit_book(source)
+
+        _render_readiness(report)
+        if send:
+            send_result = _run_with_progress(
+                "Sending to Kindle",
+                lambda _update: send_ready_book(report, profile_name=profile),
+            )
+            _render_send(send_result)
+        if open_send_to_kindle:
+            open_send_to_kindle_handoff()
+            _render_rows(
+                "Send to Kindle handoff",
+                [("URL", report.handoff_url or SEND_TO_KINDLE_URL)],
+            )
+    except PageForgeError as error:
+        _render_error("Readiness failed", error)
+        raise typer.Exit(code=1) from error
+
+
+@app.command("readiness-folder")
+def readiness_folder_command(
+    folder: Annotated[Path, typer.Argument(help="Folder with EPUB or MOBI files.")],
+    output: Annotated[
+        Path,
+        typer.Option("--output", "-o", help="Where to write Kindle-ready EPUB files."),
+    ],
+    fix: Annotated[
+        bool,
+        typer.Option("--fix", help="Apply safe fixes and write Kindle-ready EPUB files."),
+    ] = False,
+    force: Annotated[
+        bool,
+        typer.Option("--force", "-f", help="Overwrite output files if they exist."),
+    ] = False,
+    open_send_to_kindle: Annotated[
+        bool,
+        typer.Option(
+            "--open-send-to-kindle",
+            help="Open the Send to Kindle handoff page after the report.",
+        ),
+    ] = False,
+) -> None:
+    """Audit and optionally prepare a folder of ebooks for Kindle delivery."""
+    try:
+        result = _run_with_progress(
+            "Running Readiness Doctor",
+            lambda update: readiness_folder_service(
+                folder,
+                output_dir=output,
+                fix=fix,
+                force=force,
+                on_progress=update,
+            ),
+        )
+        _render_readiness_batch(result)
+        if open_send_to_kindle:
+            open_send_to_kindle_handoff()
+            _render_rows("Send to Kindle handoff", [("URL", SEND_TO_KINDLE_URL)])
+    except PageForgeError as error:
+        _render_error("Readiness folder failed", error)
+        raise typer.Exit(code=1) from error
+
+
 @app.command("to-epub")
 def to_epub(
-    source: Annotated[Path, typer.Argument(help="Path to the MOBI file to convert.")],
+    source: Annotated[
+        Path,
+        typer.Argument(help="Path to the MOBI or PDF file to convert."),
+    ],
     output: Annotated[
         Path | None,
         typer.Option("--output", "-o", help="Where to write the EPUB file."),
@@ -488,10 +679,10 @@ def to_epub(
         typer.Option("--force", "-f", help="Overwrite the output file if it exists."),
     ] = False,
 ) -> None:
-    """Convert a MOBI file to EPUB."""
+    """Convert a MOBI or PDF file to EPUB."""
     try:
         result = _run_with_progress(
-            "Converting MOBI to EPUB",
+            "Converting MOBI or PDF to EPUB",
             lambda update: convert_book(
                 source,
                 target_format="epub",

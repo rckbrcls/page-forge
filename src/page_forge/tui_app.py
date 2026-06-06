@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import shlex
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -34,11 +36,18 @@ from .conversion import RepairMode, convert_book, convert_folder, repair_epub, r
 from .errors import PageForgeError
 from .kindle import send_to_kindle
 from .metadata import inspect_book, update_book_metadata
-from .models import Profile
+from .models import Profile, ReadinessReport
+from .readiness import (
+    audit_book,
+    open_send_to_kindle_handoff,
+    prepare_book_for_kindle,
+    send_ready_book,
+)
 from .updater import update_app, update_calibre
 
 PathPickerMode = Literal["file", "directory", "save_file"]
 PathPickerConfig = tuple[str, PathPickerMode, str]
+APP_COMMAND = "page-forge"
 
 
 PATH_PICKER_BUTTONS: dict[str, PathPickerConfig] = {
@@ -46,6 +55,12 @@ PATH_PICKER_BUTTONS: dict[str, PathPickerConfig] = {
     "convert-output-browse": ("convert-output", "save_file", "Select output file"),
     "batch-source-browse": ("batch-source", "directory", "Select input folder"),
     "batch-output-browse": ("batch-output", "directory", "Select output folder"),
+    "readiness-source-browse": ("readiness-source", "file", "Select input file"),
+    "readiness-output-dir-browse": (
+        "readiness-output-dir",
+        "directory",
+        "Select output folder",
+    ),
     "send-source-browse": ("send-source", "file", "Select input file"),
     "metadata-source-browse": ("metadata-source", "file", "Select input file"),
     "settings-output-dir-browse": (
@@ -60,6 +75,12 @@ FINDER_PICKER_BUTTONS: dict[str, PathPickerConfig] = {
     "convert-output-finder": ("convert-output", "save_file", "Select output file"),
     "batch-source-finder": ("batch-source", "directory", "Select input folder"),
     "batch-output-finder": ("batch-output", "directory", "Select output folder"),
+    "readiness-source-finder": ("readiness-source", "file", "Select input file"),
+    "readiness-output-dir-finder": (
+        "readiness-output-dir",
+        "directory",
+        "Select output folder",
+    ),
     "send-source-finder": ("send-source", "file", "Select input file"),
     "metadata-source-finder": ("metadata-source", "file", "Select input file"),
     "settings-output-dir-finder": (
@@ -96,6 +117,15 @@ def _initial_save_filename(path: Path | None) -> str:
     if expanded.exists() and expanded.is_dir():
         return ""
     return expanded.name
+
+
+def _app_command_path() -> str:
+    return shutil.which(APP_COMMAND) or sys.argv[0]
+
+
+def _schedule_app_relaunch(command_path: str) -> None:
+    command = f"sleep 0.2; exec {shlex.quote(command_path)}"
+    subprocess.Popen(["/bin/sh", "-c", command])
 
 
 def choose_path_with_finder(
@@ -333,6 +363,13 @@ class PageForgeApp(App[None]):
         overflow: auto;
     }
 
+    #readiness-output {
+        margin-top: 1;
+        padding: 1 2;
+        border: solid $accent;
+        height: auto;
+    }
+
     PathPickerScreen {
         align: center middle;
     }
@@ -387,13 +424,43 @@ class PageForgeApp(App[None]):
                         yield Button("Update Calibre", id="update-calibre")
                         yield Button("Open Logs", id="open-logs")
 
+            with TabPane("Readiness", id="readiness"):
+                with Vertical(classes="form"):
+                    yield Label("Input file")
+                    with Horizontal(classes="path-row"):
+                        yield Input(
+                            placeholder="/path/to/book.epub or .mobi",
+                            id="readiness-source",
+                        )
+                        yield Button("Browse", id="readiness-source-browse")
+                        yield Button("Finder", id="readiness-source-finder")
+                    yield Label("Output folder (optional)")
+                    with Horizontal(classes="path-row"):
+                        yield Input(
+                            placeholder="/path/to/ready-books",
+                            id="readiness-output-dir",
+                        )
+                        yield Button("Browse", id="readiness-output-dir-browse")
+                        yield Button("Finder", id="readiness-output-dir-finder")
+                    yield Label("Profile")
+                    yield Input(value="default", id="readiness-profile")
+                    yield Checkbox("Apply Safe Fixes", id="readiness-fix")
+                    yield Checkbox("Overwrite existing output", id="readiness-force")
+                    yield Checkbox("Send after fixing", id="readiness-send")
+                    yield Checkbox("Open Send to Kindle", id="readiness-open-handoff")
+                    with Horizontal(classes="actions"):
+                        yield Button("Run Doctor", id="run-readiness", variant="primary")
+                        yield Button("Prepare for Kindle", id="prepare-readiness")
+                        yield Button("Open Send to Kindle", id="open-send-to-kindle")
+                    yield Static("No readiness report yet.", id="readiness-output")
+
             with TabPane("Convert", id="convert"):
                 with Vertical(classes="form"):
                     yield Label("Operation")
                     yield Select(
                         [
                             ("Repair EPUB", "repair"),
-                            ("MOBI to EPUB", "to-epub"),
+                            ("MOBI/PDF to EPUB", "to-epub"),
                             ("EPUB to MOBI", "to-mobi"),
                         ],
                         id="convert-operation",
@@ -410,7 +477,10 @@ class PageForgeApp(App[None]):
                     )
                     yield Label("Input file")
                     with Horizontal(classes="path-row"):
-                        yield Input(placeholder="/path/to/book.epub", id="convert-source")
+                        yield Input(
+                            placeholder="/path/to/book.epub, .mobi, or .pdf",
+                            id="convert-source",
+                        )
                         yield Button("Browse", id="convert-source-browse")
                         yield Button("Finder", id="convert-source-finder")
                     yield Label("Output file (optional)")
@@ -428,7 +498,7 @@ class PageForgeApp(App[None]):
                     yield Select(
                         [
                             ("Repair EPUB files", "repair"),
-                            ("MOBI files to EPUB", "to-epub"),
+                            ("MOBI/PDF files to EPUB", "to-epub"),
                             ("EPUB files to MOBI", "to-mobi"),
                         ],
                         id="batch-operation",
@@ -626,6 +696,12 @@ class PageForgeApp(App[None]):
                 self.start_app_update()
             elif button_id == "update-calibre":
                 self.start_calibre_update()
+            elif button_id == "run-readiness":
+                self.run_readiness(force_fix=False)
+            elif button_id == "prepare-readiness":
+                self.run_readiness(force_fix=True)
+            elif button_id == "open-send-to-kindle":
+                self.open_send_to_kindle()
             elif button_id == "run-convert":
                 self.run_convert()
             elif button_id == "run-batch":
@@ -702,10 +778,79 @@ class PageForgeApp(App[None]):
             return
         self.set_path_input(widget_id, selected)
 
+    def readiness_report_text(self, report: ReadinessReport) -> str:
+        lines = [
+            f"Status: {report.status.replace('_', ' ').title()}",
+            f"Input: {report.input_path}",
+        ]
+        if report.output_path is not None:
+            lines.append(f"Output: {report.output_path}")
+        if report.converted_from is not None:
+            lines.append(f"Converted from: {report.converted_from}")
+        lines.append(f"Send to Kindle: {report.handoff_url}")
+        if not report.issues:
+            lines.append("Issues: none")
+            return "\n".join(lines)
+
+        lines.append("Issues:")
+        for issue in report.issues[:12]:
+            location = f" [{issue.path}]" if issue.path else ""
+            lines.append(
+                f"- {issue.severity}: {issue.code}{location} - {issue.message}"
+            )
+        if len(report.issues) > 12:
+            lines.append(f"- {len(report.issues) - 12} more issue(s)")
+        return "\n".join(lines)
+
+    def update_readiness_output(self, report: ReadinessReport) -> None:
+        self.query_one("#readiness-output", Static).update(
+            self.readiness_report_text(report)
+        )
+
+    def run_readiness(self, *, force_fix: bool) -> None:
+        source = self.read_path("#readiness-source", "Input file")
+        output_dir_value = self.query_one("#readiness-output-dir", Input).value.strip()
+        output_dir = Path(output_dir_value).expanduser() if output_dir_value else None
+        profile = self.query_one("#readiness-profile", Input).value or "default"
+        should_fix = force_fix or self.query_one("#readiness-fix", Checkbox).value
+        force = self.query_one("#readiness-force", Checkbox).value
+
+        if should_fix:
+            report = prepare_book_for_kindle(
+                source,
+                output_dir=output_dir,
+                force=force,
+            )
+        else:
+            report = audit_book(source)
+        self.update_readiness_output(report)
+        self.write_log(f"Readiness: {report.status} - {report.input_path.name}")
+
+        if self.query_one("#readiness-send", Checkbox).value:
+            result = send_ready_book(report, profile_name=profile)
+            self.write_log(f"Sent to Kindle: {result.input_path} -> {result.kindle_email}")
+
+        if self.query_one("#readiness-open-handoff", Checkbox).value:
+            self.open_send_to_kindle()
+
+    def open_send_to_kindle(self) -> None:
+        open_send_to_kindle_handoff()
+        self.write_log("Opened Send to Kindle handoff.")
+
     def start_app_update(self) -> None:
         self.query_one(TabbedContent).active = "logs"
         self.write_log("Starting page-forge update.")
         self.run_worker(self.run_app_update_worker, thread=True)
+
+    def relaunch_after_update(self) -> None:
+        command_path = _app_command_path()
+        self.write_log(f"Reopening page-forge from: {command_path}")
+        try:
+            _schedule_app_relaunch(command_path)
+        except OSError as error:
+            self.write_log(f"Relaunch error: {error}")
+            return
+        self.exit()
 
     def start_calibre_update(self) -> None:
         self.query_one(TabbedContent).active = "logs"
@@ -716,6 +861,7 @@ class PageForgeApp(App[None]):
         try:
             update_app(on_output=lambda line: self.call_from_thread(self.write_log, line))
             self.call_from_thread(self.write_log, "page-forge update finished.")
+            self.call_from_thread(self.relaunch_after_update)
         except PageForgeError as error:
             self.call_from_thread(self.write_log, f"Update error: {error}")
 

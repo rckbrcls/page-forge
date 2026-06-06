@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shlex
 import shutil
 import subprocess
 from typing import Callable
@@ -8,7 +9,7 @@ from .errors import DependencyError
 from .installer import homebrew_path
 from .platform import platform_support_message
 
-REPO_PACKAGE = "git+https://github.com/rckbrcls/page-forge.git"
+REPO_PACKAGE = "page-forge @ git+https://github.com/rckbrcls/page-forge.git"
 UV_INSTALL_COMMAND = "curl -LsSf https://astral.sh/uv/install.sh | sh"
 
 UpdateOutputCallback = Callable[[str], None]
@@ -27,7 +28,7 @@ def build_calibre_update_command(brew_executable: str) -> list[str]:
 
 
 def command_text(command: list[str]) -> str:
-    return " ".join(command)
+    return shlex.join(command)
 
 
 def _run_streaming_command(

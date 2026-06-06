@@ -3,7 +3,14 @@ from __future__ import annotations
 import pytest
 
 from page_forge import conversion
-from page_forge.conversion import default_output_path, repair_folder, repair_epub, require_suffix
+from page_forge.conversion import (
+    convert_book,
+    convert_folder,
+    default_output_path,
+    repair_folder,
+    repair_epub,
+    require_suffix,
+)
 from page_forge.errors import ConversionError
 from page_forge.models import ConversionResult
 
@@ -23,6 +30,83 @@ def test_require_suffix_accepts_matching_suffix(tmp_path):
 def test_require_suffix_rejects_wrong_suffix(tmp_path):
     with pytest.raises(ConversionError):
         require_suffix(tmp_path / "book.pdf", ".epub")
+
+
+def test_convert_book_accepts_pdf_to_epub(tmp_path, monkeypatch):
+    source = tmp_path / "book.pdf"
+    source.write_bytes(b"pdf")
+    calls: list[tuple[str, str]] = []
+
+    def fake_convert(input_path, output_path):
+        calls.append((input_path.name, output_path.name))
+        output_path.write_bytes(b"epub")
+
+    monkeypatch.setattr(conversion, "run_ebook_convert", fake_convert)
+
+    result = convert_book(source, target_format="epub")
+
+    assert calls == [("book.pdf", "book.epub")]
+    assert result.output_path == (tmp_path / "book.epub").resolve()
+    assert result.output_path.read_bytes() == b"epub"
+
+
+def test_convert_book_accepts_uppercase_pdf_suffix(tmp_path, monkeypatch):
+    source = tmp_path / "Book.PDF"
+    source.write_bytes(b"pdf")
+
+    def fake_convert(input_path, output_path):
+        output_path.write_bytes(b"epub")
+
+    monkeypatch.setattr(conversion, "run_ebook_convert", fake_convert)
+
+    result = convert_book(source, target_format="epub")
+
+    assert result.output_path == (tmp_path / "Book.epub").resolve()
+
+
+def test_convert_book_rejects_unsupported_source_for_epub(tmp_path):
+    source = tmp_path / "notes.txt"
+    source.write_text("notes")
+
+    with pytest.raises(ConversionError, match="MOBI.*PDF"):
+        convert_book(source, target_format="epub")
+
+
+def test_convert_book_to_mobi_still_requires_epub(tmp_path):
+    source = tmp_path / "book.pdf"
+    source.write_bytes(b"pdf")
+
+    with pytest.raises(ConversionError, match="EPUB"):
+        convert_book(source, target_format="mobi")
+
+
+def test_convert_folder_to_epub_accepts_mobi_and_pdf(tmp_path, monkeypatch):
+    folder = tmp_path / "books"
+    folder.mkdir()
+    (folder / "book.mobi").write_bytes(b"mobi")
+    (folder / "manual.pdf").write_bytes(b"pdf")
+    (folder / "notes.txt").write_text("notes")
+    (folder / "source.epub").write_bytes(b"epub")
+    output_dir = tmp_path / "converted"
+    calls: list[str] = []
+
+    def fake_convert_book(source_path, *, target_format, output_dir, force, on_progress):
+        calls.append(source_path.name)
+        return ConversionResult(
+            input_path=source_path,
+            output_path=output_dir / f"{source_path.stem}.{target_format}",
+        )
+
+    monkeypatch.setattr(conversion, "convert_book", fake_convert_book)
+
+    result = convert_folder(folder, output_dir=output_dir, target_format="epub")
+
+    assert calls == ["book.mobi", "manual.pdf"]
+    assert [item.output_path.name for item in result.results] == [
+        "book.epub",
+        "manual.epub",
+    ]
+    assert [item.name for item in result.skipped] == ["notes.txt", "source.epub"]
 
 
 def test_repair_epub_safe_invokes_structural_repair_then_polish(tmp_path, monkeypatch):

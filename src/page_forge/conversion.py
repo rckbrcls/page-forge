@@ -9,6 +9,7 @@ from .calibre import (
     APP_NAME,
     EPUB_SUFFIX,
     MOBI_SUFFIX,
+    PDF_SUFFIX,
     require_ebook_convert,
     require_ebook_polish,
     run_calibre_command,
@@ -46,6 +47,13 @@ def require_suffix(path: Path, expected_suffix: str) -> None:
         raise ConversionError(
             f"Expected a {expected_suffix.upper()} file, got: {path.name}"
         )
+
+
+def require_suffixes(path: Path, expected_suffixes: tuple[str, ...]) -> None:
+    if path.suffix.lower() in expected_suffixes:
+        return
+    expected = " or ".join(suffix.upper() for suffix in expected_suffixes)
+    raise ConversionError(f"Expected a {expected} file, got: {path.name}")
 
 
 def default_output_path(source: Path, suffix: str, marker: str | None = None) -> Path:
@@ -90,7 +98,7 @@ def convert_book(
     suffix = f".{target_format}"
 
     if target_format == "epub":
-        require_suffix(input_path, MOBI_SUFFIX)
+        require_suffixes(input_path, (MOBI_SUFFIX, PDF_SUFFIX))
     elif target_format == "mobi":
         require_suffix(input_path, EPUB_SUFFIX)
     else:
@@ -225,12 +233,14 @@ def convert_folder(
     input_dir = require_existing_directory(folder)
     destination = output_dir.expanduser().resolve()
     destination.mkdir(parents=True, exist_ok=True)
-    expected_suffix = MOBI_SUFFIX if target_format == "epub" else EPUB_SUFFIX
+    expected_suffixes = (
+        (MOBI_SUFFIX, PDF_SUFFIX) if target_format == "epub" else (EPUB_SUFFIX,)
+    )
 
     results: list[ConversionResult] = []
     skipped: list[Path] = []
     for source in sorted(input_dir.iterdir()):
-        if not source.is_file() or source.suffix.lower() != expected_suffix:
+        if not source.is_file() or source.suffix.lower() not in expected_suffixes:
             skipped.append(source)
             continue
         results.append(
