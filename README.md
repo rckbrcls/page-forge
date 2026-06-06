@@ -108,7 +108,6 @@ page-forge tui
 
 The TUI includes:
 
-- Dashboard
 - Readiness
 - Convert
 - Batch
@@ -117,8 +116,9 @@ The TUI includes:
 - Settings
 - Logs
 
-The Dashboard is the main control center for Calibre status, Kindle profile
-status, update actions, and recent logs.
+The TUI opens on Readiness because Kindle preparation is the main workflow.
+Settings contains profile configuration, Calibre status, Kindle profile status,
+update actions, and log access.
 
 ## Setup
 

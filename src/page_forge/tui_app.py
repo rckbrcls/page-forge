@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import shlex
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -9,7 +7,7 @@ from typing import Literal, cast
 
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import Grid, Horizontal, Vertical
+from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import (
     Button,
@@ -47,9 +45,6 @@ from .updater import update_app, update_calibre
 
 PathPickerMode = Literal["file", "directory", "save_file"]
 PathPickerConfig = tuple[str, PathPickerMode, str]
-APP_COMMAND = "page-forge"
-
-
 PATH_PICKER_BUTTONS: dict[str, PathPickerConfig] = {
     "convert-source-browse": ("convert-source", "file", "Select input file"),
     "convert-output-browse": ("convert-output", "save_file", "Select output file"),
@@ -117,15 +112,6 @@ def _initial_save_filename(path: Path | None) -> str:
     if expanded.exists() and expanded.is_dir():
         return ""
     return expanded.name
-
-
-def _app_command_path() -> str:
-    return shutil.which(APP_COMMAND) or sys.argv[0]
-
-
-def _schedule_app_relaunch(command_path: str) -> None:
-    command = f"sleep 0.2; exec {shlex.quote(command_path)}"
-    subprocess.Popen(["/bin/sh", "-c", command])
 
 
 def choose_path_with_finder(
@@ -313,14 +299,9 @@ class PageForgeApp(App[None]):
         background: $surface;
     }
 
-    #dashboard-grid {
-        grid-size: 2 3;
-        grid-gutter: 1 2;
-        margin: 1;
-    }
-
     .panel {
         border: solid $primary;
+        margin: 1;
         padding: 1 2;
         height: auto;
     }
@@ -333,6 +314,10 @@ class PageForgeApp(App[None]):
 
     .form Input, .form Select {
         margin-bottom: 1;
+    }
+
+    #settings-layout {
+        height: auto;
     }
 
     .path-row {
@@ -407,23 +392,7 @@ class PageForgeApp(App[None]):
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
-        with TabbedContent(initial="dashboard"):
-            with TabPane("Dashboard", id="dashboard"):
-                with Grid(id="dashboard-grid"):
-                    yield Static("", id="calibre-status", classes="panel")
-                    yield Static("", id="kindle-status", classes="panel")
-                    yield Static(
-                        "Recent logs\nNo activity yet.",
-                        id="recent-logs",
-                        classes="panel",
-                    )
-                    yield Static("Quick actions", classes="panel")
-                    with Vertical(classes="panel"):
-                        yield Button("Refresh Status", id="refresh-status")
-                        yield Button("Update App", id="update-app")
-                        yield Button("Update Calibre", id="update-calibre")
-                        yield Button("Open Logs", id="open-logs")
-
+        with TabbedContent(initial="readiness"):
             with TabPane("Readiness", id="readiness"):
                 with Vertical(classes="form"):
                     yield Label("Input file")
@@ -566,28 +535,42 @@ class PageForgeApp(App[None]):
                         yield Button("Update Metadata", id="run-metadata")
 
             with TabPane("Settings", id="settings"):
-                with Vertical(classes="form"):
-                    yield Label("Profile")
-                    yield Input(value="default", id="settings-profile")
-                    yield Label("Sender email")
-                    yield Input(placeholder="you@example.com", id="settings-sender")
-                    yield Label("Kindle email")
-                    yield Input(placeholder="name@kindle.com", id="settings-kindle")
-                    yield Label("SMTP host")
-                    yield Input(value="smtp.gmail.com", id="settings-smtp-host")
-                    yield Label("SMTP port")
-                    yield Input(value="587", id="settings-smtp-port")
-                    yield Label("SMTP username")
-                    yield Input(placeholder="Defaults to sender email", id="settings-smtp-user")
-                    yield Label("SMTP password or app token")
-                    yield Input(password=True, id="settings-password")
-                    yield Label("Default output folder")
-                    with Horizontal(classes="path-row"):
-                        yield Input(placeholder="/path/to/books", id="settings-output-dir")
-                        yield Button("Browse", id="settings-output-dir-browse")
-                        yield Button("Finder", id="settings-output-dir-finder")
-                    with Horizontal(classes="actions"):
-                        yield Button("Save Profile", id="save-profile", variant="primary")
+                with Vertical(id="settings-layout"):
+                    with Vertical(classes="form"):
+                        yield Label("Profile")
+                        yield Input(value="default", id="settings-profile")
+                        yield Label("Sender email")
+                        yield Input(placeholder="you@example.com", id="settings-sender")
+                        yield Label("Kindle email")
+                        yield Input(placeholder="name@kindle.com", id="settings-kindle")
+                        yield Label("SMTP host")
+                        yield Input(value="smtp.gmail.com", id="settings-smtp-host")
+                        yield Label("SMTP port")
+                        yield Input(value="587", id="settings-smtp-port")
+                        yield Label("SMTP username")
+                        yield Input(
+                            placeholder="Defaults to sender email",
+                            id="settings-smtp-user",
+                        )
+                        yield Label("SMTP password or app token")
+                        yield Input(password=True, id="settings-password")
+                        yield Label("Default output folder")
+                        with Horizontal(classes="path-row"):
+                            yield Input(placeholder="/path/to/books", id="settings-output-dir")
+                            yield Button("Browse", id="settings-output-dir-browse")
+                            yield Button("Finder", id="settings-output-dir-finder")
+                        with Horizontal(classes="actions"):
+                            yield Button("Save Profile", id="save-profile", variant="primary")
+                    with Vertical(classes="panel"):
+                        yield Label("System status")
+                        yield Static("", id="calibre-status")
+                        yield Static("", id="kindle-status")
+                    with Vertical(classes="panel"):
+                        yield Label("Maintenance")
+                        yield Button("Refresh Status", id="refresh-status")
+                        yield Button("Update App", id="update-app")
+                        yield Button("Update Calibre", id="update-calibre")
+                        yield Button("Open Logs", id="open-logs")
 
             with TabPane("Logs", id="logs"):
                 yield Static("No activity yet.", id="log-output")
@@ -595,14 +578,14 @@ class PageForgeApp(App[None]):
 
     def on_mount(self) -> None:
         self.log_lines = []
-        self.refresh_dashboard()
+        self.refresh_settings_status()
         self.load_settings()
 
     def action_refresh(self) -> None:
-        self.refresh_dashboard()
+        self.refresh_settings_status()
         self.write_log("Status refreshed.")
 
-    def refresh_dashboard(self) -> None:
+    def refresh_settings_status(self) -> None:
         try:
             status = get_calibre_status()
             if status.is_ready:
@@ -663,8 +646,6 @@ class PageForgeApp(App[None]):
             self.log_lines = []
         self.log_lines.append(message)
         self.query_one("#log-output", Static).update("\n".join(self.log_lines[-100:]))
-        recent = "\n".join(self.log_lines[-5:])
-        self.query_one("#recent-logs", Static).update(f"Recent logs\n{recent}")
 
     def read_path(self, widget_id: str, label: str) -> Path:
         value = self.query_one(widget_id, Input).value.strip()
@@ -842,16 +823,6 @@ class PageForgeApp(App[None]):
         self.write_log("Starting page-forge update.")
         self.run_worker(self.run_app_update_worker, thread=True)
 
-    def relaunch_after_update(self) -> None:
-        command_path = _app_command_path()
-        self.write_log(f"Reopening page-forge from: {command_path}")
-        try:
-            _schedule_app_relaunch(command_path)
-        except OSError as error:
-            self.write_log(f"Relaunch error: {error}")
-            return
-        self.exit()
-
     def start_calibre_update(self) -> None:
         self.query_one(TabbedContent).active = "logs"
         self.write_log("Starting Calibre update.")
@@ -860,8 +831,10 @@ class PageForgeApp(App[None]):
     def run_app_update_worker(self) -> None:
         try:
             update_app(on_output=lambda line: self.call_from_thread(self.write_log, line))
-            self.call_from_thread(self.write_log, "page-forge update finished.")
-            self.call_from_thread(self.relaunch_after_update)
+            self.call_from_thread(
+                self.write_log,
+                "Update finished. Quit and reopen page-forge to use the updated version.",
+            )
         except PageForgeError as error:
             self.call_from_thread(self.write_log, f"Update error: {error}")
 
@@ -871,7 +844,7 @@ class PageForgeApp(App[None]):
                 on_output=lambda line: self.call_from_thread(self.write_log, line)
             )
             self.call_from_thread(self.write_log, "Calibre update finished.")
-            self.call_from_thread(self.refresh_dashboard)
+            self.call_from_thread(self.refresh_settings_status)
         except PageForgeError as error:
             self.call_from_thread(self.write_log, f"Update error: {error}")
 
@@ -889,7 +862,7 @@ class PageForgeApp(App[None]):
         else:
             result = convert_book(source, target_format="mobi", output=output, force=force)
         self.write_log(f"Converted: {result.output_path}")
-        self.refresh_dashboard()
+        self.refresh_settings_status()
 
     def run_batch(self) -> None:
         operation = str(self.query_one("#batch-operation", Select).value)
@@ -960,7 +933,7 @@ class PageForgeApp(App[None]):
             set_profile_password(name, password)
             self.query_one("#settings-password", Input).value = ""
         self.write_log(f"Profile saved: {name}")
-        self.refresh_dashboard()
+        self.refresh_settings_status()
 
 
 def run_tui() -> None:
