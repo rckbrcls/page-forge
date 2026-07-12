@@ -32,11 +32,35 @@ fi
 
 echo "Installing page-forge globally with uv on macOS..."
 uv tool install --force "${REPO_PACKAGE}"
-APP_PATH="$(uv tool dir --bin)/page-forge"
+TOOL_BIN_DIR="$(uv tool dir --bin)"
+APP_PATH="${TOOL_BIN_DIR}/page-forge"
 
 echo
 echo "page-forge installed."
 echo "App path: ${APP_PATH}"
+
+case ":${PATH}:" in
+  *":${TOOL_BIN_DIR}:"*)
+    echo "Command available: page-forge"
+    ;;
+  *)
+    cat <<EOF
+
+The page-forge command was installed, but this shell cannot find it yet.
+
+Add uv's tool binary directory to your PATH:
+
+  echo 'export PATH="${TOOL_BIN_DIR}:\$PATH"' >> ~/.zshrc
+  source ~/.zshrc
+
+Until then, run page-forge with the full path:
+
+  "${APP_PATH}"
+
+EOF
+    ;;
+esac
+
 echo
 echo "Checking Calibre setup..."
 "${APP_PATH}" setup || true
@@ -49,5 +73,9 @@ Next steps:
   "${APP_PATH}" configure
   "${APP_PATH}" update
   "${APP_PATH}"
+
+If your PATH is configured, you can also run:
+
+  page-forge
 
 EOF

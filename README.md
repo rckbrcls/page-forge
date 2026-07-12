@@ -78,12 +78,22 @@ curl -fsSL https://raw.githubusercontent.com/rckbrcls/page-forge/main/install.sh
 ```
 
 The installer does not install `uv` for you. If `uv` is missing, it prints the
-official install command and exits.
+official install command and exits. If the installed `page-forge` command is not
+on your shell `PATH`, the installer prints the exact `PATH` command to add to
+your shell profile.
 
 You can also install directly with `uv`:
 
 ```bash
 uv tool install --force "page-forge @ git+https://github.com/rckbrcls/page-forge.git"
+```
+
+If `page-forge` is not found after direct installation, add uv's tool binary
+directory to your shell `PATH`:
+
+```bash
+echo "export PATH=\"$(uv tool dir --bin):\$PATH\"" >> ~/.zshrc
+source ~/.zshrc
 ```
 
 For local editable development:
