@@ -7,7 +7,7 @@ from typing import Literal, cast
 
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import (
     Button,
@@ -299,6 +299,18 @@ class PageForgeApp(App[None]):
         background: $surface;
     }
 
+    TabbedContent {
+        height: 1fr;
+    }
+
+    TabPane {
+        height: 1fr;
+    }
+
+    .tab-scroll {
+        height: 1fr;
+    }
+
     .panel {
         border: solid $primary;
         margin: 1;
@@ -394,183 +406,189 @@ class PageForgeApp(App[None]):
         yield Header(show_clock=True)
         with TabbedContent(initial="readiness"):
             with TabPane("Readiness", id="readiness"):
-                with Vertical(classes="form"):
-                    yield Label("Input file")
-                    with Horizontal(classes="path-row"):
-                        yield Input(
-                            placeholder="/path/to/book.epub or .mobi",
-                            id="readiness-source",
-                        )
-                        yield Button("Browse", id="readiness-source-browse")
-                        yield Button("Finder", id="readiness-source-finder")
-                    yield Label("Output folder (optional)")
-                    with Horizontal(classes="path-row"):
-                        yield Input(
-                            placeholder="/path/to/ready-books",
-                            id="readiness-output-dir",
-                        )
-                        yield Button("Browse", id="readiness-output-dir-browse")
-                        yield Button("Finder", id="readiness-output-dir-finder")
-                    yield Label("Profile")
-                    yield Input(value="default", id="readiness-profile")
-                    yield Checkbox("Apply Safe Fixes", id="readiness-fix")
-                    yield Checkbox("Overwrite existing output", id="readiness-force")
-                    yield Checkbox("Send after fixing", id="readiness-send")
-                    yield Checkbox("Open Send to Kindle", id="readiness-open-handoff")
-                    with Horizontal(classes="actions"):
-                        yield Button("Run Doctor", id="run-readiness", variant="primary")
-                        yield Button("Prepare for Kindle", id="prepare-readiness")
-                        yield Button("Open Send to Kindle", id="open-send-to-kindle")
-                    yield Static("No readiness report yet.", id="readiness-output")
+                with VerticalScroll(classes="tab-scroll"):
+                    with Vertical(classes="form"):
+                        yield Label("Input file")
+                        with Horizontal(classes="path-row"):
+                            yield Input(
+                                placeholder="/path/to/book.epub or .mobi",
+                                id="readiness-source",
+                            )
+                            yield Button("Browse", id="readiness-source-browse")
+                            yield Button("Finder", id="readiness-source-finder")
+                        yield Label("Output folder (optional)")
+                        with Horizontal(classes="path-row"):
+                            yield Input(
+                                placeholder="/path/to/ready-books",
+                                id="readiness-output-dir",
+                            )
+                            yield Button("Browse", id="readiness-output-dir-browse")
+                            yield Button("Finder", id="readiness-output-dir-finder")
+                        yield Label("Profile")
+                        yield Input(value="default", id="readiness-profile")
+                        yield Checkbox("Apply Safe Fixes", id="readiness-fix")
+                        yield Checkbox("Overwrite existing output", id="readiness-force")
+                        yield Checkbox("Send after fixing", id="readiness-send")
+                        yield Checkbox("Open Send to Kindle", id="readiness-open-handoff")
+                        with Horizontal(classes="actions"):
+                            yield Button("Run Doctor", id="run-readiness", variant="primary")
+                            yield Button("Prepare for Kindle", id="prepare-readiness")
+                            yield Button("Open Send to Kindle", id="open-send-to-kindle")
+                        yield Static("No readiness report yet.", id="readiness-output")
 
             with TabPane("Convert", id="convert"):
-                with Vertical(classes="form"):
-                    yield Label("Operation")
-                    yield Select(
-                        [
-                            ("Repair EPUB", "repair"),
-                            ("MOBI/PDF to EPUB", "to-epub"),
-                            ("EPUB to MOBI", "to-mobi"),
-                        ],
-                        id="convert-operation",
-                        value="repair",
-                    )
-                    yield Label("Repair mode")
-                    yield Select(
-                        [
-                            ("Safe", "safe"),
-                            ("Aggressive", "aggressive"),
-                        ],
-                        id="convert-repair-mode",
-                        value="safe",
-                    )
-                    yield Label("Input file")
-                    with Horizontal(classes="path-row"):
-                        yield Input(
-                            placeholder="/path/to/book.epub, .mobi, or .pdf",
-                            id="convert-source",
+                with VerticalScroll(classes="tab-scroll"):
+                    with Vertical(classes="form"):
+                        yield Label("Operation")
+                        yield Select(
+                            [
+                                ("Repair EPUB", "repair"),
+                                ("MOBI/PDF to EPUB", "to-epub"),
+                                ("EPUB to MOBI", "to-mobi"),
+                            ],
+                            id="convert-operation",
+                            value="repair",
                         )
-                        yield Button("Browse", id="convert-source-browse")
-                        yield Button("Finder", id="convert-source-finder")
-                    yield Label("Output file (optional)")
-                    with Horizontal(classes="path-row"):
-                        yield Input(placeholder="/path/to/output.epub", id="convert-output")
-                        yield Button("Browse", id="convert-output-browse")
-                        yield Button("Finder", id="convert-output-finder")
-                    yield Checkbox("Overwrite existing output", id="convert-force")
-                    with Horizontal(classes="actions"):
-                        yield Button("Run Conversion", id="run-convert", variant="primary")
+                        yield Label("Repair mode")
+                        yield Select(
+                            [
+                                ("Safe", "safe"),
+                                ("Aggressive", "aggressive"),
+                            ],
+                            id="convert-repair-mode",
+                            value="safe",
+                        )
+                        yield Label("Input file")
+                        with Horizontal(classes="path-row"):
+                            yield Input(
+                                placeholder="/path/to/book.epub, .mobi, or .pdf",
+                                id="convert-source",
+                            )
+                            yield Button("Browse", id="convert-source-browse")
+                            yield Button("Finder", id="convert-source-finder")
+                        yield Label("Output file (optional)")
+                        with Horizontal(classes="path-row"):
+                            yield Input(placeholder="/path/to/output.epub", id="convert-output")
+                            yield Button("Browse", id="convert-output-browse")
+                            yield Button("Finder", id="convert-output-finder")
+                        yield Checkbox("Overwrite existing output", id="convert-force")
+                        with Horizontal(classes="actions"):
+                            yield Button("Run Conversion", id="run-convert", variant="primary")
 
             with TabPane("Batch", id="batch"):
-                with Vertical(classes="form"):
-                    yield Label("Operation")
-                    yield Select(
-                        [
-                            ("Repair EPUB files", "repair"),
-                            ("MOBI/PDF files to EPUB", "to-epub"),
-                            ("EPUB files to MOBI", "to-mobi"),
-                        ],
-                        id="batch-operation",
-                        value="repair",
-                    )
-                    yield Label("Repair mode")
-                    yield Select(
-                        [
-                            ("Safe", "safe"),
-                            ("Aggressive", "aggressive"),
-                        ],
-                        id="batch-repair-mode",
-                        value="safe",
-                    )
-                    yield Label("Input folder")
-                    with Horizontal(classes="path-row"):
-                        yield Input(placeholder="/path/to/folder", id="batch-source")
-                        yield Button("Browse", id="batch-source-browse")
-                        yield Button("Finder", id="batch-source-finder")
-                    yield Label("Output folder")
-                    with Horizontal(classes="path-row"):
-                        yield Input(placeholder="/path/to/output", id="batch-output")
-                        yield Button("Browse", id="batch-output-browse")
-                        yield Button("Finder", id="batch-output-finder")
-                    yield Checkbox("Overwrite existing outputs", id="batch-force")
-                    with Horizontal(classes="actions"):
-                        yield Button("Run Batch", id="run-batch", variant="primary")
+                with VerticalScroll(classes="tab-scroll"):
+                    with Vertical(classes="form"):
+                        yield Label("Operation")
+                        yield Select(
+                            [
+                                ("Repair EPUB files", "repair"),
+                                ("MOBI/PDF files to EPUB", "to-epub"),
+                                ("EPUB files to MOBI", "to-mobi"),
+                            ],
+                            id="batch-operation",
+                            value="repair",
+                        )
+                        yield Label("Repair mode")
+                        yield Select(
+                            [
+                                ("Safe", "safe"),
+                                ("Aggressive", "aggressive"),
+                            ],
+                            id="batch-repair-mode",
+                            value="safe",
+                        )
+                        yield Label("Input folder")
+                        with Horizontal(classes="path-row"):
+                            yield Input(placeholder="/path/to/folder", id="batch-source")
+                            yield Button("Browse", id="batch-source-browse")
+                            yield Button("Finder", id="batch-source-finder")
+                        yield Label("Output folder")
+                        with Horizontal(classes="path-row"):
+                            yield Input(placeholder="/path/to/output", id="batch-output")
+                            yield Button("Browse", id="batch-output-browse")
+                            yield Button("Finder", id="batch-output-finder")
+                        yield Checkbox("Overwrite existing outputs", id="batch-force")
+                        with Horizontal(classes="actions"):
+                            yield Button("Run Batch", id="run-batch", variant="primary")
 
             with TabPane("Send to Kindle", id="send"):
-                with Vertical(classes="form"):
-                    yield Label("Input file")
-                    with Horizontal(classes="path-row"):
-                        yield Input(placeholder="/path/to/book.epub", id="send-source")
-                        yield Button("Browse", id="send-source-browse")
-                        yield Button("Finder", id="send-source-finder")
-                    yield Label("Profile")
-                    yield Input(value="default", id="send-profile")
-                    yield Checkbox("Overwrite repaired output", id="send-force")
-                    yield Label("Repair mode")
-                    yield Select(
-                        [
-                            ("Safe", "safe"),
-                            ("Aggressive", "aggressive"),
-                        ],
-                        id="send-repair-mode",
-                        value="safe",
-                    )
-                    with Horizontal(classes="actions"):
-                        yield Button("Send", id="run-send", variant="primary")
-                        yield Button("Repair and Send", id="run-repair-send")
+                with VerticalScroll(classes="tab-scroll"):
+                    with Vertical(classes="form"):
+                        yield Label("Input file")
+                        with Horizontal(classes="path-row"):
+                            yield Input(placeholder="/path/to/book.epub", id="send-source")
+                            yield Button("Browse", id="send-source-browse")
+                            yield Button("Finder", id="send-source-finder")
+                        yield Label("Profile")
+                        yield Input(value="default", id="send-profile")
+                        yield Checkbox("Overwrite repaired output", id="send-force")
+                        yield Label("Repair mode")
+                        yield Select(
+                            [
+                                ("Safe", "safe"),
+                                ("Aggressive", "aggressive"),
+                            ],
+                            id="send-repair-mode",
+                            value="safe",
+                        )
+                        with Horizontal(classes="actions"):
+                            yield Button("Send", id="run-send", variant="primary")
+                            yield Button("Repair and Send", id="run-repair-send")
 
             with TabPane("Metadata", id="metadata"):
-                with Vertical(classes="form"):
-                    yield Label("Input file")
-                    with Horizontal(classes="path-row"):
-                        yield Input(placeholder="/path/to/book.epub", id="metadata-source")
-                        yield Button("Browse", id="metadata-source-browse")
-                        yield Button("Finder", id="metadata-source-finder")
-                    yield Label("Title")
-                    yield Input(placeholder="Book title", id="metadata-title")
-                    yield Label("Author")
-                    yield Input(placeholder="Author name", id="metadata-author")
-                    with Horizontal(classes="actions"):
-                        yield Button("Inspect", id="run-inspect", variant="primary")
-                        yield Button("Update Metadata", id="run-metadata")
+                with VerticalScroll(classes="tab-scroll"):
+                    with Vertical(classes="form"):
+                        yield Label("Input file")
+                        with Horizontal(classes="path-row"):
+                            yield Input(placeholder="/path/to/book.epub", id="metadata-source")
+                            yield Button("Browse", id="metadata-source-browse")
+                            yield Button("Finder", id="metadata-source-finder")
+                        yield Label("Title")
+                        yield Input(placeholder="Book title", id="metadata-title")
+                        yield Label("Author")
+                        yield Input(placeholder="Author name", id="metadata-author")
+                        with Horizontal(classes="actions"):
+                            yield Button("Inspect", id="run-inspect", variant="primary")
+                            yield Button("Update Metadata", id="run-metadata")
 
             with TabPane("Settings", id="settings"):
-                with Vertical(id="settings-layout"):
-                    with Vertical(classes="form"):
-                        yield Label("Profile")
-                        yield Input(value="default", id="settings-profile")
-                        yield Label("Sender email")
-                        yield Input(placeholder="you@example.com", id="settings-sender")
-                        yield Label("Kindle email")
-                        yield Input(placeholder="name@kindle.com", id="settings-kindle")
-                        yield Label("SMTP host")
-                        yield Input(value="smtp.gmail.com", id="settings-smtp-host")
-                        yield Label("SMTP port")
-                        yield Input(value="587", id="settings-smtp-port")
-                        yield Label("SMTP username")
-                        yield Input(
-                            placeholder="Defaults to sender email",
-                            id="settings-smtp-user",
-                        )
-                        yield Label("SMTP password or app token")
-                        yield Input(password=True, id="settings-password")
-                        yield Label("Default output folder")
-                        with Horizontal(classes="path-row"):
-                            yield Input(placeholder="/path/to/books", id="settings-output-dir")
-                            yield Button("Browse", id="settings-output-dir-browse")
-                            yield Button("Finder", id="settings-output-dir-finder")
-                        with Horizontal(classes="actions"):
-                            yield Button("Save Profile", id="save-profile", variant="primary")
-                    with Vertical(classes="panel"):
-                        yield Label("System status")
-                        yield Static("", id="calibre-status")
-                        yield Static("", id="kindle-status")
-                    with Vertical(classes="panel"):
-                        yield Label("Maintenance")
-                        yield Button("Refresh Status", id="refresh-status")
-                        yield Button("Update App", id="update-app")
-                        yield Button("Update Calibre", id="update-calibre")
-                        yield Button("Open Logs", id="open-logs")
+                with VerticalScroll(classes="tab-scroll"):
+                    with Vertical(id="settings-layout"):
+                        with Vertical(classes="form"):
+                            yield Label("Profile")
+                            yield Input(value="default", id="settings-profile")
+                            yield Label("Sender email")
+                            yield Input(placeholder="you@example.com", id="settings-sender")
+                            yield Label("Kindle email")
+                            yield Input(placeholder="name@kindle.com", id="settings-kindle")
+                            yield Label("SMTP host")
+                            yield Input(value="smtp.gmail.com", id="settings-smtp-host")
+                            yield Label("SMTP port")
+                            yield Input(value="587", id="settings-smtp-port")
+                            yield Label("SMTP username")
+                            yield Input(
+                                placeholder="Defaults to sender email",
+                                id="settings-smtp-user",
+                            )
+                            yield Label("SMTP password or app token")
+                            yield Input(password=True, id="settings-password")
+                            yield Label("Default output folder")
+                            with Horizontal(classes="path-row"):
+                                yield Input(placeholder="/path/to/books", id="settings-output-dir")
+                                yield Button("Browse", id="settings-output-dir-browse")
+                                yield Button("Finder", id="settings-output-dir-finder")
+                            with Horizontal(classes="actions"):
+                                yield Button("Save Profile", id="save-profile", variant="primary")
+                        with Vertical(classes="panel"):
+                            yield Label("System status")
+                            yield Static("", id="calibre-status")
+                            yield Static("", id="kindle-status")
+                        with Vertical(classes="panel"):
+                            yield Label("Maintenance")
+                            yield Button("Refresh Status", id="refresh-status")
+                            yield Button("Update App", id="update-app")
+                            yield Button("Update Calibre", id="update-calibre")
+                            yield Button("Open Logs", id="open-logs")
 
             with TabPane("Logs", id="logs"):
                 yield Static("No activity yet.", id="log-output")
