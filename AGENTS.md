@@ -21,9 +21,13 @@
 
 ## Project Context
 
-- PageForge is a macOS-only Python terminal app for ebook preparation workflows.
+- Governance source: `.specify/memory/constitution.md` (currently v1.1.0).
+- Product baseline source: `README.md`.
+- PageForge is a macOS-only ebook preparation utility.
+- Current shipped surface: Python terminal app (Textual TUI + Typer CLI).
+- Target primary surface under the constitution: lightweight native macOS desktop app (Swift/SwiftUI), preserving the README workflow contracts.
 - The console script is `page-forge = page_forge.cli:app`.
-- Main entrypoints:
+- Main entrypoints today:
   - `src/page_forge/cli.py`: Typer CLI and default TUI launch.
   - `src/page_forge/tui_app.py`: Textual TUI.
   - `src/page_forge/conversion.py`: EPUB/MOBI/PDF conversion and EPUB repair orchestration.
@@ -37,11 +41,15 @@
 - Do not frame PageForge as a Calibre replacement.
 - Treat Calibre as the underlying ebook engine.
 - PageForge should add value through a focused Kindle-ready workflow: diagnose, safely fix, prepare, optionally send, and provide Send to Kindle handoff.
+- Default experience is Readiness-first.
+- Supporting surfaces: Convert, Batch, Send to Kindle, Metadata, Settings, Logs.
 - For Kindle delivery, keep two paths clear:
   - SMTP email delivery through configured profiles.
   - Handoff to Amazon Send to Kindle web/app/USB flow.
 - Do not promise direct Amazon upload automation or Amazon login automation.
 - Do not implement DRM removal.
+- Do not promise OCR for scanned PDFs.
+- Keep the product fast, light, minimal, and visually calm.
 
 ## Implementation Conventions
 
