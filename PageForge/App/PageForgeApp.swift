@@ -13,6 +13,7 @@ struct PageForgeApp: App {
                 .preferredColorScheme(themeManager.preferredColorScheme)
                 .frame(minWidth: 980, minHeight: 640)
         }
+        .windowToolbarStyle(.unified(showsTitle: false))
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("Add Files…") {

@@ -11,31 +11,12 @@ struct MainWorkflowView: View {
     @Environment(\.openSettings) private var openSettings
     @StateObject private var viewModel = DocumentWorkflowViewModel()
     @State private var showsFileImporter = false
-    @State private var isToolbarDropTargeted = false
 
     var body: some View {
         DocumentWorkflowView(viewModel: viewModel) {
             openSettings()
         }
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showsFileImporter = true
-                } label: {
-                    Label("Add Files", systemImage: "plus")
-                        .padding(.vertical, 4)
-                        .contentShape(Rectangle())
-                }
-                .help("Add or drop EPUB, MOBI, and PDF files")
-                .accessibilityLabel("Add Files")
-                .background(
-                    isToolbarDropTargeted ? Color.accentColor.opacity(0.12) : Color.clear,
-                    in: RoundedRectangle(cornerRadius: 6)
-                )
-                .onDrop(of: [.fileURL], isTargeted: $isToolbarDropTargeted) { providers in
-                    FileURLDropResolver.resolve(providers, completion: viewModel.addFiles)
-                }
-            }
             ToolbarItem(placement: .primaryAction) {
                 SettingsLink {
                     Label("Settings", systemImage: "gearshape")
