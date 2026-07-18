@@ -22,27 +22,10 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-
-                    Text("Choose whether PageForge follows the system appearance or always uses a light or dark theme.")
-                        .font(.caption)
-                        .foregroundStyle(Color.Theme.textSecondary)
                 }
 
-                section("Calibre status") {
-                    Text(viewModel.dependencyMessage)
-                        .textSelection(.enabled)
-                    if let status = viewModel.dependencyStatus {
-                        LabeledContent("ebook-convert") {
-                            Text(status.ebookConvertPath?.path ?? "missing")
-                        }
-                        LabeledContent("ebook-meta") {
-                            Text(status.ebookMetaPath?.path ?? "missing")
-                        }
-                        LabeledContent("ebook-polish") {
-                            Text(status.ebookPolishPath?.path ?? "missing")
-                        }
-                    }
-                    Button("Refresh") { viewModel.reload() }
+                section("Calibre") {
+                    CalibreSettingsSection()
                 }
 
                 section("Profiles") {
@@ -78,24 +61,6 @@ struct SettingsView: View {
                     }
                 }
 
-                section("Updates") {
-                    Text("App update")
-                        .font(.headline)
-                    Text(viewModel.appUpdateText)
-                        .foregroundStyle(Color.Theme.textSecondary)
-                    Text("Calibre update")
-                        .font(.headline)
-                        .padding(.top, 8)
-                    Text(viewModel.calibreUpdateText)
-                        .foregroundStyle(Color.Theme.textSecondary)
-                }
-
-                section("Install guidance") {
-                    Text(viewModel.calibreInstallText)
-                        .foregroundStyle(Color.Theme.textSecondary)
-                        .textSelection(.enabled)
-                }
-
                 section("Troubleshooting") {
                     HStack {
                         Button("Refresh Logs") { viewModel.reload() }
@@ -129,7 +94,10 @@ struct SettingsView: View {
             .padding(28)
         }
         .themedScreenBackground()
-        .onAppear { viewModel.bind(appState: appState) }
+        .onAppear {
+            viewModel.bind(appState: appState)
+            appState.refreshCalibre()
+        }
     }
 
     @ViewBuilder

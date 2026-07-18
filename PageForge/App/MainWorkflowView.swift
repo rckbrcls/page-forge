@@ -38,8 +38,12 @@ struct MainWorkflowView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             viewModel.refreshDeliveryProfiles()
+            appState.refreshCalibre()
         }
-        .onAppear { viewModel.bind(appState: appState) }
+        .onAppear {
+            viewModel.bind(appState: appState)
+            appState.refreshCalibre()
+        }
     }
 
     private var supportedTypes: [UTType] {

@@ -3,7 +3,7 @@ import XCTest
 
 @MainActor
 final class SettingsViewModelTests: XCTestCase {
-    func testReloadUsesInjectedSharedServicesForDependenciesProfilesPreferencesAndLogs() {
+    func testReloadUsesInjectedSharedServicesForProfilesPreferencesAndLogs() {
         let personal = DeliveryProfile(name: "personal")
         let config = MockSettingsConfigService(config: AppConfig(
             defaultProfile: personal.name,
@@ -11,24 +11,17 @@ final class SettingsViewModelTests: XCTestCase {
             defaultOutputDirectory: "/tmp/Books"
         ))
         let secrets = MockSettingsSecretService(secretProfiles: [personal.name])
-        let dependencies = MockSettingsDependencyService(status: DependencyStatus(
-            ebookConvertPath: URL(fileURLWithPath: "/tools/ebook-convert"),
-            ebookMetaPath: URL(fileURLWithPath: "/tools/ebook-meta"),
-            ebookPolishPath: URL(fileURLWithPath: "/tools/ebook-polish")
-        ))
         let logs = MockSettingsLogService(entries: [
             OperationLogEntry(level: .info, message: "Shared log entry")
         ])
         let viewModel = makeViewModel(
             config: config,
             secrets: secrets,
-            dependencies: dependencies,
             logs: logs
         )
 
         viewModel.reload()
 
-        XCTAssertEqual(dependencies.refreshCount, 1)
         XCTAssertEqual(config.loadCount, 1)
         XCTAssertEqual(viewModel.selectedProfile, personal)
         XCTAssertEqual(viewModel.defaultOutputDirectory, "/tmp/Books")
@@ -95,15 +88,12 @@ final class SettingsViewModelTests: XCTestCase {
     private func makeViewModel(
         config: MockSettingsConfigService = MockSettingsConfigService(config: AppConfig()),
         secrets: MockSettingsSecretService = MockSettingsSecretService(),
-        dependencies: MockSettingsDependencyService = MockSettingsDependencyService(),
         logs: MockSettingsLogService = MockSettingsLogService(),
         handoff: MockHandoffService = MockHandoffService()
     ) -> SettingsViewModel {
         SettingsViewModel(
             configService: config,
             secretService: secrets,
-            dependencyService: dependencies,
-            setupGuidance: MockSettingsGuidance(),
             logService: logs,
             handoffService: handoff
         )
@@ -161,30 +151,6 @@ private final class MockSettingsSecretService: SettingsSecretServicing {
     func hasPassword(profileName: String) -> Bool {
         secretProfiles.contains(profileName)
     }
-}
-
-private final class MockSettingsDependencyService: SettingsDependencyServicing {
-    var status: DependencyStatus
-    private(set) var refreshCount = 0
-
-    init(status: DependencyStatus = DependencyStatus()) {
-        self.status = status
-    }
-
-    func calibreStatus() throws -> DependencyStatus {
-        refreshCount += 1
-        return status
-    }
-}
-
-private struct MockSettingsGuidance: SettingsGuidanceProviding {
-    func missingToolsMessage(_ status: DependencyStatus) -> String {
-        status.isReady ? "All Calibre tools are available." : "Calibre tools are missing."
-    }
-
-    func appUpdateGuidance() -> String { "App update guidance" }
-    func calibreUpdateGuidance() -> String { "Calibre update guidance" }
-    func calibreInstallGuidance() -> String { "Calibre install guidance" }
 }
 
 @MainActor

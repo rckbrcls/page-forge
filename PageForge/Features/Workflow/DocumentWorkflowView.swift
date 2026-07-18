@@ -11,6 +11,9 @@ struct DocumentWorkflowView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+            if !appState.calibreStatus.isReady {
+                calibreWarning
+            }
             if viewModel.queue.items.isEmpty {
                 emptyState
             } else {
@@ -25,6 +28,22 @@ struct DocumentWorkflowView: View {
         )) {
             metadataEditor
         }
+    }
+
+    private var calibreWarning: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(Color.Theme.warning)
+            Text("Calibre is required to prepare files.")
+                .font(.callout)
+            Spacer()
+            Button("Set Up", action: openSettings)
+        }
+        .padding(12)
+        .background(Color.Theme.warning.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .padding(.horizontal, 28)
+        .padding(.bottom, 8)
     }
 
     private var header: some View {

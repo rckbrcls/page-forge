@@ -29,7 +29,9 @@
 		7703563A89C149669F806005 /* Domain/Services/DeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9A3C9D2FC848DAA5ED9AC0 /* Domain/Services/DeliveryService.swift */; };
 		8A9507D46E0146A98897F4E7 /* Domain/Services/EPUBRepair.swift in Sources */ = {isa = PBXBuildFile; fileRef = 557CA88709CD4F73A5A1B64F /* Domain/Services/EPUBRepair.swift */; };
 		8BE1E88F91ED4A52AB82D1D8 /* Features/Shared/OperationStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A23623CC66504E3BBED1F996 /* Features/Shared/OperationStatusView.swift */; };
-		8F33B8B9AE89408E97264901 /* Domain/Services/SetupGuidanceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434ED6AE836F47B3B276E9CA /* Domain/Services/SetupGuidanceService.swift */; };
+		AF0000000000000000000001 /* Domain/Services/CalibreManagementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE0000000000000000000001 /* Domain/Services/CalibreManagementService.swift */; };
+		AF0000000000000000000002 /* Features/Settings/CalibreSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE0000000000000000000002 /* Features/Settings/CalibreSettingsSection.swift */; };
+		AF0000000000000000000003 /* Domain/CalibreManagementServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE0000000000000000000003 /* Domain/CalibreManagementServiceTests.swift */; };
 		92110F40ED794A1481980652 /* Domain/Services/SecretService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6823538E5E2F4CBDA80908BA /* Domain/Services/SecretService.swift */; };
 		92B682CB768F4A8DB8D0451F /* Domain/Jobs/ConversionJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = F86452A2D3094431B0329DE8 /* Domain/Jobs/ConversionJob.swift */; };
 		9342343A8D634F6A8345F848 /* Domain/Models/ConversionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFDCB702309B498995EA2BE6 /* Domain/Models/ConversionModels.swift */; };
@@ -102,7 +104,9 @@
 		3CF0084914064B9483344890 /* Integrations/Calibre/CalibreToolLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Integrations/Calibre/CalibreToolLocator.swift; sourceTree = "<group>"; };
 		3D8F2E733CC24DAABD4FFD25 /* Domain/RepairServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/RepairServiceTests.swift; sourceTree = "<group>"; };
 		41444576580D433B848A92F3 /* Domain/ReadinessServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/ReadinessServiceTests.swift; sourceTree = "<group>"; };
-		434ED6AE836F47B3B276E9CA /* Domain/Services/SetupGuidanceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/SetupGuidanceService.swift; sourceTree = "<group>"; };
+		AE0000000000000000000001 /* Domain/Services/CalibreManagementService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/CalibreManagementService.swift; sourceTree = "<group>"; };
+		AE0000000000000000000002 /* Features/Settings/CalibreSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Settings/CalibreSettingsSection.swift; sourceTree = "<group>"; };
+		AE0000000000000000000003 /* Domain/CalibreManagementServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/CalibreManagementServiceTests.swift; sourceTree = "<group>"; };
 		4660EA605A3B49F8ABBD14C6 /* Domain/Services/EPUBInspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/EPUBInspection.swift; sourceTree = "<group>"; };
 		4D9A3C9D2FC848DAA5ED9AC0 /* Domain/Services/DeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/DeliveryService.swift; sourceTree = "<group>"; };
 		557CA88709CD4F73A5A1B64F /* Domain/Services/EPUBRepair.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/EPUBRepair.swift; sourceTree = "<group>"; };
@@ -222,7 +226,8 @@
 				57019522767B4440BC159355 /* Domain/Services/ReadinessService.swift */,
 				0627F822FF9F485F9C854631 /* Domain/Services/RepairService.swift */,
 				6823538E5E2F4CBDA80908BA /* Domain/Services/SecretService.swift */,
-				434ED6AE836F47B3B276E9CA /* Domain/Services/SetupGuidanceService.swift */,
+				AE0000000000000000000001 /* Domain/Services/CalibreManagementService.swift */,
+				AE0000000000000000000002 /* Features/Settings/CalibreSettingsSection.swift */,
 				D8BCA2D2CA274D1195E33771 /* Features/Settings/ProfileEditorView.swift */,
 				8BCA233FE96E42C482FFD2B1 /* Features/Settings/SettingsView.swift */,
 				2EF4181F1BA9464C9745FC92 /* Features/Settings/SettingsViewModel.swift */,
@@ -258,6 +263,7 @@
 				AC0000000000000000000005 /* Domain/DocumentPreparationServiceTests.swift */,
 				AC0000000000000000000006 /* Domain/PreparedOutputExporterTests.swift */,
 				AC0000000000000000000007 /* Domain/DocumentDeliveryWorkflowTests.swift */,
+				AE0000000000000000000003 /* Domain/CalibreManagementServiceTests.swift */,
 				AC0000000000000000000008 /* Features/SettingsViewModelTests.swift */,
 				AC0000000000000000000009 /* Features/DocumentWorkflowViewModelTests.swift */,
 				AC000000000000000000000A /* Features/DocumentWorkflowOutputTests.swift */,
@@ -400,7 +406,8 @@
 				96916AFF786847DEA336FB42 /* Domain/Services/ReadinessService.swift in Sources */,
 				0E1E56D139E1456FADBC46D7 /* Domain/Services/RepairService.swift in Sources */,
 				92110F40ED794A1481980652 /* Domain/Services/SecretService.swift in Sources */,
-				8F33B8B9AE89408E97264901 /* Domain/Services/SetupGuidanceService.swift in Sources */,
+				AF0000000000000000000001 /* Domain/Services/CalibreManagementService.swift in Sources */,
+				AF0000000000000000000002 /* Features/Settings/CalibreSettingsSection.swift in Sources */,
 				45C3100E0D2A4061AC416CE3 /* Features/Settings/ProfileEditorView.swift in Sources */,
 				1C79B41F3F2A4E59B758C58A /* Features/Settings/SettingsView.swift in Sources */,
 				02997E6C8E9E40ECB7FB91AB /* Features/Settings/SettingsViewModel.swift in Sources */,
@@ -427,6 +434,7 @@
 				AD0000000000000000000005 /* Domain/DocumentPreparationServiceTests.swift in Sources */,
 				AD0000000000000000000006 /* Domain/PreparedOutputExporterTests.swift in Sources */,
 				AD0000000000000000000007 /* Domain/DocumentDeliveryWorkflowTests.swift in Sources */,
+				AF0000000000000000000003 /* Domain/CalibreManagementServiceTests.swift in Sources */,
 				AD0000000000000000000008 /* Features/SettingsViewModelTests.swift in Sources */,
 				AD0000000000000000000009 /* Features/DocumentWorkflowViewModelTests.swift in Sources */,
 				AD000000000000000000000A /* Features/DocumentWorkflowOutputTests.swift in Sources */,
