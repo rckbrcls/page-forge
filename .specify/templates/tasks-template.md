@@ -21,8 +21,8 @@ description: "Task list template for feature implementation"
 
 ## Path Conventions
 
-- **macOS desktop (preferred)**: `PageForge/App/`, `PageForge/Domain/`, `PageForge/Features/`, `PageForge/Integrations/`, `PageForgeTests/`
-- **Transitional Python surface**: `src/page_forge/`, `tests/`
+- **macOS desktop**: `PageForge/App/`, `PageForge/Domain/`, `PageForge/Features/Workflow/`, `PageForge/Features/Settings/`, `PageForge/Integrations/`, `PageForgeTests/`
+- **Legacy reference only**: `legacy/python-tui-cli/` (never a new-feature target)
 - **Web app**: not used for PageForge product work under the constitution
 - Paths shown below are examples - adjust based on plan.md structure
 
@@ -31,11 +31,12 @@ description: "Task list template for feature implementation"
 - Foundational work MUST establish domain services before feature UI polish
 - Readiness/repair/conversion rules MUST land in `Domain` or equivalent services, not Views
 - Any Calibre invocation tasks MUST include missing-tool/doctor/setup handling
-- UI tasks MUST keep Readiness-first order and progressive disclosure for Convert/Batch/Metadata/Settings/Logs
-- Desktop UI tasks SHOULD include drag-and-drop intake for local ebook files
-- Performance-sensitive tasks MUST keep convert/repair/batch/update work non-blocking
+- UI tasks MUST preserve one files-first queue with shared drag-and-drop, picker, toolbar, and File menu intake
+- Prepare, Save Files, and Send to Kindle MUST remain the primary workflow actions
+- Metadata, advanced repair, logs, and troubleshooting MUST remain contextual
+- Settings tasks MUST use the separate native Settings window
+- Performance-sensitive tasks MUST keep preparation, export, and delivery work non-blocking
 - Security-sensitive tasks (Keychain, SMTP, file writes) MUST include safe-default handling
-- Preserve README CLI contracts during migration unless a breaking change is explicit
 - Do not schedule tasks for DRM removal, OCR pipelines, Amazon login automation, or multi-platform shells
 
 <!--
@@ -46,7 +47,7 @@ description: "Task list template for feature implementation"
   - User stories from spec.md (with their priorities P1, P2, P3...)
   - Feature requirements from plan.md
   - Entities from data-model.md
-  - Endpoints from contracts/
+  - Interfaces and workflows from contracts/
 
   Tasks MUST be organized by user story so each story can be:
   - Implemented independently
@@ -75,12 +76,12 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 Create shared workflow models in PageForge/Domain/Models/[WorkflowModels].swift
+- [ ] T005 [P] Define job state invariants in PageForge/Domain/Jobs/[JobCoordinator].swift
+- [ ] T006 [P] Define narrow service contracts in PageForge/Domain/Services/[Service].swift
+- [ ] T007 Create deterministic file fixtures in PageForgeTests/Support/[FixtureFactory].swift
+- [ ] T008 Configure operation feedback in PageForge/Domain/Services/LogService.swift
+- [ ] T009 Register new source and test files in PageForge.xcodeproj/project.pbxproj
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -96,17 +97,17 @@ Examples of foundational tasks (adjust based on your project):
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T010 [P] [US1] Add domain contract tests in PageForgeTests/Domain/[Feature]Tests.swift
+- [ ] T011 [P] [US1] Add workflow tests in PageForgeTests/Features/[Feature]Tests.swift
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
-- [ ] T017 [US1] Add logging for user story 1 operations
+- [ ] T012 [P] [US1] Create [Entity1] model in PageForge/Domain/Models/[Entity1].swift
+- [ ] T013 [P] [US1] Create [Entity2] model in PageForge/Domain/Models/[Entity2].swift
+- [ ] T014 [US1] Implement [Service] in PageForge/Domain/Services/[Service].swift (depends on T012, T013)
+- [ ] T015 [US1] Implement workflow behavior in PageForge/Features/Workflow/[Feature].swift
+- [ ] T016 [US1] Add validation and error handling in PageForge/Domain/Services/[Service].swift
+- [ ] T017 [US1] Add operation feedback in PageForge/Features/Workflow/[Feature].swift
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -120,15 +121,15 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
 
-- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T018 [P] [US2] Add domain tests in PageForgeTests/Domain/[Feature]Tests.swift
+- [ ] T019 [P] [US2] Add workflow tests in PageForgeTests/Features/[Feature]Tests.swift
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
-- [ ] T021 [US2] Implement [Service] in src/services/[service].py
-- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T023 [US2] Integrate with User Story 1 components (if needed)
+- [ ] T020 [P] [US2] Create [Entity] model in PageForge/Domain/Models/[Entity].swift
+- [ ] T021 [US2] Implement [Service] in PageForge/Domain/Services/[Service].swift
+- [ ] T022 [US2] Implement workflow behavior in PageForge/Features/Workflow/[Feature].swift
+- [ ] T023 [US2] Integrate with the single queue in PageForge/Features/Workflow/[WorkflowViewModel].swift
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -142,14 +143,14 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
 
-- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T024 [P] [US3] Add domain tests in PageForgeTests/Domain/[Feature]Tests.swift
+- [ ] T025 [P] [US3] Add workflow tests in PageForgeTests/Features/[Feature]Tests.swift
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
-- [ ] T027 [US3] Implement [Service] in src/services/[service].py
-- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T026 [P] [US3] Create [Entity] model in PageForge/Domain/Models/[Entity].swift
+- [ ] T027 [US3] Implement [Service] in PageForge/Domain/Services/[Service].swift
+- [ ] T028 [US3] Implement workflow behavior in PageForge/Features/Workflow/[Feature].swift
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -195,7 +196,7 @@ Examples of foundational tasks (adjust based on your project):
 
 - Tests (if included) MUST be written and FAIL before implementation
 - Models before services
-- Services before endpoints
+- Services before workflow UI
 - Core implementation before integration
 - Story complete before moving to next priority
 
@@ -214,12 +215,12 @@ Examples of foundational tasks (adjust based on your project):
 
 ```bash
 # Launch all tests for User Story 1 together (if tests requested):
-Task: "Contract test for [endpoint] in tests/contract/test_[name].py"
-Task: "Integration test for [user journey] in tests/integration/test_[name].py"
+Task: "Domain contract tests in PageForgeTests/Domain/[Feature]Tests.swift"
+Task: "Workflow tests in PageForgeTests/Features/[Feature]Tests.swift"
 
 # Launch all models for User Story 1 together:
-Task: "Create [Entity1] model in src/models/[entity1].py"
-Task: "Create [Entity2] model in src/models/[entity2].py"
+Task: "Create [Entity1] model in PageForge/Domain/Models/[Entity1].swift"
+Task: "Create [Entity2] model in PageForge/Domain/Models/[Entity2].swift"
 ```
 
 ---
@@ -232,7 +233,7 @@ Task: "Create [Entity2] model in src/models/[entity2].py"
 2. Complete Phase 2: Foundational (CRITICAL - blocks all stories)
 3. Complete Phase 3: User Story 1
 4. **STOP and VALIDATE**: Test User Story 1 independently
-5. Deploy/demo if ready
+5. Demo locally if ready
 
 ### Incremental Delivery
 
@@ -261,6 +262,6 @@ With multiple developers:
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
 - Verify tests fail before implementing
-- Commit after each task or logical group
+- Do not stage or commit unless the user explicitly requests it
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence

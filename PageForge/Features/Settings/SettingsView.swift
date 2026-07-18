@@ -68,6 +68,16 @@ struct SettingsView: View {
                     )
                 }
 
+                section("Output") {
+                    TextField("Default save folder", text: $viewModel.defaultOutputDirectory)
+                    Text("Leave empty to choose a folder each time.")
+                        .font(.caption)
+                        .foregroundStyle(Color.Theme.textSecondary)
+                    Button("Save Output Preference") {
+                        viewModel.saveOutputPreference()
+                    }
+                }
+
                 section("Updates") {
                     Text("App update")
                         .font(.headline)
@@ -84,6 +94,30 @@ struct SettingsView: View {
                     Text(viewModel.calibreInstallText)
                         .foregroundStyle(Color.Theme.textSecondary)
                         .textSelection(.enabled)
+                }
+
+                section("Troubleshooting") {
+                    HStack {
+                        Button("Refresh Logs") { viewModel.reload() }
+                        Button("Open Send to Kindle Handoff") {
+                            viewModel.openSendToKindleHandoff()
+                        }
+                    }
+                    if viewModel.recentLogs.isEmpty {
+                        Text("No log entries yet.")
+                            .foregroundStyle(Color.Theme.textSecondary)
+                    } else {
+                        ForEach(viewModel.recentLogs) { entry in
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(entry.message)
+                                    .textSelection(.enabled)
+                                Text(entry.timestamp.formatted(date: .abbreviated, time: .standard))
+                                    .font(.caption)
+                                    .foregroundStyle(Color.Theme.textSecondary)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
                 }
 
                 OperationStatusView(

@@ -2,14 +2,15 @@
 
 # PageForge
 
-PageForge is a **macOS desktop app** for preparing and managing ebook workflows.
+PageForge is a **macOS desktop app** for preparing ebook files for Kindle.
 
-It helps turn scattered ebook files into clean, ready-to-use books through
-conversion, repair, metadata cleanup, batch processing, and Kindle delivery.
+Add EPUB, MOBI, and PDF files to one queue, prepare them with a single action,
+then save the Kindle-ready EPUB files locally or send them through a configured
+SMTP profile.
 
 Under the hood, PageForge orchestrates Calibre-powered EPUB, MOBI, and PDF
 operations while owning Kindle readiness diagnosis, safe structural repair, and
-a focused desktop experience.
+a focused files-first desktop experience.
 
 ## Product Status
 
@@ -23,7 +24,7 @@ a focused desktop experience.
 - [Features](#features)
 - [Requirements](#requirements)
 - [Open / Develop](#open--develop)
-- [Readiness Doctor](#readiness-doctor)
+- [Prepare Files](#prepare-files)
 - [Send to Kindle](#send-to-kindle)
 - [Legacy Python Surface](#legacy-python-surface)
 - [Repository Description](#repository-description)
@@ -40,16 +41,14 @@ It depends on:
 
 ## Features
 
-- Readiness-first desktop workspace
-- Drag-and-drop intake for local ebooks
-- Kindle Readiness Doctor (audit + prepare)
-- Safe EPUB repair and optional aggressive repair
-- Conversion: `MOBI -> EPUB`, `PDF -> EPUB`, `EPUB -> MOBI`
-- Folder batch readiness/repair/conversion
-- Metadata inspect + title/author updates
-- Send to Kindle via SMTP profiles or handoff
-- Settings for Calibre status, profiles, and update guidance
-- In-app operation logs
+- One files-first queue for EPUB, MOBI, and PDF documents
+- Multi-file drag-and-drop, file picker, toolbar, and File menu intake
+- Sequential Kindle preparation with independent per-file results
+- Kindle-ready EPUB output using the `*-kindle-ready.epub` convention
+- Local Save Files export with explicit conflict handling
+- Send to Kindle through configured SMTP profiles or explicit Amazon handoff
+- Native Settings window for Calibre status, delivery profiles, and preferences
+- Contextual readiness details, metadata, repair, and troubleshooting actions
 
 ## Requirements
 
@@ -81,17 +80,22 @@ export EBOOK_POLISH_PATH="/path/to/ebook-polish"
 
 More notes: `docs/desktop-migration.md`
 
-## Readiness Doctor
+## Prepare Files
 
-Default home screen.
+The main window contains one document queue. Add any supported local files,
+select the items to process, and choose **Prepare Files**.
 
-- **Audit**: diagnose without writing a new file
-- **Prepare / Fix**: write `*-kindle-ready.epub`
+- EPUB is diagnosed and safely prepared.
+- MOBI is converted to EPUB before readiness preparation.
+- PDF is converted to EPUB before readiness preparation; OCR is not performed.
+- Processing is sequential, failures are isolated per file, and pending work can
+  be cancelled without claiming that an active Calibre subprocess stopped.
 - Status vocabulary: `ready`, `needs_fixes`, `blocked`
 - Issue severities: `info`, `warning`, `error`, `fixable`
-- MOBI is legacy input and may be converted before preparation
 
-Structural repair outputs remain distinct: `*-repaired.epub`
+Advanced metadata and repair capabilities remain contextual. Structural repair
+outputs stay distinct as `*-repaired.epub` and never replace the primary prepare
+result.
 
 ## Send to Kindle
 
@@ -117,5 +121,5 @@ Do not add new product features there.
 ## Repository Description
 
 ```text
-macOS desktop app for preparing ebooks: readiness diagnosis, conversion, repair, and Kindle delivery.
+macOS app for preparing EPUB, MOBI, and PDF files for Kindle from one simple queue.
 ```

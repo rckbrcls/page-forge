@@ -28,8 +28,8 @@ and evaluated as an incremental slice.
 **Purpose**: Establish deterministic local-file fixtures without introducing an
 external package or executable test dependency.
 
-- [ ] T001 Create reusable temporary EPUB, MOBI, PDF, unsupported-file, duplicate-path, and unreadable-file fixtures in `PageForgeTests/Support/TemporaryDocumentFactory.swift`
-- [ ] T002 Register `PageForgeTests/Support/TemporaryDocumentFactory.swift` in the PageForgeTests group and Sources build phase in `PageForge.xcodeproj/project.pbxproj`
+- [X] T001 Create reusable temporary EPUB, MOBI, PDF, unsupported-file, duplicate-path, and unreadable-file fixtures in `PageForgeTests/Support/TemporaryDocumentFactory.swift`
+- [X] T002 Register `PageForgeTests/Support/TemporaryDocumentFactory.swift` in the PageForgeTests group and Sources build phase in `PageForge.xcodeproj/project.pbxproj`
 
 ---
 
@@ -40,12 +40,12 @@ composition root before any user-facing story work.
 
 **⚠️ CRITICAL**: User-story implementation begins only after this phase is complete.
 
-- [ ] T003 [P] Write failing state-transition, selection-eligibility, independent save/delivery state, and derived queue-state tests in `PageForgeTests/Domain/DocumentWorkflowModelsTests.swift`
-- [ ] T004 Implement `DocumentFormat`, `PreparationState`, `OutputActionState`, `QueueState`, intake outcomes, `DocumentItem`, `DocumentQueue`, `PreparedOutput`, issues, export results, and delivery results in `PageForge/Domain/Models/DocumentWorkflowModels.swift`
-- [ ] T005 [P] Write failing queued-job and cancel-pending consistency tests in `PageForgeTests/Domain/OperationJobCoordinatorTests.swift`
-- [ ] T006 Add explicit queued creation, pending cancellation, and terminal reconciliation APIs without claiming hard subprocess cancellation in `PageForge/Domain/Jobs/OperationJobCoordinator.swift`
-- [ ] T007 [P] Construct and reuse single `ConfigService`, `SecretService`, `ConversionService`, `RepairService`, `ReadinessService`, and `DeliveryService` instances in `PageForge/App/AppState.swift`
-- [ ] T008 Register `PageForge/Domain/Models/DocumentWorkflowModels.swift`, `PageForgeTests/Domain/DocumentWorkflowModelsTests.swift`, and `PageForgeTests/Domain/OperationJobCoordinatorTests.swift` in the correct groups and Sources phases in `PageForge.xcodeproj/project.pbxproj`
+- [X] T003 [P] Write failing state-transition, selection-eligibility, independent save/delivery state, and derived queue-state tests in `PageForgeTests/Domain/DocumentWorkflowModelsTests.swift`
+- [X] T004 Implement `DocumentFormat`, `PreparationState`, `OutputActionState`, `QueueState`, intake outcomes, `DocumentItem`, `DocumentQueue`, `PreparedOutput`, issues, export results, and delivery results in `PageForge/Domain/Models/DocumentWorkflowModels.swift`
+- [X] T005 [P] Write failing queued-job and cancel-pending consistency tests in `PageForgeTests/Domain/OperationJobCoordinatorTests.swift`
+- [X] T006 Add explicit queued creation, pending cancellation, and terminal reconciliation APIs without claiming hard subprocess cancellation in `PageForge/Domain/Jobs/OperationJobCoordinator.swift`
+- [X] T007 [P] Construct and reuse single `ConfigService`, `SecretService`, `ConversionService`, `RepairService`, `ReadinessService`, and `DeliveryService` instances in `PageForge/App/AppState.swift`
+- [X] T008 Register `PageForge/Domain/Models/DocumentWorkflowModels.swift`, `PageForgeTests/Domain/DocumentWorkflowModelsTests.swift`, and `PageForgeTests/Domain/OperationJobCoordinatorTests.swift` in the correct groups and Sources phases in `PageForge.xcodeproj/project.pbxproj`
 
 **Checkpoint**: Shared models compile conceptually, queue invariants are specified,
 and app-wide services no longer drift through duplicate instances.
@@ -63,19 +63,19 @@ each rejection has a reason, and removing rows never deletes local files.
 
 ### Tests for User Story 1
 
-- [ ] T009 [P] [US1] Write failing local-file validation, EPUB/MOBI/PDF filtering, canonical dedupe, partial acceptance, stable ordering, and rejection-reason tests in `PageForgeTests/Domain/DocumentIntakeServiceTests.swift`
-- [ ] T010 [P] [US1] Write failing add/select/select-all/remove/intake-summary and add-while-existing-queue tests in `PageForgeTests/Features/DocumentWorkflowViewModelTests.swift`
+- [X] T009 [P] [US1] Write failing local-file validation, EPUB/MOBI/PDF filtering, canonical dedupe, partial acceptance, stable ordering, and rejection-reason tests in `PageForgeTests/Domain/DocumentIntakeServiceTests.swift`
+- [X] T010 [P] [US1] Write failing add/select/select-all/remove/intake-summary and add-while-existing-queue tests in `PageForgeTests/Features/DocumentWorkflowViewModelTests.swift`
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Implement canonical identity, readability/type validation, duplicate detection, stable partial outcomes, and security-scoped access metadata in `PageForge/Domain/Services/DocumentIntakeService.swift`
-- [ ] T012 [P] [US1] Refactor chooser and drop handling to accept `[URL]`, enable multiple selection, resolve every provider in input order, and balance security-scoped access in `PageForge/Features/Shared/FileDropIntakeView.swift`
-- [ ] T013 [US1] Implement queue ownership, shared intake entry, selection, Select All, removal-only semantics, and intake feedback in `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`
-- [ ] T014 [P] [US1] Implement the selectable filename/format/status row with accessible remove action in `PageForge/Features/Workflow/DocumentQueueRow.swift`
-- [ ] T015 [US1] Implement the empty large drop state and non-empty queue state with calm hierarchy and no nested-card/dashboard layout in `PageForge/Features/Workflow/DocumentWorkflowView.swift`
-- [ ] T016 [US1] Replace `RootNavigationView` and the `NavigationSplitView` shell with `MainWorkflowView` and remove `AppDestination`/destination routing in `PageForge/App/RootNavigationView.swift`, `PageForge/App/MainWorkflowView.swift`, `PageForge/App/AppState.swift`, and `PageForge/App/PageForgeApp.swift`
-- [ ] T017 [US1] Add the drop-capable `Add Files` toolbar control, `File > Add Files…` command, keyboard shortcut, targeted highlight, help, and overflow-safe labeling in `PageForge/App/MainWorkflowView.swift` and `PageForge/App/PageForgeApp.swift`
-- [ ] T018 [US1] Add Workflow, intake service, view-model, row, view, and US1 test references to the app/test Sources phases and remove the obsolete `RootNavigationView.swift` reference in `PageForge.xcodeproj/project.pbxproj`
+- [X] T011 [US1] Implement canonical identity, readability/type validation, duplicate detection, stable partial outcomes, and security-scoped access metadata in `PageForge/Domain/Services/DocumentIntakeService.swift`
+- [X] T012 [P] [US1] Refactor chooser and drop handling to accept `[URL]`, enable multiple selection, resolve every provider in input order, and balance security-scoped access in `PageForge/Features/Shared/FileDropIntakeView.swift`
+- [X] T013 [US1] Implement queue ownership, shared intake entry, selection, Select All, removal-only semantics, and intake feedback in `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`
+- [X] T014 [P] [US1] Implement the selectable filename/format/status row with accessible remove action in `PageForge/Features/Workflow/DocumentQueueRow.swift`
+- [X] T015 [US1] Implement the empty large drop state and non-empty queue state with calm hierarchy and no nested-card/dashboard layout in `PageForge/Features/Workflow/DocumentWorkflowView.swift`
+- [X] T016 [US1] Replace `RootNavigationView` and the `NavigationSplitView` shell with `MainWorkflowView` and remove `AppDestination`/destination routing in `PageForge/App/RootNavigationView.swift`, `PageForge/App/MainWorkflowView.swift`, `PageForge/App/AppState.swift`, and `PageForge/App/PageForgeApp.swift`
+- [X] T017 [US1] Add the drop-capable `Add Files` toolbar control, `File > Add Files…` command, keyboard shortcut, targeted highlight, help, and overflow-safe labeling in `PageForge/App/MainWorkflowView.swift` and `PageForge/App/PageForgeApp.swift`
+- [X] T018 [US1] Add Workflow, intake service, view-model, row, view, and US1 test references to the app/test Sources phases and remove the obsolete `RootNavigationView.swift` reference in `PageForge.xcodeproj/project.pbxproj`
 
 **Checkpoint**: US1 is independently demonstrable as one simple multi-file intake
 screen even before preparation is connected.
@@ -94,18 +94,18 @@ failure.
 
 ### Tests for User Story 2
 
-- [ ] T019 [P] [US2] Write failing EPUB/MOBI/PDF routing, PDF temporary cleanup, original immutability, `*-kindle-ready.epub`, no-OCR warning, output collision, and missing-dependency tests in `PageForgeTests/Domain/DocumentPreparationServiceTests.swift`
-- [ ] T020 [P] [US2] Write failing preparation snapshot, sequential progression, per-item failure isolation, retry, new-intake exclusion, cancel-pending, and active-result reconciliation tests in `PageForgeTests/Features/DocumentWorkflowViewModelTests.swift`
+- [X] T019 [P] [US2] Write failing EPUB/MOBI/PDF routing, PDF temporary cleanup, original immutability, `*-kindle-ready.epub`, no-OCR warning, output collision, and missing-dependency tests in `PageForgeTests/Domain/DocumentPreparationServiceTests.swift`
+- [X] T020 [P] [US2] Write failing preparation snapshot, sequential progression, per-item failure isolation, retry, new-intake exclusion, cancel-pending, and active-result reconciliation tests in `PageForgeTests/Features/DocumentWorkflowViewModelTests.swift`
 
 ### Implementation for User Story 2
 
-- [ ] T021 [US2] Define the narrow `DocumentPreparing` contract and implement EPUB/MOBI delegation plus PDF conversion-then-readiness orchestration in `PageForge/Domain/Services/DocumentPreparationService.swift`
-- [ ] T022 [US2] Add unique PDF working directories, `defer`-style best-effort cleanup, final report source remapping, final output verification, and no-OCR issue propagation in `PageForge/Domain/Services/DocumentPreparationService.swift`
-- [ ] T023 [US2] Implement stable selected-item snapshots, sequential detached work, main-actor reconciliation, independent failures, and operation logging in `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`
-- [ ] T024 [US2] Add retry and cancel-pending transitions while allowing an active external process to reconcile honestly in `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift` and `PageForge/Domain/Jobs/OperationJobCoordinator.swift`
-- [ ] T025 [US2] Render Prepare Files, per-row determinate/indeterminate progress, readiness status text, output location, retry, and cancel feedback in `PageForge/Features/Workflow/DocumentWorkflowView.swift` and `PageForge/Features/Workflow/DocumentQueueRow.swift`
-- [ ] T026 [US2] Surface missing-tool, moved-source, blocked-readiness, output-conflict, and scanned-PDF guidance with contextual recovery actions in `PageForge/Features/Workflow/DocumentWorkflowView.swift` and `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`
-- [ ] T027 [US2] Register `DocumentPreparationService.swift` and `DocumentPreparationServiceTests.swift` in the app/test groups and Sources phases in `PageForge.xcodeproj/project.pbxproj`
+- [X] T021 [US2] Define the narrow `DocumentPreparing` contract and implement EPUB/MOBI delegation plus PDF conversion-then-readiness orchestration in `PageForge/Domain/Services/DocumentPreparationService.swift`
+- [X] T022 [US2] Add unique PDF working directories, `defer`-style best-effort cleanup, final report source remapping, final output verification, and no-OCR issue propagation in `PageForge/Domain/Services/DocumentPreparationService.swift`
+- [X] T023 [US2] Implement stable selected-item snapshots, sequential detached work, main-actor reconciliation, independent failures, and operation logging in `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`
+- [X] T024 [US2] Add retry and cancel-pending transitions while allowing an active external process to reconcile honestly in `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift` and `PageForge/Domain/Jobs/OperationJobCoordinator.swift`
+- [X] T025 [US2] Render Prepare Files, per-row determinate/indeterminate progress, readiness status text, output location, retry, and cancel feedback in `PageForge/Features/Workflow/DocumentWorkflowView.swift` and `PageForge/Features/Workflow/DocumentQueueRow.swift`
+- [X] T026 [US2] Surface missing-tool, moved-source, blocked-readiness, output-conflict, and scanned-PDF guidance with contextual recovery actions in `PageForge/Features/Workflow/DocumentWorkflowView.swift` and `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`
+- [X] T027 [US2] Register `DocumentPreparationService.swift` and `DocumentPreparationServiceTests.swift` in the app/test groups and Sources phases in `PageForge.xcodeproj/project.pbxproj`
 
 **Checkpoint**: US1 + US2 form the first useful product increment: import N files
 and leave with independently prepared Kindle-ready outputs.
@@ -123,19 +123,19 @@ copy semantics, independent results, and preservation of previous successes.
 
 ### Tests for User Story 3
 
-- [ ] T028 [P] [US3] Write failing copy-only export, writable destination, partial success, no-silent-overwrite, confirmed replacement, and source/output preservation tests in `PageForgeTests/Domain/PreparedOutputExporterTests.swift`
-- [ ] T029 [P] [US3] Write failing complete-profile preflight, attachment existence/size, secret-safe failure, stable send order, partial SMTP failure, and prior-success preservation tests in `PageForgeTests/Domain/DocumentDeliveryWorkflowTests.swift`
-- [ ] T030 [P] [US3] Write failing ready-item eligibility, selected-only save/send, independent save/delivery axes, conflict retry, and remove-without-delete tests in `PageForgeTests/Features/DocumentWorkflowOutputTests.swift`
+- [X] T028 [P] [US3] Write failing copy-only export, writable destination, partial success, no-silent-overwrite, confirmed replacement, and source/output preservation tests in `PageForgeTests/Domain/PreparedOutputExporterTests.swift`
+- [X] T029 [P] [US3] Write failing complete-profile preflight, attachment existence/size, secret-safe failure, stable send order, partial SMTP failure, and prior-success preservation tests in `PageForgeTests/Domain/DocumentDeliveryWorkflowTests.swift`
+- [X] T030 [P] [US3] Write failing ready-item eligibility, selected-only save/send, independent save/delivery axes, conflict retry, and remove-without-delete tests in `PageForgeTests/Features/DocumentWorkflowOutputTests.swift`
 
 ### Implementation for User Story 3
 
-- [ ] T031 [P] [US3] Define `PreparedOutputExporting` and implement per-file copy results, writable-directory validation, `failIfExists`, and explicit replacement in `PageForge/Integrations/FileSystem/PreparedOutputExporter.swift`
-- [ ] T032 [P] [US3] Add reusable profile preflight, readable attachment and delivery-size validation, and secret-free result/error mapping in `PageForge/Domain/Services/DeliveryService.swift`
-- [ ] T033 [US3] Implement Save Files destination selection, selected-ready filtering, per-file exporter results, conflict recovery, and Reveal File behavior in `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`
-- [ ] T034 [US3] Implement explicit profile selection, preflight-before-first-send, sequential per-output delivery, cancel-pending, and partial result preservation in `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`
-- [ ] T035 [US3] Add primary Save Files and Send to Kindle controls with accurate disabled/loading/error/partial-success states in `PageForge/Features/Workflow/DocumentWorkflowView.swift`
-- [ ] T036 [US3] Render per-item saved/sent/failed destinations and explicit replace/retry confirmation without changing readiness state in `PageForge/Features/Workflow/DocumentQueueRow.swift` and `PageForge/Features/Workflow/DocumentWorkflowView.swift`
-- [ ] T037 [US3] Register the exporter and US3 test files in the app/test groups and Sources phases in `PageForge.xcodeproj/project.pbxproj`
+- [X] T031 [P] [US3] Define `PreparedOutputExporting` and implement per-file copy results, writable-directory validation, `failIfExists`, and explicit replacement in `PageForge/Integrations/FileSystem/PreparedOutputExporter.swift`
+- [X] T032 [P] [US3] Add reusable profile preflight, readable attachment and delivery-size validation, and secret-free result/error mapping in `PageForge/Domain/Services/DeliveryService.swift`
+- [X] T033 [US3] Implement Save Files destination selection, selected-ready filtering, per-file exporter results, conflict recovery, and Reveal File behavior in `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`
+- [X] T034 [US3] Implement explicit profile selection, preflight-before-first-send, sequential per-output delivery, cancel-pending, and partial result preservation in `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`
+- [X] T035 [US3] Add primary Save Files and Send to Kindle controls with accurate disabled/loading/error/partial-success states in `PageForge/Features/Workflow/DocumentWorkflowView.swift`
+- [X] T036 [US3] Render per-item saved/sent/failed destinations and explicit replace/retry confirmation without changing readiness state in `PageForge/Features/Workflow/DocumentQueueRow.swift` and `PageForge/Features/Workflow/DocumentWorkflowView.swift`
+- [X] T037 [US3] Register the exporter and US3 test files in the app/test groups and Sources phases in `PageForge.xcodeproj/project.pbxproj`
 
 **Checkpoint**: US3 is independently testable with seeded ready outputs and
 completes both requested outcomes from the same screen.
@@ -153,17 +153,17 @@ unchanged queue state, persistent non-secret config, and Keychain-only secrets.
 
 ### Tests for User Story 4
 
-- [ ] T038 [P] [US4] Extend profile persistence, default-profile, Keychain-only secret, missing-secret, and secret-redaction coverage in `PageForgeTests/Domain/ConfigSecretTests.swift`
-- [ ] T039 [P] [US4] Write failing dependency refresh, profile save/select, output preference, log access, and shared-service Settings tests in `PageForgeTests/Features/SettingsViewModelTests.swift`
+- [X] T038 [P] [US4] Extend profile persistence, default-profile, Keychain-only secret, missing-secret, and secret-redaction coverage in `PageForgeTests/Domain/ConfigSecretTests.swift`
+- [X] T039 [P] [US4] Write failing dependency refresh, profile save/select, output preference, log access, and shared-service Settings tests in `PageForgeTests/Features/SettingsViewModelTests.swift`
 
 ### Implementation for User Story 4
 
-- [ ] T040 [P] [US4] Declare the native `Settings` scene, inject shared `AppState`/`ThemeManager`, and place `SettingsLink` in the main toolbar in `PageForge/App/PageForgeApp.swift` and `PageForge/App/MainWorkflowView.swift`
-- [ ] T041 [P] [US4] Refactor Settings state to use shared config/dependency/secret/log services and persist relevant output preference without queue ownership in `PageForge/Features/Settings/SettingsViewModel.swift` and `PageForge/Domain/Models/ConfigModels.swift`
-- [ ] T042 [US4] Organize appearance, Calibre status/recovery, delivery profiles, output preference, updates, logs/troubleshooting, and Amazon handoff in the dedicated window in `PageForge/Features/Settings/SettingsView.swift` and `PageForge/Features/Settings/ProfileEditorView.swift`
-- [ ] T043 [US4] Connect preparation and delivery recovery actions to the native Settings window without resetting selection, progress, or results in `PageForge/Features/Workflow/DocumentWorkflowView.swift` and `PageForge/App/MainWorkflowView.swift`
-- [ ] T044 [US4] Remove remaining Settings destination, pending-send navigation, and obsolete route state while retaining shared job/log lifecycle in `PageForge/App/AppState.swift`
-- [ ] T045 [US4] Register `SettingsViewModelTests.swift`, verify Settings files remain in the app target, and remove obsolete navigation references in `PageForge.xcodeproj/project.pbxproj`
+- [X] T040 [P] [US4] Declare the native `Settings` scene, inject shared `AppState`/`ThemeManager`, and place `SettingsLink` in the main toolbar in `PageForge/App/PageForgeApp.swift` and `PageForge/App/MainWorkflowView.swift`
+- [X] T041 [P] [US4] Refactor Settings state to use shared config/dependency/secret/log services and persist relevant output preference without queue ownership in `PageForge/Features/Settings/SettingsViewModel.swift` and `PageForge/Domain/Models/ConfigModels.swift`
+- [X] T042 [US4] Organize appearance, Calibre status/recovery, delivery profiles, output preference, updates, logs/troubleshooting, and Amazon handoff in the dedicated window in `PageForge/Features/Settings/SettingsView.swift` and `PageForge/Features/Settings/ProfileEditorView.swift`
+- [X] T043 [US4] Connect preparation and delivery recovery actions to the native Settings window without resetting selection, progress, or results in `PageForge/Features/Workflow/DocumentWorkflowView.swift` and `PageForge/App/MainWorkflowView.swift`
+- [X] T044 [US4] Remove remaining Settings destination, pending-send navigation, and obsolete route state while retaining shared job/log lifecycle in `PageForge/App/AppState.swift`
+- [X] T045 [US4] Register `SettingsViewModelTests.swift`, verify Settings files remain in the app target, and remove obsolete navigation references in `PageForge.xcodeproj/project.pbxproj`
 
 **Checkpoint**: All four user stories are functional, with Settings separated from
 the single-screen workflow and secrets still protected by Keychain.
@@ -175,14 +175,14 @@ the single-screen workflow and secrets still protected by Keychain.
 **Purpose**: Preserve advanced baseline capabilities contextually, remove dead UI,
 align governance, and complete static validation without reintroducing complexity.
 
-- [ ] T046 [P] Write failing contextual metadata, explicit aggressive-repair confirmation, and no-default-advanced-action tests in `PageForgeTests/Features/DocumentWorkflowAdvancedActionsTests.swift`
-- [ ] T047 Implement per-item progressive disclosure for metadata inspect/update and explicitly confirmed aggressive repair using existing services in `PageForge/Features/Workflow/DocumentQueueRow.swift`, `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`, and `PageForge/Domain/Services/MetadataService.swift`
-- [ ] T048 Add keyboard shortcuts, visible focus, VoiceOver labels/values, non-color status text, compact-toolbar behavior, empty/error/partial-completion polish, and reduced-motion-safe feedback in `PageForge/App/MainWorkflowView.swift`, `PageForge/Features/Workflow/DocumentWorkflowView.swift`, `PageForge/Features/Workflow/DocumentQueueRow.swift`, and `PageForge/Features/Shared/FileDropIntakeView.swift`
-- [ ] T049 [P] Add a 50-item intake and mixed-outcome performance regression test with no real Calibre/network work in `PageForgeTests/Domain/DocumentIntakeServiceTests.swift`
-- [ ] T050 Audit output paths, security-scoped access balancing, Keychain/SMTP redaction, logs, and user-facing errors for secret or destructive behavior in `PageForge/Domain/Services/DeliveryService.swift`, `PageForge/Integrations/FileSystem/PreparedOutputExporter.swift`, `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`, and `PageForge/Domain/Services/LogService.swift`
-- [ ] T051 Remove obsolete top-level view/view-model files under `PageForge/Features/Batch/`, `PageForge/Features/Convert/`, `PageForge/Features/Readiness/`, `PageForge/Features/Send/`, `PageForge/Features/Metadata/`, and `PageForge/Features/Logs/` only after their required behavior is relocated, and remove their references from `PageForge.xcodeproj/project.pbxproj`
-- [ ] T052 Align the delivered single-workflow product and explicit files-first scope in `README.md`, `docs/desktop-migration.md`, `AGENTS.md`, `.specify/memory/constitution.md`, and `.specify/templates/tasks-template.md`
-- [ ] T053 Perform `git diff --check` and all targeted static searches from `specs/002-simplify-document-workflow/quickstart.md`, resolve findings in affected source/docs, and leave the documented `xcodebuild`/interactive scenarios for Erick to run locally
+- [X] T046 [P] Write failing contextual metadata, explicit aggressive-repair confirmation, and no-default-advanced-action tests in `PageForgeTests/Features/DocumentWorkflowAdvancedActionsTests.swift`
+- [X] T047 Implement per-item progressive disclosure for metadata inspect/update and explicitly confirmed aggressive repair using existing services in `PageForge/Features/Workflow/DocumentQueueRow.swift`, `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`, and `PageForge/Domain/Services/MetadataService.swift`
+- [X] T048 Add keyboard shortcuts, visible focus, VoiceOver labels/values, non-color status text, compact-toolbar behavior, empty/error/partial-completion polish, and reduced-motion-safe feedback in `PageForge/App/MainWorkflowView.swift`, `PageForge/Features/Workflow/DocumentWorkflowView.swift`, `PageForge/Features/Workflow/DocumentQueueRow.swift`, and `PageForge/Features/Shared/FileDropIntakeView.swift`
+- [X] T049 [P] Add a 50-item intake and mixed-outcome performance regression test with no real Calibre/network work in `PageForgeTests/Domain/DocumentIntakeServiceTests.swift`
+- [X] T050 Audit output paths, security-scoped access balancing, Keychain/SMTP redaction, logs, and user-facing errors for secret or destructive behavior in `PageForge/Domain/Services/DeliveryService.swift`, `PageForge/Integrations/FileSystem/PreparedOutputExporter.swift`, `PageForge/Features/Workflow/DocumentWorkflowViewModel.swift`, and `PageForge/Domain/Services/LogService.swift`
+- [X] T051 Remove obsolete top-level view/view-model files under `PageForge/Features/Batch/`, `PageForge/Features/Convert/`, `PageForge/Features/Readiness/`, `PageForge/Features/Send/`, `PageForge/Features/Metadata/`, and `PageForge/Features/Logs/` only after their required behavior is relocated, and remove their references from `PageForge.xcodeproj/project.pbxproj`
+- [X] T052 Align the delivered single-workflow product and explicit files-first scope in `README.md`, `docs/desktop-migration.md`, `AGENTS.md`, `.specify/memory/constitution.md`, and `.specify/templates/tasks-template.md`
+- [X] T053 Perform `git diff --check` and all targeted static searches from `specs/002-simplify-document-workflow/quickstart.md`, resolve findings in affected source/docs, and leave the documented `xcodebuild`/interactive scenarios for Erick to run locally
 
 ---
 

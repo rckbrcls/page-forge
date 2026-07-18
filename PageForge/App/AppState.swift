@@ -1,35 +1,8 @@
 import Foundation
 import SwiftUI
 
-enum AppDestination: String, CaseIterable, Identifiable, Hashable {
-    case readiness = "Readiness"
-    case convert = "Convert"
-    case batch = "Batch"
-    case send = "Send"
-    case metadata = "Metadata"
-    case settings = "Settings"
-    case logs = "Logs"
-
-    var id: String { rawValue }
-
-    var systemImage: String {
-        switch self {
-        case .readiness: return "stethoscope"
-        case .convert: return "arrow.triangle.2.circlepath"
-        case .batch: return "folder.badge.gearshape"
-        case .send: return "paperplane"
-        case .metadata: return "text.book.closed"
-        case .settings: return "gearshape"
-        case .logs: return "doc.text.magnifyingglass"
-        }
-    }
-}
-
 @MainActor
 final class AppState: ObservableObject {
-    @Published var destination: AppDestination = .readiness
-    @Published var pendingSendURL: URL?
-
     let logService: LogService
     let jobCoordinator: OperationJobCoordinator
     let dependencyService: DependencyService
@@ -44,27 +17,29 @@ final class AppState: ObservableObject {
 
     init() {
         let logs = LogService()
+        let dependencies = DependencyService()
+        let conversion = ConversionService(dependencyService: dependencies)
+        let repair = RepairService(dependencyService: dependencies)
+        let config = ConfigService()
+        let secrets = SecretService()
+
         self.logService = logs
         self.jobCoordinator = OperationJobCoordinator(logService: logs)
-        self.dependencyService = DependencyService()
-        self.conversionService = ConversionService()
-        self.repairService = RepairService()
+        self.dependencyService = dependencies
+        self.conversionService = conversion
+        self.repairService = repair
         self.readinessService = ReadinessService(
-            conversionService: ConversionService(),
-            repairService: RepairService()
+            conversionService: conversion,
+            repairService: repair
         )
         self.metadataService = MetadataService()
-        self.configService = ConfigService()
-        self.secretService = SecretService()
+        self.configService = config
+        self.secretService = secrets
         self.deliveryService = DeliveryService(
-            configService: ConfigService(),
-            secretService: SecretService()
+            configService: config,
+            secretService: secrets
         )
         self.setupGuidance = SetupGuidanceService()
     }
 
-    func openSend(with url: URL) {
-        pendingSendURL = url
-        destination = .send
-    }
 }

@@ -6,7 +6,7 @@ struct FileDropIntakeView: View {
     let title: String
     let subtitle: String
     let allowFolders: Bool
-    let onPick: (URL) -> Void
+    let onPick: ([URL]) -> Void
 
     @State private var isTargeted = false
 
@@ -59,7 +59,7 @@ struct FileDropIntakeView: View {
         let panel = NSOpenPanel()
         panel.canChooseFiles = true
         panel.canChooseDirectories = allowFolders
-        panel.allowsMultipleSelection = false
+        panel.allowsMultipleSelection = true
         if !allowFolders {
             panel.allowedContentTypes = [
                 .pdf,
@@ -67,26 +67,50 @@ struct FileDropIntakeView: View {
                 UTType(filenameExtension: "mobi") ?? .data,
             ]
         }
-        if panel.runModal() == .OK, let url = panel.url {
-            onPick(url)
+        if panel.runModal() == .OK, !panel.urls.isEmpty {
+            onPick(panel.urls)
         }
     }
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
-        guard let provider = providers.first else { return false }
-        provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
-            let url: URL?
-            if let data = item as? Data {
-                url = URL(dataRepresentation: data, relativeTo: nil)
-            } else if let value = item as? URL {
-                url = value
-            } else {
-                url = nil
+        FileURLDropResolver.resolve(providers, completion: onPick)
+    }
+}
+
+enum FileURLDropResolver {
+    static func resolve(
+        _ providers: [NSItemProvider],
+        completion: @escaping ([URL]) -> Void
+    ) -> Bool {
+        guard !providers.isEmpty else { return false }
+
+        let group = DispatchGroup()
+        let lock = NSLock()
+        var resolved = Array<URL?>(repeating: nil, count: providers.count)
+
+        for (index, provider) in providers.enumerated() {
+            group.enter()
+            provider.loadItem(
+                forTypeIdentifier: UTType.fileURL.identifier,
+                options: nil
+            ) { item, _ in
+                let url: URL?
+                if let data = item as? Data {
+                    url = URL(dataRepresentation: data, relativeTo: nil)
+                } else if let value = item as? URL {
+                    url = value
+                } else {
+                    url = nil
+                }
+                lock.lock()
+                resolved[index] = url
+                lock.unlock()
+                group.leave()
             }
-            guard let url else { return }
-            DispatchQueue.main.async {
-                onPick(url)
-            }
+        }
+
+        group.notify(queue: .main) {
+            completion(resolved.compactMap { $0 })
         }
         return true
     }

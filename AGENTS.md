@@ -22,13 +22,15 @@
 ## Project Context
 
 - Governance source: `.specify/memory/constitution.md`.
-- Product baseline + migration docs: `README.md`, `docs/desktop-migration.md`, `specs/001-desktop-app-migration/`.
+- Product baseline + workflow docs: `README.md`, `docs/desktop-migration.md`, `specs/002-simplify-document-workflow/`.
 - PageForge is a macOS-only ebook preparation utility.
 - **Primary surface**: native SwiftUI desktop app in `PageForge/` via `PageForge.xcodeproj`.
 - **Legacy surface**: Python TUI/CLI archived under `legacy/python-tui-cli/` for reference only.
 - Main desktop areas:
-  - `PageForge/App/`: app entry and navigation
-  - `PageForge/Features/`: Readiness, Convert, Batch, Send, Metadata, Settings, Logs
+  - `PageForge/App/`: app entry, commands, and main window composition
+  - `PageForge/Features/Workflow/`: the single document queue and primary actions
+  - `PageForge/Features/Settings/`: the separate native Settings window
+  - `PageForge/Features/Shared/`: shared intake and presentation components
   - `PageForge/Domain/`: models, services, jobs
   - `PageForge/Integrations/`: Calibre, Keychain, Mail, FileSystem
   - `PageForgeTests/`: domain tests
@@ -37,9 +39,11 @@
 
 - Do not frame PageForge as a Calibre replacement.
 - Treat Calibre as the underlying ebook engine.
-- PageForge adds value through a focused Kindle-ready workflow: diagnose, safely fix, prepare, optionally send, and provide Send to Kindle handoff.
-- Default experience is Readiness-first.
-- Supporting surfaces: Convert, Batch, Send to Kindle, Metadata, Settings, Logs.
+- PageForge adds value through one focused Kindle-ready workflow: add local files, diagnose and safely prepare them, then save or send the results.
+- The default experience is files-first and queue-first, with no mode sidebar.
+- Readiness, conversion, and delivery are steps in the main workflow rather than peer destinations.
+- Metadata, advanced repair, and troubleshooting remain contextual capabilities.
+- Configuration belongs in the separate native Settings window.
 - For Kindle delivery, keep two paths clear:
   - SMTP email delivery through configured profiles.
   - Handoff to Amazon Send to Kindle web/app/USB flow.
@@ -50,10 +54,15 @@
 
 ## Implementation Conventions
 
+- Keep one shared intake path for drag-and-drop, picker, toolbar, and File menu.
+- Process a stable selected snapshot sequentially and isolate failures per file.
+- New files added during processing remain queued for a later run.
+- Cancellation stops pending scheduling; do not claim hard cancellation of an active Calibre process.
 - Keep `repair` behavior separate from Readiness prepare behavior:
   - Repair output remains `*-repaired.epub`.
   - Readiness prepare output uses `*-kindle-ready.epub`.
 - Keep shared logic in domain services. Avoid embedding readiness/repair/conversion rules in SwiftUI views.
+- Do not restore separate top-level Readiness, Convert, Batch, Send, Metadata, or Logs navigation without an approved product change.
 - For user-facing statuses, use:
   - `ready`
   - `needs_fixes`

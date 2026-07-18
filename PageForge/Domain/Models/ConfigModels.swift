@@ -48,13 +48,36 @@ struct DeliveryProfile: Identifiable, Equatable, Codable, Sendable {
 struct AppConfig: Equatable, Codable, Sendable {
     var defaultProfile: String
     var profiles: [String: DeliveryProfile]
+    var defaultOutputDirectory: String
 
     init(
         defaultProfile: String = "default",
-        profiles: [String: DeliveryProfile] = ["default": DeliveryProfile()]
+        profiles: [String: DeliveryProfile] = ["default": DeliveryProfile()],
+        defaultOutputDirectory: String = ""
     ) {
         self.defaultProfile = defaultProfile
         self.profiles = profiles
+        self.defaultOutputDirectory = defaultOutputDirectory
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case defaultProfile
+        case profiles
+        case defaultOutputDirectory
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        defaultProfile = try container.decodeIfPresent(String.self, forKey: .defaultProfile)
+            ?? "default"
+        profiles = try container.decodeIfPresent(
+            [String: DeliveryProfile].self,
+            forKey: .profiles
+        ) ?? ["default": DeliveryProfile()]
+        defaultOutputDirectory = try container.decodeIfPresent(
+            String.self,
+            forKey: .defaultOutputDirectory
+        ) ?? ""
     }
 }
 

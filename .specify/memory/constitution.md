@@ -1,35 +1,26 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 → 1.1.0
-- Bump rationale: README-grounded rewrite; expanded product baseline, workflow
-  surface, operational contracts, and explicit current-vs-target UI direction
+- Version change: 1.1.0 → 2.0.0
+- Bump rationale: replace the mode-based and folder-first baseline with one
+  files-first queue while retaining advanced capabilities contextually
+- Product impact: one main queue and one Settings window replace peer workflow
+  destinations; Calibre, local-file safety, and delivery boundaries are unchanged
 - Modified principles:
-  - I. Mission-First Minimalism → I. Kindle-Ready Ebook Workflow Mission
-  - II. Lightweight Native Performance → II. Fast, Light, Beautiful Surface
-  - III. Calibre Engine Boundary → III. Calibre-Powered Engine Boundary
-  - IV. Safe Local-First Operations → IV. Safe Local-First Operations (expanded)
-  - V. Calm Premium Interface → V. Readiness-First Progressive UI
-- Added sections:
-  - Product Baseline (from README)
-  - Capability Map
-  - Operational Contracts
+  - I. Kindle-Ready Ebook Workflow Mission: queue-first primary flow
+  - II. Fast, Light, Beautiful Surface: desktop app is the sole primary surface
+  - V. Readiness-First Progressive UI → V. Files-First Progressive UI
+- Added sections: none
 - Removed sections: none
-- Templates requiring updates:
-  - .specify/templates/plan-template.md → ✅ updated
-  - .specify/templates/spec-template.md → ✅ updated
-  - .specify/templates/tasks-template.md → ✅ updated
-  - .specify/templates/checklist-template.md → ✅ updated
-  - .specify/templates/commands/*.md → ⚠ pending (directory absent)
-  - AGENTS.md → ✅ updated
-  - README.md → ⚠ pending (still documents current Python TUI as primary surface)
-- Source of truth used for this amendment:
-  - README.md (full)
+- Templates and guidance updated:
+  - .specify/templates/tasks-template.md
   - AGENTS.md
-  - User direction: desktop app that remains fast, light, minimal, and beautiful
-- Follow-up TODOs:
-  - Update README product story when desktop surface becomes primary
-  - Keep Python CLI contracts stable during desktop migration unless a breaking
-    change is explicitly approved
+  - README.md
+  - docs/desktop-migration.md
+- Reviewed without changes: plan-template.md, spec-template.md, and
+  checklist-template.md
+- Source of truth: specs/002-simplify-document-workflow/ and the delivered native
+  desktop workflow
+- Follow-up TODOs: none
 -->
 
 # PageForge Constitution
@@ -37,13 +28,13 @@ Sync Impact Report
 ## Core Principles
 
 ### I. Kindle-Ready Ebook Workflow Mission
-PageForge is a macOS product for preparing and managing ebook workflows. Its
-mission is to turn scattered ebook files into clean, ready-to-use books through
-conversion, repair, metadata cleanup, batch processing, and Kindle delivery.
+PageForge is a macOS product for preparing ebook files for Kindle. Its mission is
+to turn a user-selected collection of local EPUB, MOBI, and PDF files into
+Kindle-ready EPUB outputs that can be saved or sent.
 
 The non-negotiable primary flow is:
 
-`intake → readiness diagnose → safe fix/prepare → convert when needed → send or hand off`
+`add files → prepare sequentially → save or send`
 
 Every feature MUST strengthen that mission. PageForge MUST NOT become a Calibre
 replacement, generic digital library, reader social app, storefront, cloud sync
@@ -54,14 +45,12 @@ Breadth without that spine dilutes quality, speed, and trust.
 
 ### II. Fast, Light, Beautiful Surface
 PageForge MUST stay fast, lightweight, and visually calm. Local interactions
-MUST feel immediate. Long-running conversion, repair, batch, setup, and update
+MUST feel immediate. Long-running preparation, conversion, export, and delivery
 work MUST run without freezing the interface and MUST expose progress or clear
 status.
 
-Target product surface:
-
-- Primary: native macOS desktop app (Swift/SwiftUI)
-- Secondary during transition: existing Python TUI/CLI documented in README
+The native macOS desktop app is the primary product surface. The archived Python
+TUI/CLI is reference material only and MUST NOT constrain the desktop workflow.
 
 The desktop surface MUST prioritize drag-and-drop intake, low overhead, and a
 premium but restrained macOS aesthetic. Electron, generic web-shell runtimes, and
@@ -80,7 +69,7 @@ PageForge has two layers:
 
 PageForge MUST orchestrate Calibre for conversion, metadata mutation, and polish.
 PageForge-owned logic covers readiness diagnosis, safe structural repair
-workflow, delivery/handoff UX, setup/doctor guidance, and focused batch
+workflow, delivery/handoff UX, setup/doctor guidance, and focused queue
 orchestration. The product MUST NOT claim to replace Calibre.
 
 Missing or custom Calibre installs MUST be handled explicitly:
@@ -116,68 +105,58 @@ Readiness vocabulary is mandatory:
 
 Rationale: Trust depends on local control, explicit actions, and honest limits.
 
-### V. Readiness-First Progressive UI
-Readiness is the main workflow. The default entry experience MUST open on
-Readiness, not on settings or secondary tools.
-
-Core surfaces derived from the README:
-
-- Readiness
-- Convert
-- Batch
-- Send to Kindle
-- Metadata
-- Settings
-- Logs
+### V. Files-First Progressive UI
+The default experience MUST be one files-first document queue, not a mode picker,
+sidebar, dashboard, settings screen, or collection of peer workflow destinations.
 
 UI rules:
 
-- Readiness and intake come first
-- Convert, Batch, Metadata, Settings, and Logs are supporting surfaces
-- Settings holds profile configuration, Calibre status, Kindle profile status,
-  update actions, and log access
+- Drag-and-drop, picker, toolbar, and File menu MUST feed one shared intake path
+- EPUB, MOBI, and PDF items MUST coexist in one stable queue
+- Prepare, Save Files, and Send to Kindle MUST be the obvious primary actions
+- Settings MUST open in the native separate Settings window
+- Readiness details, metadata, advanced repair, logs, and troubleshooting MUST be
+  contextual or progressively disclosed rather than top-level destinations
 - Advanced or destructive controls use progressive disclosure
 - The UI MUST NOT present every internal engine concept as equal primary
   navigation
 
-Rationale: The README already centers Kindle preparation. The interface should
-make that order obvious.
+Rationale: A single queue keeps the common task obvious while preserving expert
+capabilities without turning engine concepts into navigation.
 
 ## Product Baseline
 
-This constitution treats the current README capability set as the product
-baseline that desktop work MUST preserve unless an explicit breaking change is
-approved.
+This constitution treats the files-first desktop workflow as the product
+baseline. Capability preservation does not require preserving legacy navigation,
+folder-oriented entrypoints, or one screen per engine operation.
 
 ### Capability Map
-- Interactive primary app experience (today: Textual TUI; target: SwiftUI desktop)
-- Readiness Doctor for Kindle-focused EPUB/MOBI audit and safe fixes
+- One native macOS queue for multi-file EPUB, MOBI, and PDF intake
+- Sequential preparation with independent per-file progress and results
+- Readiness diagnosis and safe preparation inside the primary workflow
 - Safe EPUB repair plus optional aggressive MOBI roundtrip mode
-- Direct conversion: `MOBI -> EPUB`, `PDF -> EPUB`, `EPUB -> MOBI`
-- Folder batch repair and conversion
-- Metadata inspection and title/author updates
-- Send to Kindle through SMTP profiles or Send to Kindle handoff
+- Required conversion: `MOBI -> EPUB` and `PDF -> EPUB` before preparation
+- Metadata inspection and repair as contextual advanced capabilities
+- Local output export plus SMTP Send to Kindle or explicit handoff
 - Calibre setup checks with visible feedback
-- App and Calibre update actions
-- Command-line shortcuts for automation and one-off tasks during transition
+- App and Calibre guidance in Settings
 
 ### Operational Contracts
 - Readiness audit without write: inspect only
 - Readiness with fix: write `*-kindle-ready.epub`
 - Structural repair command/output remains distinct: `*-repaired.epub`
 - MOBI is legacy input: convert to EPUB before full readiness preparation
-- Folder readiness/conversion/repair remain supported workflows
-- `doctor` checks local dependencies
-- `setup` can guide or install Calibre on macOS via Homebrew-oriented flow
-- `update` updates PageForge by default; Calibre updates only when explicitly
-  requested because Calibre is a separate native macOS app
+- Multi-file queue processing replaces folder-first batch as the primary model
+- Settings reports local dependency status and provides setup guidance
+- PageForge and Calibre update guidance remain separate because Calibre is a
+  separate native macOS app
 - Custom Calibre binary locations may be provided through configured paths/env
 - SMTP sender email authorization on Amazon remains a user responsibility
 - Named local profiles are supported for delivery configuration
 
 ### In Scope
 - macOS-only ebook preparation utility
-- Kindle-ready diagnosis, repair, conversion, light metadata edits, batch ops
+- Kindle-ready diagnosis, repair, conversion, light metadata edits, and queued processing
 - SMTP delivery and Send to Kindle handoff
 - Local config, Keychain secrets, setup/doctor/update guidance
 
@@ -202,16 +181,14 @@ approved.
   - delivery
 - Domain rules for readiness, repair, conversion orchestration, and delivery
   preconditions MUST live in shared services/models
-- UI and CLI entrypoints MUST NOT duplicate business rules
-- During desktop migration, preserve existing public CLI behavior unless a
-  breaking change is explicitly requested
+- UI and legacy entrypoints MUST NOT duplicate business rules
 - New mission-critical behavior SHOULD be implemented in a form reusable by the
   primary UI and any secondary automation surface
 
 ### Quality Gates
 - Every feature plan MUST pass a Constitution Check before design acceptance
-- Performance-sensitive paths MUST keep the UI responsive during convert/repair/
-  batch/update work
+- Performance-sensitive paths MUST keep the UI responsive during preparation,
+  conversion, export, and delivery work
 - Security-sensitive changes (Keychain, SMTP, file writes, process execution)
   MUST use safe defaults and explicit user intent
 - Tests are required for:
@@ -255,7 +232,7 @@ Primary references:
 - Reject work that violates mission, safety, Calibre boundary, or UI order
 - Temporary exceptions require Complexity Tracking with a simpler rejected
   alternative
-- Desktop migration work MUST preserve README workflow contracts unless an
-  explicit product change is approved
+- Product work MUST preserve the single-queue files-first workflow unless an
+  explicit constitution amendment approves a different primary model
 
-**Version**: 1.1.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-17
+**Version**: 2.0.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-18
