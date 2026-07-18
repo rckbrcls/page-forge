@@ -9,7 +9,7 @@
 ## Hard Workflow Rules
 
 - Never run build or run commands in this environment.
-- Do not start the TUI, app, dev servers, browser previews, or commands that execute the app unless the user explicitly allows it.
+- Do not start the app, TUI, dev servers, browser previews, or commands that execute the app unless the user explicitly allows it.
 - Do not create branches unless the user explicitly asks. Work on the current branch by default.
 - Do not revert or overwrite user changes. If the worktree is dirty, inspect the relevant diff and work with it.
 - Use `apply_patch` for manual file edits.
@@ -21,26 +21,23 @@
 
 ## Project Context
 
-- Governance source: `.specify/memory/constitution.md` (currently v1.1.0).
-- Product baseline source: `README.md`.
+- Governance source: `.specify/memory/constitution.md`.
+- Product baseline + migration docs: `README.md`, `docs/desktop-migration.md`, `specs/001-desktop-app-migration/`.
 - PageForge is a macOS-only ebook preparation utility.
-- Current shipped surface: Python terminal app (Textual TUI + Typer CLI).
-- Target primary surface under the constitution: lightweight native macOS desktop app (Swift/SwiftUI), preserving the README workflow contracts.
-- The console script is `page-forge = page_forge.cli:app`.
-- Main entrypoints today:
-  - `src/page_forge/cli.py`: Typer CLI and default TUI launch.
-  - `src/page_forge/tui_app.py`: Textual TUI.
-  - `src/page_forge/conversion.py`: EPUB/MOBI/PDF conversion and EPUB repair orchestration.
-  - `src/page_forge/epub_repair.py`: safe EPUB ZIP/container/OPF structure repair.
-  - `src/page_forge/readiness.py`: Kindle Readiness Doctor audit/fix/send handoff flow.
-  - `src/page_forge/kindle.py`: SMTP Send to Kindle delivery.
-  - `src/page_forge/config.py`: local config and macOS Keychain password storage.
+- **Primary surface**: native SwiftUI desktop app in `PageForge/` via `PageForge.xcodeproj`.
+- **Legacy surface**: Python TUI/CLI archived under `legacy/python-tui-cli/` for reference only.
+- Main desktop areas:
+  - `PageForge/App/`: app entry and navigation
+  - `PageForge/Features/`: Readiness, Convert, Batch, Send, Metadata, Settings, Logs
+  - `PageForge/Domain/`: models, services, jobs
+  - `PageForge/Integrations/`: Calibre, Keychain, Mail, FileSystem
+  - `PageForgeTests/`: domain tests
 
 ## Product Positioning
 
 - Do not frame PageForge as a Calibre replacement.
 - Treat Calibre as the underlying ebook engine.
-- PageForge should add value through a focused Kindle-ready workflow: diagnose, safely fix, prepare, optionally send, and provide Send to Kindle handoff.
+- PageForge adds value through a focused Kindle-ready workflow: diagnose, safely fix, prepare, optionally send, and provide Send to Kindle handoff.
 - Default experience is Readiness-first.
 - Supporting surfaces: Convert, Batch, Send to Kindle, Metadata, Settings, Logs.
 - For Kindle delivery, keep two paths clear:
@@ -53,32 +50,28 @@
 
 ## Implementation Conventions
 
-- Preserve existing public behavior unless the user explicitly asks for a breaking change.
-- Keep `repair-epub` behavior separate from Readiness Doctor behavior:
-  - Existing repair output remains `*-repaired.epub`.
-  - Readiness Doctor output uses `*-kindle-ready.epub`.
-- Keep shared logic in services that can be used by both CLI and TUI. Avoid duplicating rules between `cli.py` and `tui_app.py`.
-- For user-facing statuses, use the existing Readiness model vocabulary:
+- Keep `repair` behavior separate from Readiness prepare behavior:
+  - Repair output remains `*-repaired.epub`.
+  - Readiness prepare output uses `*-kindle-ready.epub`.
+- Keep shared logic in domain services. Avoid embedding readiness/repair/conversion rules in SwiftUI views.
+- For user-facing statuses, use:
   - `ready`
   - `needs_fixes`
   - `blocked`
-- For Readiness issues, use the existing severity vocabulary:
+- For Readiness issues, use:
   - `info`
   - `warning`
   - `error`
   - `fixable`
+- Do not develop new features in `legacy/`.
 
 ## Dependencies And Platform
 
-- Python version: `>=3.11`.
-- Package manager/tooling: `uv`.
-- Runtime dependencies: `typer`, `rich`, `textual`, `keyring`.
-- Dev dependency: `pytest`.
-- Calibre is external and required for conversion, metadata, and polish operations.
-- macOS assumptions are intentional:
-  - Homebrew for Calibre setup/update.
-  - Calibre macOS app paths for `ebook-convert`, `ebook-meta`, and `ebook-polish`.
-  - macOS Keychain via `keyring`.
+- Desktop: Swift / SwiftUI, macOS 14+
+- External: Calibre tools (`ebook-convert`, `ebook-meta`, `ebook-polish`)
+- Secrets: macOS Keychain
+- Optional discovery overrides: `EBOOK_CONVERT_PATH`, `EBOOK_META_PATH`, `EBOOK_POLISH_PATH`
+- Legacy Python tree remains only as reference under `legacy/python-tui-cli/`
 
 ## Verification
 
@@ -86,7 +79,7 @@
 - Use static checks that do not build or run the app when useful, such as:
   - `git diff --check`
   - targeted `rg`
-  - focused file reads with `sed`
+  - focused file reads
 - If tests or app execution are needed, ask the user first and be explicit about the exact command.
 
 ## Git And Delivery
