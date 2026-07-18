@@ -1,189 +1,655 @@
 // !$*UTF8*$!
 {
 	archiveVersion = 1;
-	classes = {};
+	classes = {
+	};
 	objectVersion = 56;
 	objects = {
+
 /* Begin PBXBuildFile section */
-		4157ECD8DFCE4F5C873CBCD4 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 030C5B4015EE4B52BDC136AA /* AppState.swift */; };
-		FD11E7CCD31B4567B8985A21 /* PageForgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFEC32912E464E5EA20E3182 /* PageForgeApp.swift */; };
-		A9864CCA7427406B8B40C977 /* BatchJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = B118A193694B4F5C9525BFF9 /* BatchJob.swift */; };
-		92B682CB768F4A8DB8D0451F /* ConversionJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = F86452A2D3094431B0329DE8 /* ConversionJob.swift */; };
-		554E02EC7F504DD8A3489119 /* MetadataJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 689B82A4B9E840E3917E6BDB /* MetadataJob.swift */; };
-		6FDC539AB4374F418B780B59 /* OperationJobCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0B2CE01D3D4D1A86C1A621 /* OperationJobCoordinator.swift */; };
-		F92F422D93E7477397AD7097 /* ReadinessAuditJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38E6673CED4E47529026B0F2 /* ReadinessAuditJob.swift */; };
-		93CD7D4782144B81A465C507 /* ReadinessPrepareJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DB0DCBA41734E84AE2A93E4 /* ReadinessPrepareJob.swift */; };
-		1CE68E4B28164E56AB8947B0 /* RepairJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D60B1E661494A2293542CB1 /* RepairJob.swift */; };
-		F9E6FF5D083C414DB8FF6E7E /* BatchModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62C1D447F25B4BB4AC036D49 /* BatchModels.swift */; };
-		E82FC5CD0DE34EFBA4287D7B /* ConfigModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A8B69C4E5D47788B9C70F2 /* ConfigModels.swift */; };
-		9342343A8D634F6A8345F848 /* ConversionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFDCB702309B498995EA2BE6 /* ConversionModels.swift */; };
-		3DB2E11BD24646DD9D01DB77 /* CoreModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0465A2AE35364291A2B1A657 /* CoreModels.swift */; };
-		173FA7497F4E40A0AE5FB68B /* DomainEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0661879B74E04D9599EECFE5 /* DomainEnums.swift */; };
-		DD637A244F49469DAFBF5243 /* DomainError.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF07F079DE34B788F13F1C6 /* DomainError.swift */; };
-		517DAA564D9947FB8D5817F6 /* MetadataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC3C12BC2D9462CB1D6715F /* MetadataModels.swift */; };
-		4B32C30EE4FC43DF9DB7B837 /* ReadinessModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 326713F2246D4C6399242667 /* ReadinessModels.swift */; };
-		95781959F1E744438878FF76 /* ConfigService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DB6DC72191410CBAC9A59B /* ConfigService.swift */; };
-		ED533A1FE2514FF08E7C4C7A /* ConversionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BFDCDF1E3564DADAD2237BB /* ConversionService.swift */; };
-		7703563A89C149669F806005 /* DeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9A3C9D2FC848DAA5ED9AC0 /* DeliveryService.swift */; };
-		35BDD61667144BE49D9854D3 /* DependencyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371B39B0E870418D904C6CF5 /* DependencyService.swift */; };
-		41DAD22F813945F9ACCCC1B3 /* EPUBInspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4660EA605A3B49F8ABBD14C6 /* EPUBInspection.swift */; };
-		8A9507D46E0146A98897F4E7 /* EPUBRepair.swift in Sources */ = {isa = PBXBuildFile; fileRef = 557CA88709CD4F73A5A1B64F /* EPUBRepair.swift */; };
-		E827283263B247FC8387F458 /* LogService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF8B599B4E9F44FA9E9D296D /* LogService.swift */; };
-		58622DAF129D4523BC6B2A69 /* MetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B136FFC9262C4C40911F6EB3 /* MetadataService.swift */; };
-		48EBF35CC428458BB0296480 /* OutputPathBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 891C3AB071EB4755A21C02C7 /* OutputPathBuilder.swift */; };
-		96916AFF786847DEA336FB42 /* ReadinessService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57019522767B4440BC159355 /* ReadinessService.swift */; };
-		0E1E56D139E1456FADBC46D7 /* RepairService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0627F822FF9F485F9C854631 /* RepairService.swift */; };
-		92110F40ED794A1481980652 /* SecretService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6823538E5E2F4CBDA80908BA /* SecretService.swift */; };
-		8F33B8B9AE89408E97264901 /* SetupGuidanceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434ED6AE836F47B3B276E9CA /* SetupGuidanceService.swift */; };
-		45C3100E0D2A4061AC416CE3 /* ProfileEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BCA2D2CA274D1195E33771 /* ProfileEditorView.swift */; };
-		1C79B41F3F2A4E59B758C58A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BCA233FE96E42C482FFD2B1 /* SettingsView.swift */; };
-		02997E6C8E9E40ECB7FB91AB /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EF4181F1BA9464C9745FC92 /* SettingsViewModel.swift */; };
-		EC2EB417A4474B6197FCEDA9 /* FileDropIntakeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38A703BB949B4B519DEBDC87 /* FileDropIntakeView.swift */; };
-		8BE1E88F91ED4A52AB82D1D8 /* OperationStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A23623CC66504E3BBED1F996 /* OperationStatusView.swift */; };
-		A61240F929E1445AA754CEDE /* CalibreProcessRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E96C7037396D4A47ACD1E5B7 /* CalibreProcessRunner.swift */; };
-		765DDFC3AC8747FFA49C4C19 /* CalibreToolLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CF0084914064B9483344890 /* CalibreToolLocator.swift */; };
-		D93F5F1120D0448BAB4951E3 /* ConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A878FB4D37944258F1265C0 /* ConfigStore.swift */; };
-		964CEC6AD2494D5EBEE1E75F /* FilePathValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82E599D02A314116BD50CDC2 /* FilePathValidator.swift */; };
-		A0EA55D613A24F989594902B /* FolderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDE241F30CCB4DC7A928F21E /* FolderEnumerator.swift */; };
-		0D688ADE2C1A44EAA1E7017C /* KeychainSecretStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98C6738420EB456C86F67715 /* KeychainSecretStore.swift */; };
-		45477055A79D4C20BD48CAAD /* SMTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB82F73870D74136BB9E152F /* SMTPClient.swift */; };
-		F1A000000000000000000001 /* Color+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B000000000000000000001 /* Color+Theme.swift */; };
-		F1A000000000000000000002 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B000000000000000000002 /* ThemeManager.swift */; };
-		F1A000000000000000000003 /* View+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B000000000000000000003 /* View+Theme.swift */; };
+		02997E6C8E9E40ECB7FB91AB /* Features/Settings/SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EF4181F1BA9464C9745FC92 /* Features/Settings/SettingsViewModel.swift */; };
+		0D688ADE2C1A44EAA1E7017C /* Integrations/Keychain/KeychainSecretStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98C6738420EB456C86F67715 /* Integrations/Keychain/KeychainSecretStore.swift */; };
+		0E1E56D139E1456FADBC46D7 /* Domain/Services/RepairService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0627F822FF9F485F9C854631 /* Domain/Services/RepairService.swift */; };
+		173FA7497F4E40A0AE5FB68B /* Domain/Models/DomainEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0661879B74E04D9599EECFE5 /* Domain/Models/DomainEnums.swift */; };
+		1C79B41F3F2A4E59B758C58A /* Features/Settings/SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BCA233FE96E42C482FFD2B1 /* Features/Settings/SettingsView.swift */; };
+		1CE68E4B28164E56AB8947B0 /* Domain/Jobs/RepairJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D60B1E661494A2293542CB1 /* Domain/Jobs/RepairJob.swift */; };
+		35BDD61667144BE49D9854D3 /* Domain/Services/DependencyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371B39B0E870418D904C6CF5 /* Domain/Services/DependencyService.swift */; };
+		3DB2E11BD24646DD9D01DB77 /* Domain/Models/CoreModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0465A2AE35364291A2B1A657 /* Domain/Models/CoreModels.swift */; };
+		4157ECD8DFCE4F5C873CBCD4 /* App/AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 030C5B4015EE4B52BDC136AA /* App/AppState.swift */; };
+		41DAD22F813945F9ACCCC1B3 /* Domain/Services/EPUBInspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4660EA605A3B49F8ABBD14C6 /* Domain/Services/EPUBInspection.swift */; };
+		45477055A79D4C20BD48CAAD /* Integrations/Mail/SMTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB82F73870D74136BB9E152F /* Integrations/Mail/SMTPClient.swift */; };
+		45C3100E0D2A4061AC416CE3 /* Features/Settings/ProfileEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8BCA2D2CA274D1195E33771 /* Features/Settings/ProfileEditorView.swift */; };
+		48EBF35CC428458BB0296480 /* Domain/Services/OutputPathBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 891C3AB071EB4755A21C02C7 /* Domain/Services/OutputPathBuilder.swift */; };
+		4B32C30EE4FC43DF9DB7B837 /* Domain/Models/ReadinessModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 326713F2246D4C6399242667 /* Domain/Models/ReadinessModels.swift */; };
+		517DAA564D9947FB8D5817F6 /* Domain/Models/MetadataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC3C12BC2D9462CB1D6715F /* Domain/Models/MetadataModels.swift */; };
+		554E02EC7F504DD8A3489119 /* Domain/Jobs/MetadataJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 689B82A4B9E840E3917E6BDB /* Domain/Jobs/MetadataJob.swift */; };
+		58622DAF129D4523BC6B2A69 /* Domain/Services/MetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B136FFC9262C4C40911F6EB3 /* Domain/Services/MetadataService.swift */; };
+		6FDC539AB4374F418B780B59 /* Domain/Jobs/OperationJobCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B0B2CE01D3D4D1A86C1A621 /* Domain/Jobs/OperationJobCoordinator.swift */; };
+		765DDFC3AC8747FFA49C4C19 /* Integrations/Calibre/CalibreToolLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CF0084914064B9483344890 /* Integrations/Calibre/CalibreToolLocator.swift */; };
+		7703563A89C149669F806005 /* Domain/Services/DeliveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9A3C9D2FC848DAA5ED9AC0 /* Domain/Services/DeliveryService.swift */; };
+		8A9507D46E0146A98897F4E7 /* Domain/Services/EPUBRepair.swift in Sources */ = {isa = PBXBuildFile; fileRef = 557CA88709CD4F73A5A1B64F /* Domain/Services/EPUBRepair.swift */; };
+		8BE1E88F91ED4A52AB82D1D8 /* Features/Shared/OperationStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A23623CC66504E3BBED1F996 /* Features/Shared/OperationStatusView.swift */; };
+		8F33B8B9AE89408E97264901 /* Domain/Services/SetupGuidanceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434ED6AE836F47B3B276E9CA /* Domain/Services/SetupGuidanceService.swift */; };
+		92110F40ED794A1481980652 /* Domain/Services/SecretService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6823538E5E2F4CBDA80908BA /* Domain/Services/SecretService.swift */; };
+		92B682CB768F4A8DB8D0451F /* Domain/Jobs/ConversionJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = F86452A2D3094431B0329DE8 /* Domain/Jobs/ConversionJob.swift */; };
+		9342343A8D634F6A8345F848 /* Domain/Models/ConversionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFDCB702309B498995EA2BE6 /* Domain/Models/ConversionModels.swift */; };
+		93CD7D4782144B81A465C507 /* Domain/Jobs/ReadinessPrepareJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DB0DCBA41734E84AE2A93E4 /* Domain/Jobs/ReadinessPrepareJob.swift */; };
+		95781959F1E744438878FF76 /* Domain/Services/ConfigService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DB6DC72191410CBAC9A59B /* Domain/Services/ConfigService.swift */; };
+		964CEC6AD2494D5EBEE1E75F /* Integrations/FileSystem/FilePathValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82E599D02A314116BD50CDC2 /* Integrations/FileSystem/FilePathValidator.swift */; };
+		96916AFF786847DEA336FB42 /* Domain/Services/ReadinessService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57019522767B4440BC159355 /* Domain/Services/ReadinessService.swift */; };
+		A0EA55D613A24F989594902B /* Integrations/FileSystem/FolderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDE241F30CCB4DC7A928F21E /* Integrations/FileSystem/FolderEnumerator.swift */; };
+		A61240F929E1445AA754CEDE /* Integrations/Calibre/CalibreProcessRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = E96C7037396D4A47ACD1E5B7 /* Integrations/Calibre/CalibreProcessRunner.swift */; };
+		A94A5FDD61874C7285024803 /* Domain/ReadinessServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41444576580D433B848A92F3 /* Domain/ReadinessServiceTests.swift */; };
+		A9864CCA7427406B8B40C977 /* Domain/Jobs/BatchJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = B118A193694B4F5C9525BFF9 /* Domain/Jobs/BatchJob.swift */; };
+		AB0000000000000000000001 /* App/MainWorkflowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* App/MainWorkflowView.swift */; };
+		AB0000000000000000000002 /* Domain/Models/DocumentWorkflowModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000002 /* Domain/Models/DocumentWorkflowModels.swift */; };
+		AB0000000000000000000003 /* Domain/Services/DocumentIntakeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000003 /* Domain/Services/DocumentIntakeService.swift */; };
+		AB0000000000000000000004 /* Domain/Services/DocumentPreparationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000004 /* Domain/Services/DocumentPreparationService.swift */; };
+		AB0000000000000000000005 /* Features/Workflow/DocumentQueueRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000005 /* Features/Workflow/DocumentQueueRow.swift */; };
+		AB0000000000000000000006 /* Features/Workflow/DocumentWorkflowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000006 /* Features/Workflow/DocumentWorkflowView.swift */; };
+		AB0000000000000000000007 /* Features/Workflow/DocumentWorkflowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000007 /* Features/Workflow/DocumentWorkflowViewModel.swift */; };
+		AB0000000000000000000008 /* Integrations/FileSystem/PreparedOutputExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000008 /* Integrations/FileSystem/PreparedOutputExporter.swift */; };
+		AD0000000000000000000001 /* Support/TemporaryDocumentFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000001 /* Support/TemporaryDocumentFactory.swift */; };
+		AD0000000000000000000002 /* Domain/DocumentWorkflowModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000002 /* Domain/DocumentWorkflowModelsTests.swift */; };
+		AD0000000000000000000003 /* Domain/OperationJobCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000003 /* Domain/OperationJobCoordinatorTests.swift */; };
+		AD0000000000000000000004 /* Domain/DocumentIntakeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000004 /* Domain/DocumentIntakeServiceTests.swift */; };
+		AD0000000000000000000005 /* Domain/DocumentPreparationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000005 /* Domain/DocumentPreparationServiceTests.swift */; };
+		AD0000000000000000000006 /* Domain/PreparedOutputExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000006 /* Domain/PreparedOutputExporterTests.swift */; };
+		AD0000000000000000000007 /* Domain/DocumentDeliveryWorkflowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000007 /* Domain/DocumentDeliveryWorkflowTests.swift */; };
+		AD0000000000000000000008 /* Features/SettingsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000008 /* Features/SettingsViewModelTests.swift */; };
+		AD0000000000000000000009 /* Features/DocumentWorkflowViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000009 /* Features/DocumentWorkflowViewModelTests.swift */; };
+		AD000000000000000000000A /* Features/DocumentWorkflowOutputTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC000000000000000000000A /* Features/DocumentWorkflowOutputTests.swift */; };
+		AD000000000000000000000B /* Features/DocumentWorkflowAdvancedActionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC000000000000000000000B /* Features/DocumentWorkflowAdvancedActionsTests.swift */; };
+		B9FE78A0D0634735A6C4985D /* Domain/RepairServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8F2E733CC24DAABD4FFD25 /* Domain/RepairServiceTests.swift */; };
+		D93F5F1120D0448BAB4951E3 /* Integrations/FileSystem/ConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A878FB4D37944258F1265C0 /* Integrations/FileSystem/ConfigStore.swift */; };
+		DD637A244F49469DAFBF5243 /* Domain/Models/DomainError.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF07F079DE34B788F13F1C6 /* Domain/Models/DomainError.swift */; };
+		E827283263B247FC8387F458 /* Domain/Services/LogService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF8B599B4E9F44FA9E9D296D /* Domain/Services/LogService.swift */; };
+		E82FC5CD0DE34EFBA4287D7B /* Domain/Models/ConfigModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A8B69C4E5D47788B9C70F2 /* Domain/Models/ConfigModels.swift */; };
+		EC2EB417A4474B6197FCEDA9 /* Features/Shared/FileDropIntakeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38A703BB949B4B519DEBDC87 /* Features/Shared/FileDropIntakeView.swift */; };
+		ED533A1FE2514FF08E7C4C7A /* Domain/Services/ConversionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BFDCDF1E3564DADAD2237BB /* Domain/Services/ConversionService.swift */; };
+		F1A000000000000000000001 /* DesignSystem/Color+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B000000000000000000001 /* DesignSystem/Color+Theme.swift */; };
+		F1A000000000000000000002 /* DesignSystem/ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B000000000000000000002 /* DesignSystem/ThemeManager.swift */; };
+		F1A000000000000000000003 /* DesignSystem/View+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B000000000000000000003 /* DesignSystem/View+Theme.swift */; };
 		F1A000000000000000000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F1B000000000000000000004 /* Assets.xcassets */; };
-		FE1E165A7B3047C78451E601 /* ConfigSecretTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBC8D53112B49B9B629D8CF /* ConfigSecretTests.swift */; };
-		A94A5FDD61874C7285024803 /* ReadinessServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41444576580D433B848A92F3 /* ReadinessServiceTests.swift */; };
-		B9FE78A0D0634735A6C4985D /* RepairServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D8F2E733CC24DAABD4FFD25 /* RepairServiceTests.swift */; };
-		AB0000000000000000000001 /* MainWorkflowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* MainWorkflowView.swift */; };
-		AB0000000000000000000002 /* DocumentWorkflowModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000002 /* DocumentWorkflowModels.swift */; };
-		AB0000000000000000000003 /* DocumentIntakeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000003 /* DocumentIntakeService.swift */; };
-		AB0000000000000000000004 /* DocumentPreparationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000004 /* DocumentPreparationService.swift */; };
-		AB0000000000000000000005 /* DocumentQueueRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000005 /* DocumentQueueRow.swift */; };
-		AB0000000000000000000006 /* DocumentWorkflowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000006 /* DocumentWorkflowView.swift */; };
-		AB0000000000000000000007 /* DocumentWorkflowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000007 /* DocumentWorkflowViewModel.swift */; };
-		AB0000000000000000000008 /* PreparedOutputExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000008 /* PreparedOutputExporter.swift */; };
-		AD0000000000000000000001 /* TemporaryDocumentFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000001 /* TemporaryDocumentFactory.swift */; };
-		AD0000000000000000000002 /* DocumentWorkflowModelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000002 /* DocumentWorkflowModelsTests.swift */; };
-		AD0000000000000000000003 /* OperationJobCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000003 /* OperationJobCoordinatorTests.swift */; };
-		AD0000000000000000000004 /* DocumentIntakeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000004 /* DocumentIntakeServiceTests.swift */; };
-		AD0000000000000000000005 /* DocumentPreparationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000005 /* DocumentPreparationServiceTests.swift */; };
-		AD0000000000000000000006 /* PreparedOutputExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000006 /* PreparedOutputExporterTests.swift */; };
-		AD0000000000000000000007 /* DocumentDeliveryWorkflowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000007 /* DocumentDeliveryWorkflowTests.swift */; };
-		AD0000000000000000000008 /* SettingsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000008 /* SettingsViewModelTests.swift */; };
-		AD0000000000000000000009 /* DocumentWorkflowViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0000000000000000000009 /* DocumentWorkflowViewModelTests.swift */; };
-		AD000000000000000000000A /* DocumentWorkflowOutputTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC000000000000000000000A /* DocumentWorkflowOutputTests.swift */; };
-		AD000000000000000000000B /* DocumentWorkflowAdvancedActionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC000000000000000000000B /* DocumentWorkflowAdvancedActionsTests.swift */; };
+		F92F422D93E7477397AD7097 /* Domain/Jobs/ReadinessAuditJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38E6673CED4E47529026B0F2 /* Domain/Jobs/ReadinessAuditJob.swift */; };
+		F9E6FF5D083C414DB8FF6E7E /* Domain/Models/BatchModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62C1D447F25B4BB4AC036D49 /* Domain/Models/BatchModels.swift */; };
+		FD11E7CCD31B4567B8985A21 /* App/PageForgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFEC32912E464E5EA20E3182 /* App/PageForgeApp.swift */; };
+		FE1E165A7B3047C78451E601 /* Domain/ConfigSecretTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BBC8D53112B49B9B629D8CF /* Domain/ConfigSecretTests.swift */; };
 /* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
-		913738ABE467495E94F0916C /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = C5145871CAA840719F399263 /* Project object */; proxyType = 1; remoteGlobalIDString = B0672975C7684AE8B2A5BA7E; remoteInfo = PageForge; };
+		913738ABE467495E94F0916C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C5145871CAA840719F399263 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B0672975C7684AE8B2A5BA7E;
+			remoteInfo = PageForge;
+		};
 /* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		030C5B4015EE4B52BDC136AA /* App/AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/AppState.swift; sourceTree = "<group>"; };
+		0465A2AE35364291A2B1A657 /* Domain/Models/CoreModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Models/CoreModels.swift; sourceTree = "<group>"; };
+		0627F822FF9F485F9C854631 /* Domain/Services/RepairService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/RepairService.swift; sourceTree = "<group>"; };
+		0661879B74E04D9599EECFE5 /* Domain/Models/DomainEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Models/DomainEnums.swift; sourceTree = "<group>"; };
+		0DB0DCBA41734E84AE2A93E4 /* Domain/Jobs/ReadinessPrepareJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Jobs/ReadinessPrepareJob.swift; sourceTree = "<group>"; };
+		2BFDCDF1E3564DADAD2237BB /* Domain/Services/ConversionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/ConversionService.swift; sourceTree = "<group>"; };
+		2EF4181F1BA9464C9745FC92 /* Features/Settings/SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Settings/SettingsViewModel.swift; sourceTree = "<group>"; };
+		326713F2246D4C6399242667 /* Domain/Models/ReadinessModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Models/ReadinessModels.swift; sourceTree = "<group>"; };
+		371B39B0E870418D904C6CF5 /* Domain/Services/DependencyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/DependencyService.swift; sourceTree = "<group>"; };
+		38A703BB949B4B519DEBDC87 /* Features/Shared/FileDropIntakeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Shared/FileDropIntakeView.swift; sourceTree = "<group>"; };
+		38E6673CED4E47529026B0F2 /* Domain/Jobs/ReadinessAuditJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Jobs/ReadinessAuditJob.swift; sourceTree = "<group>"; };
+		3CF0084914064B9483344890 /* Integrations/Calibre/CalibreToolLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Integrations/Calibre/CalibreToolLocator.swift; sourceTree = "<group>"; };
+		3D8F2E733CC24DAABD4FFD25 /* Domain/RepairServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/RepairServiceTests.swift; sourceTree = "<group>"; };
+		41444576580D433B848A92F3 /* Domain/ReadinessServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/ReadinessServiceTests.swift; sourceTree = "<group>"; };
+		434ED6AE836F47B3B276E9CA /* Domain/Services/SetupGuidanceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/SetupGuidanceService.swift; sourceTree = "<group>"; };
+		4660EA605A3B49F8ABBD14C6 /* Domain/Services/EPUBInspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/EPUBInspection.swift; sourceTree = "<group>"; };
+		4D9A3C9D2FC848DAA5ED9AC0 /* Domain/Services/DeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/DeliveryService.swift; sourceTree = "<group>"; };
+		557CA88709CD4F73A5A1B64F /* Domain/Services/EPUBRepair.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/EPUBRepair.swift; sourceTree = "<group>"; };
+		57019522767B4440BC159355 /* Domain/Services/ReadinessService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/ReadinessService.swift; sourceTree = "<group>"; };
+		5B0B2CE01D3D4D1A86C1A621 /* Domain/Jobs/OperationJobCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Jobs/OperationJobCoordinator.swift; sourceTree = "<group>"; };
+		62C1D447F25B4BB4AC036D49 /* Domain/Models/BatchModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Models/BatchModels.swift; sourceTree = "<group>"; };
+		6823538E5E2F4CBDA80908BA /* Domain/Services/SecretService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/SecretService.swift; sourceTree = "<group>"; };
+		689B82A4B9E840E3917E6BDB /* Domain/Jobs/MetadataJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Jobs/MetadataJob.swift; sourceTree = "<group>"; };
+		6A878FB4D37944258F1265C0 /* Integrations/FileSystem/ConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Integrations/FileSystem/ConfigStore.swift; sourceTree = "<group>"; };
+		6BBC8D53112B49B9B629D8CF /* Domain/ConfigSecretTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/ConfigSecretTests.swift; sourceTree = "<group>"; };
 		6EFB9EE159E7419DB7A288FC /* PageForge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PageForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7D60B1E661494A2293542CB1 /* Domain/Jobs/RepairJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Jobs/RepairJob.swift; sourceTree = "<group>"; };
+		82E599D02A314116BD50CDC2 /* Integrations/FileSystem/FilePathValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Integrations/FileSystem/FilePathValidator.swift; sourceTree = "<group>"; };
+		891C3AB071EB4755A21C02C7 /* Domain/Services/OutputPathBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/OutputPathBuilder.swift; sourceTree = "<group>"; };
+		8BCA233FE96E42C482FFD2B1 /* Features/Settings/SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Settings/SettingsView.swift; sourceTree = "<group>"; };
+		98C6738420EB456C86F67715 /* Integrations/Keychain/KeychainSecretStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Integrations/Keychain/KeychainSecretStore.swift; sourceTree = "<group>"; };
+		A23623CC66504E3BBED1F996 /* Features/Shared/OperationStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Shared/OperationStatusView.swift; sourceTree = "<group>"; };
+		AA0000000000000000000001 /* App/MainWorkflowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/MainWorkflowView.swift; sourceTree = "<group>"; };
+		AA0000000000000000000002 /* Domain/Models/DocumentWorkflowModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Models/DocumentWorkflowModels.swift; sourceTree = "<group>"; };
+		AA0000000000000000000003 /* Domain/Services/DocumentIntakeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/DocumentIntakeService.swift; sourceTree = "<group>"; };
+		AA0000000000000000000004 /* Domain/Services/DocumentPreparationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/DocumentPreparationService.swift; sourceTree = "<group>"; };
+		AA0000000000000000000005 /* Features/Workflow/DocumentQueueRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Workflow/DocumentQueueRow.swift; sourceTree = "<group>"; };
+		AA0000000000000000000006 /* Features/Workflow/DocumentWorkflowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Workflow/DocumentWorkflowView.swift; sourceTree = "<group>"; };
+		AA0000000000000000000007 /* Features/Workflow/DocumentWorkflowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Workflow/DocumentWorkflowViewModel.swift; sourceTree = "<group>"; };
+		AA0000000000000000000008 /* Integrations/FileSystem/PreparedOutputExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Integrations/FileSystem/PreparedOutputExporter.swift; sourceTree = "<group>"; };
+		AC0000000000000000000001 /* Support/TemporaryDocumentFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Support/TemporaryDocumentFactory.swift; sourceTree = "<group>"; };
+		AC0000000000000000000002 /* Domain/DocumentWorkflowModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/DocumentWorkflowModelsTests.swift; sourceTree = "<group>"; };
+		AC0000000000000000000003 /* Domain/OperationJobCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/OperationJobCoordinatorTests.swift; sourceTree = "<group>"; };
+		AC0000000000000000000004 /* Domain/DocumentIntakeServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/DocumentIntakeServiceTests.swift; sourceTree = "<group>"; };
+		AC0000000000000000000005 /* Domain/DocumentPreparationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/DocumentPreparationServiceTests.swift; sourceTree = "<group>"; };
+		AC0000000000000000000006 /* Domain/PreparedOutputExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/PreparedOutputExporterTests.swift; sourceTree = "<group>"; };
+		AC0000000000000000000007 /* Domain/DocumentDeliveryWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/DocumentDeliveryWorkflowTests.swift; sourceTree = "<group>"; };
+		AC0000000000000000000008 /* Features/SettingsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/SettingsViewModelTests.swift; sourceTree = "<group>"; };
+		AC0000000000000000000009 /* Features/DocumentWorkflowViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/DocumentWorkflowViewModelTests.swift; sourceTree = "<group>"; };
+		AC000000000000000000000A /* Features/DocumentWorkflowOutputTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/DocumentWorkflowOutputTests.swift; sourceTree = "<group>"; };
+		AC000000000000000000000B /* Features/DocumentWorkflowAdvancedActionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/DocumentWorkflowAdvancedActionsTests.swift; sourceTree = "<group>"; };
+		B118A193694B4F5C9525BFF9 /* Domain/Jobs/BatchJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Jobs/BatchJob.swift; sourceTree = "<group>"; };
+		B136FFC9262C4C40911F6EB3 /* Domain/Services/MetadataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/MetadataService.swift; sourceTree = "<group>"; };
+		BB82F73870D74136BB9E152F /* Integrations/Mail/SMTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Integrations/Mail/SMTPClient.swift; sourceTree = "<group>"; };
+		BDC3C12BC2D9462CB1D6715F /* Domain/Models/MetadataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Models/MetadataModels.swift; sourceTree = "<group>"; };
+		CFEC32912E464E5EA20E3182 /* App/PageForgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/PageForgeApp.swift; sourceTree = "<group>"; };
+		D8BCA2D2CA274D1195E33771 /* Features/Settings/ProfileEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Settings/ProfileEditorView.swift; sourceTree = "<group>"; };
+		DDE241F30CCB4DC7A928F21E /* Integrations/FileSystem/FolderEnumerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Integrations/FileSystem/FolderEnumerator.swift; sourceTree = "<group>"; };
+		DFDCB702309B498995EA2BE6 /* Domain/Models/ConversionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Models/ConversionModels.swift; sourceTree = "<group>"; };
 		E4FF6DBF170F44F7B70BFA41 /* PageForgeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PageForgeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		030C5B4015EE4B52BDC136AA /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "App/AppState.swift"; sourceTree = "<group>"; };
-		CFEC32912E464E5EA20E3182 /* PageForgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "App/PageForgeApp.swift"; sourceTree = "<group>"; };
-		B118A193694B4F5C9525BFF9 /* BatchJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Jobs/BatchJob.swift"; sourceTree = "<group>"; };
-		F86452A2D3094431B0329DE8 /* ConversionJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Jobs/ConversionJob.swift"; sourceTree = "<group>"; };
-		689B82A4B9E840E3917E6BDB /* MetadataJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Jobs/MetadataJob.swift"; sourceTree = "<group>"; };
-		5B0B2CE01D3D4D1A86C1A621 /* OperationJobCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Jobs/OperationJobCoordinator.swift"; sourceTree = "<group>"; };
-		38E6673CED4E47529026B0F2 /* ReadinessAuditJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Jobs/ReadinessAuditJob.swift"; sourceTree = "<group>"; };
-		0DB0DCBA41734E84AE2A93E4 /* ReadinessPrepareJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Jobs/ReadinessPrepareJob.swift"; sourceTree = "<group>"; };
-		7D60B1E661494A2293542CB1 /* RepairJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Jobs/RepairJob.swift"; sourceTree = "<group>"; };
-		62C1D447F25B4BB4AC036D49 /* BatchModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Models/BatchModels.swift"; sourceTree = "<group>"; };
-		F4A8B69C4E5D47788B9C70F2 /* ConfigModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Models/ConfigModels.swift"; sourceTree = "<group>"; };
-		DFDCB702309B498995EA2BE6 /* ConversionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Models/ConversionModels.swift"; sourceTree = "<group>"; };
-		0465A2AE35364291A2B1A657 /* CoreModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Models/CoreModels.swift"; sourceTree = "<group>"; };
-		0661879B74E04D9599EECFE5 /* DomainEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Models/DomainEnums.swift"; sourceTree = "<group>"; };
-		FAF07F079DE34B788F13F1C6 /* DomainError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Models/DomainError.swift"; sourceTree = "<group>"; };
-		BDC3C12BC2D9462CB1D6715F /* MetadataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Models/MetadataModels.swift"; sourceTree = "<group>"; };
-		326713F2246D4C6399242667 /* ReadinessModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Models/ReadinessModels.swift"; sourceTree = "<group>"; };
-		E8DB6DC72191410CBAC9A59B /* ConfigService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/ConfigService.swift"; sourceTree = "<group>"; };
-		2BFDCDF1E3564DADAD2237BB /* ConversionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/ConversionService.swift"; sourceTree = "<group>"; };
-		4D9A3C9D2FC848DAA5ED9AC0 /* DeliveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/DeliveryService.swift"; sourceTree = "<group>"; };
-		371B39B0E870418D904C6CF5 /* DependencyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/DependencyService.swift"; sourceTree = "<group>"; };
-		4660EA605A3B49F8ABBD14C6 /* EPUBInspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/EPUBInspection.swift"; sourceTree = "<group>"; };
-		557CA88709CD4F73A5A1B64F /* EPUBRepair.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/EPUBRepair.swift"; sourceTree = "<group>"; };
-		FF8B599B4E9F44FA9E9D296D /* LogService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/LogService.swift"; sourceTree = "<group>"; };
-		B136FFC9262C4C40911F6EB3 /* MetadataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/MetadataService.swift"; sourceTree = "<group>"; };
-		891C3AB071EB4755A21C02C7 /* OutputPathBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/OutputPathBuilder.swift"; sourceTree = "<group>"; };
-		57019522767B4440BC159355 /* ReadinessService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/ReadinessService.swift"; sourceTree = "<group>"; };
-		0627F822FF9F485F9C854631 /* RepairService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/RepairService.swift"; sourceTree = "<group>"; };
-		6823538E5E2F4CBDA80908BA /* SecretService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/SecretService.swift"; sourceTree = "<group>"; };
-		434ED6AE836F47B3B276E9CA /* SetupGuidanceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/SetupGuidanceService.swift"; sourceTree = "<group>"; };
-		D8BCA2D2CA274D1195E33771 /* ProfileEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/Settings/ProfileEditorView.swift"; sourceTree = "<group>"; };
-		8BCA233FE96E42C482FFD2B1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/Settings/SettingsView.swift"; sourceTree = "<group>"; };
-		2EF4181F1BA9464C9745FC92 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/Settings/SettingsViewModel.swift"; sourceTree = "<group>"; };
-		38A703BB949B4B519DEBDC87 /* FileDropIntakeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/Shared/FileDropIntakeView.swift"; sourceTree = "<group>"; };
-		A23623CC66504E3BBED1F996 /* OperationStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/Shared/OperationStatusView.swift"; sourceTree = "<group>"; };
-		E96C7037396D4A47ACD1E5B7 /* CalibreProcessRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Integrations/Calibre/CalibreProcessRunner.swift"; sourceTree = "<group>"; };
-		3CF0084914064B9483344890 /* CalibreToolLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Integrations/Calibre/CalibreToolLocator.swift"; sourceTree = "<group>"; };
-		6A878FB4D37944258F1265C0 /* ConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Integrations/FileSystem/ConfigStore.swift"; sourceTree = "<group>"; };
-		82E599D02A314116BD50CDC2 /* FilePathValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Integrations/FileSystem/FilePathValidator.swift"; sourceTree = "<group>"; };
-		DDE241F30CCB4DC7A928F21E /* FolderEnumerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Integrations/FileSystem/FolderEnumerator.swift"; sourceTree = "<group>"; };
-		98C6738420EB456C86F67715 /* KeychainSecretStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Integrations/Keychain/KeychainSecretStore.swift"; sourceTree = "<group>"; };
-		BB82F73870D74136BB9E152F /* SMTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Integrations/Mail/SMTPClient.swift"; sourceTree = "<group>"; };
-		F1B000000000000000000001 /* Color+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DesignSystem/Color+Theme.swift"; sourceTree = "<group>"; };
-		F1B000000000000000000002 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DesignSystem/ThemeManager.swift"; sourceTree = "<group>"; };
-		F1B000000000000000000003 /* View+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DesignSystem/View+Theme.swift"; sourceTree = "<group>"; };
+		E8DB6DC72191410CBAC9A59B /* Domain/Services/ConfigService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/ConfigService.swift; sourceTree = "<group>"; };
+		E96C7037396D4A47ACD1E5B7 /* Integrations/Calibre/CalibreProcessRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Integrations/Calibre/CalibreProcessRunner.swift; sourceTree = "<group>"; };
+		F1B000000000000000000001 /* DesignSystem/Color+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DesignSystem/Color+Theme.swift"; sourceTree = "<group>"; };
+		F1B000000000000000000002 /* DesignSystem/ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem/ThemeManager.swift; sourceTree = "<group>"; };
+		F1B000000000000000000003 /* DesignSystem/View+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DesignSystem/View+Theme.swift"; sourceTree = "<group>"; };
 		F1B000000000000000000004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		6BBC8D53112B49B9B629D8CF /* ConfigSecretTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/ConfigSecretTests.swift"; sourceTree = "<group>"; };
-		41444576580D433B848A92F3 /* ReadinessServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/ReadinessServiceTests.swift"; sourceTree = "<group>"; };
-		3D8F2E733CC24DAABD4FFD25 /* RepairServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/RepairServiceTests.swift"; sourceTree = "<group>"; };
-		AA0000000000000000000001 /* MainWorkflowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "App/MainWorkflowView.swift"; sourceTree = "<group>"; };
-		AA0000000000000000000002 /* DocumentWorkflowModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Models/DocumentWorkflowModels.swift"; sourceTree = "<group>"; };
-		AA0000000000000000000003 /* DocumentIntakeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/DocumentIntakeService.swift"; sourceTree = "<group>"; };
-		AA0000000000000000000004 /* DocumentPreparationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/Services/DocumentPreparationService.swift"; sourceTree = "<group>"; };
-		AA0000000000000000000005 /* DocumentQueueRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/Workflow/DocumentQueueRow.swift"; sourceTree = "<group>"; };
-		AA0000000000000000000006 /* DocumentWorkflowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/Workflow/DocumentWorkflowView.swift"; sourceTree = "<group>"; };
-		AA0000000000000000000007 /* DocumentWorkflowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/Workflow/DocumentWorkflowViewModel.swift"; sourceTree = "<group>"; };
-		AA0000000000000000000008 /* PreparedOutputExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Integrations/FileSystem/PreparedOutputExporter.swift"; sourceTree = "<group>"; };
-		AC0000000000000000000001 /* TemporaryDocumentFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Support/TemporaryDocumentFactory.swift"; sourceTree = "<group>"; };
-		AC0000000000000000000002 /* DocumentWorkflowModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/DocumentWorkflowModelsTests.swift"; sourceTree = "<group>"; };
-		AC0000000000000000000003 /* OperationJobCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/OperationJobCoordinatorTests.swift"; sourceTree = "<group>"; };
-		AC0000000000000000000004 /* DocumentIntakeServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/DocumentIntakeServiceTests.swift"; sourceTree = "<group>"; };
-		AC0000000000000000000005 /* DocumentPreparationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/DocumentPreparationServiceTests.swift"; sourceTree = "<group>"; };
-		AC0000000000000000000006 /* PreparedOutputExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/PreparedOutputExporterTests.swift"; sourceTree = "<group>"; };
-		AC0000000000000000000007 /* DocumentDeliveryWorkflowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Domain/DocumentDeliveryWorkflowTests.swift"; sourceTree = "<group>"; };
-		AC0000000000000000000008 /* SettingsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/SettingsViewModelTests.swift"; sourceTree = "<group>"; };
-		AC0000000000000000000009 /* DocumentWorkflowViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/DocumentWorkflowViewModelTests.swift"; sourceTree = "<group>"; };
-		AC000000000000000000000A /* DocumentWorkflowOutputTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/DocumentWorkflowOutputTests.swift"; sourceTree = "<group>"; };
-		AC000000000000000000000B /* DocumentWorkflowAdvancedActionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Features/DocumentWorkflowAdvancedActionsTests.swift"; sourceTree = "<group>"; };
+		F4A8B69C4E5D47788B9C70F2 /* Domain/Models/ConfigModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Models/ConfigModels.swift; sourceTree = "<group>"; };
+		F86452A2D3094431B0329DE8 /* Domain/Jobs/ConversionJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Jobs/ConversionJob.swift; sourceTree = "<group>"; };
+		FAF07F079DE34B788F13F1C6 /* Domain/Models/DomainError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Models/DomainError.swift; sourceTree = "<group>"; };
+		FF8B599B4E9F44FA9E9D296D /* Domain/Services/LogService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Domain/Services/LogService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
 /* Begin PBXFrameworksBuildPhase section */
-		0CF7878963DD49C4A3FF9E2D /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-		CFB4C6B7C09448738882B634 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		0CF7878963DD49C4A3FF9E2D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CFB4C6B7C09448738882B634 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
-		260FFDDED0A84B3394BD8063 = {isa = PBXGroup; children = (0DE53666FC3A45C4AD97F16D /* PageForge */, 75F24FE634234DD9A17F9524 /* PageForgeTests */, FE383B11E10A4ACE8AF4044D /* Products */,); sourceTree = "<group>"; };
-		FE383B11E10A4ACE8AF4044D /* Products */ = {isa = PBXGroup; children = (6EFB9EE159E7419DB7A288FC /* PageForge.app */, E4FF6DBF170F44F7B70BFA41 /* PageForgeTests.xctest */,); name = Products; sourceTree = "<group>"; };
-		0DE53666FC3A45C4AD97F16D /* PageForge */ = {isa = PBXGroup; children = (AA0000000000000000000001 /* MainWorkflowView.swift */,AA0000000000000000000002 /* DocumentWorkflowModels.swift */,AA0000000000000000000003 /* DocumentIntakeService.swift */,AA0000000000000000000004 /* DocumentPreparationService.swift */,AA0000000000000000000005 /* DocumentQueueRow.swift */,AA0000000000000000000006 /* DocumentWorkflowView.swift */,AA0000000000000000000007 /* DocumentWorkflowViewModel.swift */,AA0000000000000000000008 /* PreparedOutputExporter.swift */,030C5B4015EE4B52BDC136AA /* AppState.swift */,CFEC32912E464E5EA20E3182 /* PageForgeApp.swift */,F1B000000000000000000001 /* Color+Theme.swift */,F1B000000000000000000002 /* ThemeManager.swift */,F1B000000000000000000003 /* View+Theme.swift */,F1B000000000000000000004 /* Assets.xcassets */,B118A193694B4F5C9525BFF9 /* BatchJob.swift */,F86452A2D3094431B0329DE8 /* ConversionJob.swift */,689B82A4B9E840E3917E6BDB /* MetadataJob.swift */,5B0B2CE01D3D4D1A86C1A621 /* OperationJobCoordinator.swift */,38E6673CED4E47529026B0F2 /* ReadinessAuditJob.swift */,0DB0DCBA41734E84AE2A93E4 /* ReadinessPrepareJob.swift */,7D60B1E661494A2293542CB1 /* RepairJob.swift */,62C1D447F25B4BB4AC036D49 /* BatchModels.swift */,F4A8B69C4E5D47788B9C70F2 /* ConfigModels.swift */,DFDCB702309B498995EA2BE6 /* ConversionModels.swift */,0465A2AE35364291A2B1A657 /* CoreModels.swift */,0661879B74E04D9599EECFE5 /* DomainEnums.swift */,FAF07F079DE34B788F13F1C6 /* DomainError.swift */,BDC3C12BC2D9462CB1D6715F /* MetadataModels.swift */,326713F2246D4C6399242667 /* ReadinessModels.swift */,E8DB6DC72191410CBAC9A59B /* ConfigService.swift */,2BFDCDF1E3564DADAD2237BB /* ConversionService.swift */,4D9A3C9D2FC848DAA5ED9AC0 /* DeliveryService.swift */,371B39B0E870418D904C6CF5 /* DependencyService.swift */,4660EA605A3B49F8ABBD14C6 /* EPUBInspection.swift */,557CA88709CD4F73A5A1B64F /* EPUBRepair.swift */,FF8B599B4E9F44FA9E9D296D /* LogService.swift */,B136FFC9262C4C40911F6EB3 /* MetadataService.swift */,891C3AB071EB4755A21C02C7 /* OutputPathBuilder.swift */,57019522767B4440BC159355 /* ReadinessService.swift */,0627F822FF9F485F9C854631 /* RepairService.swift */,6823538E5E2F4CBDA80908BA /* SecretService.swift */,434ED6AE836F47B3B276E9CA /* SetupGuidanceService.swift */,D8BCA2D2CA274D1195E33771 /* ProfileEditorView.swift */,8BCA233FE96E42C482FFD2B1 /* SettingsView.swift */,2EF4181F1BA9464C9745FC92 /* SettingsViewModel.swift */,38A703BB949B4B519DEBDC87 /* FileDropIntakeView.swift */,A23623CC66504E3BBED1F996 /* OperationStatusView.swift */,E96C7037396D4A47ACD1E5B7 /* CalibreProcessRunner.swift */,3CF0084914064B9483344890 /* CalibreToolLocator.swift */,6A878FB4D37944258F1265C0 /* ConfigStore.swift */,82E599D02A314116BD50CDC2 /* FilePathValidator.swift */,DDE241F30CCB4DC7A928F21E /* FolderEnumerator.swift */,98C6738420EB456C86F67715 /* KeychainSecretStore.swift */,BB82F73870D74136BB9E152F /* SMTPClient.swift */,); path = PageForge; sourceTree = "<group>"; };
-		75F24FE634234DD9A17F9524 /* PageForgeTests */ = {isa = PBXGroup; children = (AC0000000000000000000001 /* TemporaryDocumentFactory.swift */,AC0000000000000000000002 /* DocumentWorkflowModelsTests.swift */,AC0000000000000000000003 /* OperationJobCoordinatorTests.swift */,AC0000000000000000000004 /* DocumentIntakeServiceTests.swift */,AC0000000000000000000005 /* DocumentPreparationServiceTests.swift */,AC0000000000000000000006 /* PreparedOutputExporterTests.swift */,AC0000000000000000000007 /* DocumentDeliveryWorkflowTests.swift */,AC0000000000000000000008 /* SettingsViewModelTests.swift */,AC0000000000000000000009 /* DocumentWorkflowViewModelTests.swift */,AC000000000000000000000A /* DocumentWorkflowOutputTests.swift */,AC000000000000000000000B /* DocumentWorkflowAdvancedActionsTests.swift */,6BBC8D53112B49B9B629D8CF /* ConfigSecretTests.swift */,41444576580D433B848A92F3 /* ReadinessServiceTests.swift */,3D8F2E733CC24DAABD4FFD25 /* RepairServiceTests.swift */,); path = PageForgeTests; sourceTree = "<group>"; };
+		0DE53666FC3A45C4AD97F16D /* PageForge */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000000000000000000001 /* App/MainWorkflowView.swift */,
+				AA0000000000000000000002 /* Domain/Models/DocumentWorkflowModels.swift */,
+				AA0000000000000000000003 /* Domain/Services/DocumentIntakeService.swift */,
+				AA0000000000000000000004 /* Domain/Services/DocumentPreparationService.swift */,
+				AA0000000000000000000005 /* Features/Workflow/DocumentQueueRow.swift */,
+				AA0000000000000000000006 /* Features/Workflow/DocumentWorkflowView.swift */,
+				AA0000000000000000000007 /* Features/Workflow/DocumentWorkflowViewModel.swift */,
+				AA0000000000000000000008 /* Integrations/FileSystem/PreparedOutputExporter.swift */,
+				030C5B4015EE4B52BDC136AA /* App/AppState.swift */,
+				CFEC32912E464E5EA20E3182 /* App/PageForgeApp.swift */,
+				F1B000000000000000000001 /* DesignSystem/Color+Theme.swift */,
+				F1B000000000000000000002 /* DesignSystem/ThemeManager.swift */,
+				F1B000000000000000000003 /* DesignSystem/View+Theme.swift */,
+				F1B000000000000000000004 /* Assets.xcassets */,
+				B118A193694B4F5C9525BFF9 /* Domain/Jobs/BatchJob.swift */,
+				F86452A2D3094431B0329DE8 /* Domain/Jobs/ConversionJob.swift */,
+				689B82A4B9E840E3917E6BDB /* Domain/Jobs/MetadataJob.swift */,
+				5B0B2CE01D3D4D1A86C1A621 /* Domain/Jobs/OperationJobCoordinator.swift */,
+				38E6673CED4E47529026B0F2 /* Domain/Jobs/ReadinessAuditJob.swift */,
+				0DB0DCBA41734E84AE2A93E4 /* Domain/Jobs/ReadinessPrepareJob.swift */,
+				7D60B1E661494A2293542CB1 /* Domain/Jobs/RepairJob.swift */,
+				62C1D447F25B4BB4AC036D49 /* Domain/Models/BatchModels.swift */,
+				F4A8B69C4E5D47788B9C70F2 /* Domain/Models/ConfigModels.swift */,
+				DFDCB702309B498995EA2BE6 /* Domain/Models/ConversionModels.swift */,
+				0465A2AE35364291A2B1A657 /* Domain/Models/CoreModels.swift */,
+				0661879B74E04D9599EECFE5 /* Domain/Models/DomainEnums.swift */,
+				FAF07F079DE34B788F13F1C6 /* Domain/Models/DomainError.swift */,
+				BDC3C12BC2D9462CB1D6715F /* Domain/Models/MetadataModels.swift */,
+				326713F2246D4C6399242667 /* Domain/Models/ReadinessModels.swift */,
+				E8DB6DC72191410CBAC9A59B /* Domain/Services/ConfigService.swift */,
+				2BFDCDF1E3564DADAD2237BB /* Domain/Services/ConversionService.swift */,
+				4D9A3C9D2FC848DAA5ED9AC0 /* Domain/Services/DeliveryService.swift */,
+				371B39B0E870418D904C6CF5 /* Domain/Services/DependencyService.swift */,
+				4660EA605A3B49F8ABBD14C6 /* Domain/Services/EPUBInspection.swift */,
+				557CA88709CD4F73A5A1B64F /* Domain/Services/EPUBRepair.swift */,
+				FF8B599B4E9F44FA9E9D296D /* Domain/Services/LogService.swift */,
+				B136FFC9262C4C40911F6EB3 /* Domain/Services/MetadataService.swift */,
+				891C3AB071EB4755A21C02C7 /* Domain/Services/OutputPathBuilder.swift */,
+				57019522767B4440BC159355 /* Domain/Services/ReadinessService.swift */,
+				0627F822FF9F485F9C854631 /* Domain/Services/RepairService.swift */,
+				6823538E5E2F4CBDA80908BA /* Domain/Services/SecretService.swift */,
+				434ED6AE836F47B3B276E9CA /* Domain/Services/SetupGuidanceService.swift */,
+				D8BCA2D2CA274D1195E33771 /* Features/Settings/ProfileEditorView.swift */,
+				8BCA233FE96E42C482FFD2B1 /* Features/Settings/SettingsView.swift */,
+				2EF4181F1BA9464C9745FC92 /* Features/Settings/SettingsViewModel.swift */,
+				38A703BB949B4B519DEBDC87 /* Features/Shared/FileDropIntakeView.swift */,
+				A23623CC66504E3BBED1F996 /* Features/Shared/OperationStatusView.swift */,
+				E96C7037396D4A47ACD1E5B7 /* Integrations/Calibre/CalibreProcessRunner.swift */,
+				3CF0084914064B9483344890 /* Integrations/Calibre/CalibreToolLocator.swift */,
+				6A878FB4D37944258F1265C0 /* Integrations/FileSystem/ConfigStore.swift */,
+				82E599D02A314116BD50CDC2 /* Integrations/FileSystem/FilePathValidator.swift */,
+				DDE241F30CCB4DC7A928F21E /* Integrations/FileSystem/FolderEnumerator.swift */,
+				98C6738420EB456C86F67715 /* Integrations/Keychain/KeychainSecretStore.swift */,
+				BB82F73870D74136BB9E152F /* Integrations/Mail/SMTPClient.swift */,
+			);
+			path = PageForge;
+			sourceTree = "<group>";
+		};
+		260FFDDED0A84B3394BD8063 = {
+			isa = PBXGroup;
+			children = (
+				0DE53666FC3A45C4AD97F16D /* PageForge */,
+				75F24FE634234DD9A17F9524 /* PageForgeTests */,
+				FE383B11E10A4ACE8AF4044D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		75F24FE634234DD9A17F9524 /* PageForgeTests */ = {
+			isa = PBXGroup;
+			children = (
+				AC0000000000000000000001 /* Support/TemporaryDocumentFactory.swift */,
+				AC0000000000000000000002 /* Domain/DocumentWorkflowModelsTests.swift */,
+				AC0000000000000000000003 /* Domain/OperationJobCoordinatorTests.swift */,
+				AC0000000000000000000004 /* Domain/DocumentIntakeServiceTests.swift */,
+				AC0000000000000000000005 /* Domain/DocumentPreparationServiceTests.swift */,
+				AC0000000000000000000006 /* Domain/PreparedOutputExporterTests.swift */,
+				AC0000000000000000000007 /* Domain/DocumentDeliveryWorkflowTests.swift */,
+				AC0000000000000000000008 /* Features/SettingsViewModelTests.swift */,
+				AC0000000000000000000009 /* Features/DocumentWorkflowViewModelTests.swift */,
+				AC000000000000000000000A /* Features/DocumentWorkflowOutputTests.swift */,
+				AC000000000000000000000B /* Features/DocumentWorkflowAdvancedActionsTests.swift */,
+				6BBC8D53112B49B9B629D8CF /* Domain/ConfigSecretTests.swift */,
+				41444576580D433B848A92F3 /* Domain/ReadinessServiceTests.swift */,
+				3D8F2E733CC24DAABD4FFD25 /* Domain/RepairServiceTests.swift */,
+			);
+			path = PageForgeTests;
+			sourceTree = "<group>";
+		};
+		FE383B11E10A4ACE8AF4044D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6EFB9EE159E7419DB7A288FC /* PageForge.app */,
+				E4FF6DBF170F44F7B70BFA41 /* PageForgeTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
+
 /* Begin PBXNativeTarget section */
-		B0672975C7684AE8B2A5BA7E /* PageForge */ = {isa = PBXNativeTarget; buildConfigurationList = FC15496EA95C4C40AD63F2F2; buildPhases = (1748182D4AEB4A3A8807DD6F /* Sources */, 0CF7878963DD49C4A3FF9E2D /* Frameworks */, 493787690AE84EEDAEAB03A6 /* Resources */,); buildRules = (); dependencies = (); name = PageForge; productName = PageForge; productReference = 6EFB9EE159E7419DB7A288FC; productType = "com.apple.product-type.application"; };
-		DEA90660ED1D4D3A88CF1697 /* PageForgeTests */ = {isa = PBXNativeTarget; buildConfigurationList = EBB7364A3DAE46FEB4BCD115; buildPhases = (BDFB70CBE9CE4F618627CDFD /* Sources */, CFB4C6B7C09448738882B634 /* Frameworks */,); buildRules = (); dependencies = (87AFE96486F64159A7C03479 /* PBXTargetDependency */,); name = PageForgeTests; productName = PageForgeTests; productReference = E4FF6DBF170F44F7B70BFA41; productType = "com.apple.product-type.bundle.unit-test"; };
+		B0672975C7684AE8B2A5BA7E /* PageForge */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FC15496EA95C4C40AD63F2F2 /* Build configuration list for PBXNativeTarget "PageForge" */;
+			buildPhases = (
+				1748182D4AEB4A3A8807DD6F /* Sources */,
+				0CF7878963DD49C4A3FF9E2D /* Frameworks */,
+				493787690AE84EEDAEAB03A6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PageForge;
+			productName = PageForge;
+			productReference = 6EFB9EE159E7419DB7A288FC /* PageForge.app */;
+			productType = "com.apple.product-type.application";
+		};
+		DEA90660ED1D4D3A88CF1697 /* PageForgeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EBB7364A3DAE46FEB4BCD115 /* Build configuration list for PBXNativeTarget "PageForgeTests" */;
+			buildPhases = (
+				BDFB70CBE9CE4F618627CDFD /* Sources */,
+				CFB4C6B7C09448738882B634 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				87AFE96486F64159A7C03479 /* PBXTargetDependency */,
+			);
+			name = PageForgeTests;
+			productName = PageForgeTests;
+			productReference = E4FF6DBF170F44F7B70BFA41 /* PageForgeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
+
 /* Begin PBXProject section */
-		C5145871CAA840719F399263 /* Project object */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 1500; LastUpgradeCheck = 1500;}; buildConfigurationList = 6BB3E4C3BECF4C6E84662ACE; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base,); mainGroup = 260FFDDED0A84B3394BD8063; productRefGroup = FE383B11E10A4ACE8AF4044D; projectDirPath = ""; projectRoot = ""; targets = (B0672975C7684AE8B2A5BA7E /* PageForge */, DEA90660ED1D4D3A88CF1697 /* PageForgeTests */,); };
+		C5145871CAA840719F399263 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 2660;
+			};
+			buildConfigurationList = 6BB3E4C3BECF4C6E84662ACE /* Build configuration list for PBXProject "PageForge" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 260FFDDED0A84B3394BD8063;
+			productRefGroup = FE383B11E10A4ACE8AF4044D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B0672975C7684AE8B2A5BA7E /* PageForge */,
+				DEA90660ED1D4D3A88CF1697 /* PageForgeTests */,
+			);
+		};
 /* End PBXProject section */
-		493787690AE84EEDAEAB03A6 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (F1A000000000000000000004 /* Assets.xcassets in Resources */,); runOnlyForDeploymentPostprocessing = 0; };
+
+/* Begin PBXResourcesBuildPhase section */
+		493787690AE84EEDAEAB03A6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1A000000000000000000004 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
-		1748182D4AEB4A3A8807DD6F /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (AB0000000000000000000001 /* MainWorkflowView.swift in Sources */,AB0000000000000000000002 /* DocumentWorkflowModels.swift in Sources */,AB0000000000000000000003 /* DocumentIntakeService.swift in Sources */,AB0000000000000000000004 /* DocumentPreparationService.swift in Sources */,AB0000000000000000000005 /* DocumentQueueRow.swift in Sources */,AB0000000000000000000006 /* DocumentWorkflowView.swift in Sources */,AB0000000000000000000007 /* DocumentWorkflowViewModel.swift in Sources */,AB0000000000000000000008 /* PreparedOutputExporter.swift in Sources */,4157ECD8DFCE4F5C873CBCD4 /* AppState.swift in Sources */,FD11E7CCD31B4567B8985A21 /* PageForgeApp.swift in Sources */,F1A000000000000000000001 /* Color+Theme.swift in Sources */,F1A000000000000000000002 /* ThemeManager.swift in Sources */,F1A000000000000000000003 /* View+Theme.swift in Sources */,A9864CCA7427406B8B40C977 /* BatchJob.swift in Sources */,92B682CB768F4A8DB8D0451F /* ConversionJob.swift in Sources */,554E02EC7F504DD8A3489119 /* MetadataJob.swift in Sources */,6FDC539AB4374F418B780B59 /* OperationJobCoordinator.swift in Sources */,F92F422D93E7477397AD7097 /* ReadinessAuditJob.swift in Sources */,93CD7D4782144B81A465C507 /* ReadinessPrepareJob.swift in Sources */,1CE68E4B28164E56AB8947B0 /* RepairJob.swift in Sources */,F9E6FF5D083C414DB8FF6E7E /* BatchModels.swift in Sources */,E82FC5CD0DE34EFBA4287D7B /* ConfigModels.swift in Sources */,9342343A8D634F6A8345F848 /* ConversionModels.swift in Sources */,3DB2E11BD24646DD9D01DB77 /* CoreModels.swift in Sources */,173FA7497F4E40A0AE5FB68B /* DomainEnums.swift in Sources */,DD637A244F49469DAFBF5243 /* DomainError.swift in Sources */,517DAA564D9947FB8D5817F6 /* MetadataModels.swift in Sources */,4B32C30EE4FC43DF9DB7B837 /* ReadinessModels.swift in Sources */,95781959F1E744438878FF76 /* ConfigService.swift in Sources */,ED533A1FE2514FF08E7C4C7A /* ConversionService.swift in Sources */,7703563A89C149669F806005 /* DeliveryService.swift in Sources */,35BDD61667144BE49D9854D3 /* DependencyService.swift in Sources */,41DAD22F813945F9ACCCC1B3 /* EPUBInspection.swift in Sources */,8A9507D46E0146A98897F4E7 /* EPUBRepair.swift in Sources */,E827283263B247FC8387F458 /* LogService.swift in Sources */,58622DAF129D4523BC6B2A69 /* MetadataService.swift in Sources */,48EBF35CC428458BB0296480 /* OutputPathBuilder.swift in Sources */,96916AFF786847DEA336FB42 /* ReadinessService.swift in Sources */,0E1E56D139E1456FADBC46D7 /* RepairService.swift in Sources */,92110F40ED794A1481980652 /* SecretService.swift in Sources */,8F33B8B9AE89408E97264901 /* SetupGuidanceService.swift in Sources */,45C3100E0D2A4061AC416CE3 /* ProfileEditorView.swift in Sources */,1C79B41F3F2A4E59B758C58A /* SettingsView.swift in Sources */,02997E6C8E9E40ECB7FB91AB /* SettingsViewModel.swift in Sources */,EC2EB417A4474B6197FCEDA9 /* FileDropIntakeView.swift in Sources */,8BE1E88F91ED4A52AB82D1D8 /* OperationStatusView.swift in Sources */,A61240F929E1445AA754CEDE /* CalibreProcessRunner.swift in Sources */,765DDFC3AC8747FFA49C4C19 /* CalibreToolLocator.swift in Sources */,D93F5F1120D0448BAB4951E3 /* ConfigStore.swift in Sources */,964CEC6AD2494D5EBEE1E75F /* FilePathValidator.swift in Sources */,A0EA55D613A24F989594902B /* FolderEnumerator.swift in Sources */,0D688ADE2C1A44EAA1E7017C /* KeychainSecretStore.swift in Sources */,45477055A79D4C20BD48CAAD /* SMTPClient.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
-		BDFB70CBE9CE4F618627CDFD /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (AD0000000000000000000001 /* TemporaryDocumentFactory.swift in Sources */,AD0000000000000000000002 /* DocumentWorkflowModelsTests.swift in Sources */,AD0000000000000000000003 /* OperationJobCoordinatorTests.swift in Sources */,AD0000000000000000000004 /* DocumentIntakeServiceTests.swift in Sources */,AD0000000000000000000005 /* DocumentPreparationServiceTests.swift in Sources */,AD0000000000000000000006 /* PreparedOutputExporterTests.swift in Sources */,AD0000000000000000000007 /* DocumentDeliveryWorkflowTests.swift in Sources */,AD0000000000000000000008 /* SettingsViewModelTests.swift in Sources */,AD0000000000000000000009 /* DocumentWorkflowViewModelTests.swift in Sources */,AD000000000000000000000A /* DocumentWorkflowOutputTests.swift in Sources */,AD000000000000000000000B /* DocumentWorkflowAdvancedActionsTests.swift in Sources */,FE1E165A7B3047C78451E601 /* ConfigSecretTests.swift in Sources */,A94A5FDD61874C7285024803 /* ReadinessServiceTests.swift in Sources */,B9FE78A0D0634735A6C4985D /* RepairServiceTests.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
+		1748182D4AEB4A3A8807DD6F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AB0000000000000000000001 /* App/MainWorkflowView.swift in Sources */,
+				AB0000000000000000000002 /* Domain/Models/DocumentWorkflowModels.swift in Sources */,
+				AB0000000000000000000003 /* Domain/Services/DocumentIntakeService.swift in Sources */,
+				AB0000000000000000000004 /* Domain/Services/DocumentPreparationService.swift in Sources */,
+				AB0000000000000000000005 /* Features/Workflow/DocumentQueueRow.swift in Sources */,
+				AB0000000000000000000006 /* Features/Workflow/DocumentWorkflowView.swift in Sources */,
+				AB0000000000000000000007 /* Features/Workflow/DocumentWorkflowViewModel.swift in Sources */,
+				AB0000000000000000000008 /* Integrations/FileSystem/PreparedOutputExporter.swift in Sources */,
+				4157ECD8DFCE4F5C873CBCD4 /* App/AppState.swift in Sources */,
+				FD11E7CCD31B4567B8985A21 /* App/PageForgeApp.swift in Sources */,
+				F1A000000000000000000001 /* DesignSystem/Color+Theme.swift in Sources */,
+				F1A000000000000000000002 /* DesignSystem/ThemeManager.swift in Sources */,
+				F1A000000000000000000003 /* DesignSystem/View+Theme.swift in Sources */,
+				A9864CCA7427406B8B40C977 /* Domain/Jobs/BatchJob.swift in Sources */,
+				92B682CB768F4A8DB8D0451F /* Domain/Jobs/ConversionJob.swift in Sources */,
+				554E02EC7F504DD8A3489119 /* Domain/Jobs/MetadataJob.swift in Sources */,
+				6FDC539AB4374F418B780B59 /* Domain/Jobs/OperationJobCoordinator.swift in Sources */,
+				F92F422D93E7477397AD7097 /* Domain/Jobs/ReadinessAuditJob.swift in Sources */,
+				93CD7D4782144B81A465C507 /* Domain/Jobs/ReadinessPrepareJob.swift in Sources */,
+				1CE68E4B28164E56AB8947B0 /* Domain/Jobs/RepairJob.swift in Sources */,
+				F9E6FF5D083C414DB8FF6E7E /* Domain/Models/BatchModels.swift in Sources */,
+				E82FC5CD0DE34EFBA4287D7B /* Domain/Models/ConfigModels.swift in Sources */,
+				9342343A8D634F6A8345F848 /* Domain/Models/ConversionModels.swift in Sources */,
+				3DB2E11BD24646DD9D01DB77 /* Domain/Models/CoreModels.swift in Sources */,
+				173FA7497F4E40A0AE5FB68B /* Domain/Models/DomainEnums.swift in Sources */,
+				DD637A244F49469DAFBF5243 /* Domain/Models/DomainError.swift in Sources */,
+				517DAA564D9947FB8D5817F6 /* Domain/Models/MetadataModels.swift in Sources */,
+				4B32C30EE4FC43DF9DB7B837 /* Domain/Models/ReadinessModels.swift in Sources */,
+				95781959F1E744438878FF76 /* Domain/Services/ConfigService.swift in Sources */,
+				ED533A1FE2514FF08E7C4C7A /* Domain/Services/ConversionService.swift in Sources */,
+				7703563A89C149669F806005 /* Domain/Services/DeliveryService.swift in Sources */,
+				35BDD61667144BE49D9854D3 /* Domain/Services/DependencyService.swift in Sources */,
+				41DAD22F813945F9ACCCC1B3 /* Domain/Services/EPUBInspection.swift in Sources */,
+				8A9507D46E0146A98897F4E7 /* Domain/Services/EPUBRepair.swift in Sources */,
+				E827283263B247FC8387F458 /* Domain/Services/LogService.swift in Sources */,
+				58622DAF129D4523BC6B2A69 /* Domain/Services/MetadataService.swift in Sources */,
+				48EBF35CC428458BB0296480 /* Domain/Services/OutputPathBuilder.swift in Sources */,
+				96916AFF786847DEA336FB42 /* Domain/Services/ReadinessService.swift in Sources */,
+				0E1E56D139E1456FADBC46D7 /* Domain/Services/RepairService.swift in Sources */,
+				92110F40ED794A1481980652 /* Domain/Services/SecretService.swift in Sources */,
+				8F33B8B9AE89408E97264901 /* Domain/Services/SetupGuidanceService.swift in Sources */,
+				45C3100E0D2A4061AC416CE3 /* Features/Settings/ProfileEditorView.swift in Sources */,
+				1C79B41F3F2A4E59B758C58A /* Features/Settings/SettingsView.swift in Sources */,
+				02997E6C8E9E40ECB7FB91AB /* Features/Settings/SettingsViewModel.swift in Sources */,
+				EC2EB417A4474B6197FCEDA9 /* Features/Shared/FileDropIntakeView.swift in Sources */,
+				8BE1E88F91ED4A52AB82D1D8 /* Features/Shared/OperationStatusView.swift in Sources */,
+				A61240F929E1445AA754CEDE /* Integrations/Calibre/CalibreProcessRunner.swift in Sources */,
+				765DDFC3AC8747FFA49C4C19 /* Integrations/Calibre/CalibreToolLocator.swift in Sources */,
+				D93F5F1120D0448BAB4951E3 /* Integrations/FileSystem/ConfigStore.swift in Sources */,
+				964CEC6AD2494D5EBEE1E75F /* Integrations/FileSystem/FilePathValidator.swift in Sources */,
+				A0EA55D613A24F989594902B /* Integrations/FileSystem/FolderEnumerator.swift in Sources */,
+				0D688ADE2C1A44EAA1E7017C /* Integrations/Keychain/KeychainSecretStore.swift in Sources */,
+				45477055A79D4C20BD48CAAD /* Integrations/Mail/SMTPClient.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BDFB70CBE9CE4F618627CDFD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AD0000000000000000000001 /* Support/TemporaryDocumentFactory.swift in Sources */,
+				AD0000000000000000000002 /* Domain/DocumentWorkflowModelsTests.swift in Sources */,
+				AD0000000000000000000003 /* Domain/OperationJobCoordinatorTests.swift in Sources */,
+				AD0000000000000000000004 /* Domain/DocumentIntakeServiceTests.swift in Sources */,
+				AD0000000000000000000005 /* Domain/DocumentPreparationServiceTests.swift in Sources */,
+				AD0000000000000000000006 /* Domain/PreparedOutputExporterTests.swift in Sources */,
+				AD0000000000000000000007 /* Domain/DocumentDeliveryWorkflowTests.swift in Sources */,
+				AD0000000000000000000008 /* Features/SettingsViewModelTests.swift in Sources */,
+				AD0000000000000000000009 /* Features/DocumentWorkflowViewModelTests.swift in Sources */,
+				AD000000000000000000000A /* Features/DocumentWorkflowOutputTests.swift in Sources */,
+				AD000000000000000000000B /* Features/DocumentWorkflowAdvancedActionsTests.swift in Sources */,
+				FE1E165A7B3047C78451E601 /* Domain/ConfigSecretTests.swift in Sources */,
+				A94A5FDD61874C7285024803 /* Domain/ReadinessServiceTests.swift in Sources */,
+				B9FE78A0D0634735A6C4985D /* Domain/RepairServiceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
-		87AFE96486F64159A7C03479 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = B0672975C7684AE8B2A5BA7E /* PageForge */; targetProxy = 913738ABE467495E94F0916C /* PBXContainerItemProxy */; };
+
+/* Begin PBXTargetDependency section */
+		87AFE96486F64159A7C03479 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B0672975C7684AE8B2A5BA7E /* PageForge */;
+			targetProxy = 913738ABE467495E94F0916C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
-		331CE365823241EAAD032A6D /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; COPY_PHASE_STRIP = NO; MACOSX_DEPLOYMENT_TARGET = 26.0; ONLY_ACTIVE_ARCH = YES; SDKROOT = macosx; SWIFT_VERSION = 5.0;}; name = Debug; };
-		8D0D21CD2A374239B36854E2 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; COPY_PHASE_STRIP = NO; MACOSX_DEPLOYMENT_TARGET = 26.0; ONLY_ACTIVE_ARCH = NO; SDKROOT = macosx; SWIFT_VERSION = 5.0;}; name = Release; };
-		6A7F63BD5438477BB8A25516 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_NSPrincipalClass = NSApplication; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks",); MACOSX_DEPLOYMENT_TARGET = 26.0; MARKETING_VERSION = 0.1.0; PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.PageForge; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0;}; name = Debug; };
-		7EF9857FC3714DD6A6628BAB /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_HARDENED_RUNTIME = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_NSPrincipalClass = NSApplication; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks",); MACOSX_DEPLOYMENT_TARGET = 26.0; MARKETING_VERSION = 0.1.0; PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.PageForge; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0;}; name = Release; };
-		AA9EAE5284FA411BB08521BB /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 26.0; MARKETING_VERSION = 0.1.0; PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.PageForgeTests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PageForge.app/Contents/MacOS/PageForge";}; name = Debug; };
-		AD16A08880DE4776AAF77A77 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 26.0; MARKETING_VERSION = 0.1.0; PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.PageForgeTests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PageForge.app/Contents/MacOS/PageForge";}; name = Release; };
+		331CE365823241EAAD032A6D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		6A7F63BD5438477BB8A25516 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.PageForge;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		7EF9857FC3714DD6A6628BAB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.PageForge;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		8D0D21CD2A374239B36854E2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				ONLY_ACTIVE_ARCH = NO;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		AA9EAE5284FA411BB08521BB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.PageForgeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PageForge.app/Contents/MacOS/PageForge";
+			};
+			name = Debug;
+		};
+		AD16A08880DE4776AAF77A77 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.PageForgeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PageForge.app/Contents/MacOS/PageForge";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
+
 /* Begin XCConfigurationList section */
-		6BB3E4C3BECF4C6E84662ACE /* Project */ = {isa = XCConfigurationList; buildConfigurations = (331CE365823241EAAD032A6D /* Debug */, 8D0D21CD2A374239B36854E2 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		FC15496EA95C4C40AD63F2F2 /* App */ = {isa = XCConfigurationList; buildConfigurations = (6A7F63BD5438477BB8A25516 /* Debug */, 7EF9857FC3714DD6A6628BAB /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		EBB7364A3DAE46FEB4BCD115 /* Tests */ = {isa = XCConfigurationList; buildConfigurations = (AA9EAE5284FA411BB08521BB /* Debug */, AD16A08880DE4776AAF77A77 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		6BB3E4C3BECF4C6E84662ACE /* Build configuration list for PBXProject "PageForge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				331CE365823241EAAD032A6D /* Debug */,
+				8D0D21CD2A374239B36854E2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EBB7364A3DAE46FEB4BCD115 /* Build configuration list for PBXNativeTarget "PageForgeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA9EAE5284FA411BB08521BB /* Debug */,
+				AD16A08880DE4776AAF77A77 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FC15496EA95C4C40AD63F2F2 /* Build configuration list for PBXNativeTarget "PageForge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6A7F63BD5438477BB8A25516 /* Debug */,
+				7EF9857FC3714DD6A6628BAB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 	};
 	rootObject = C5145871CAA840719F399263 /* Project object */;

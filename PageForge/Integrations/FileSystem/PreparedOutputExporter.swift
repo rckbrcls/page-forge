@@ -9,17 +9,12 @@ protocol PreparedOutputExporting: Sendable {
 }
 
 struct PreparedOutputExporter: PreparedOutputExporting {
-    private let fileManager: FileManager
-
-    init(fileManager: FileManager = .default) {
-        self.fileManager = fileManager
-    }
-
     func export(
         outputs: [PreparedOutput],
         destinationDirectory: URL,
         conflictPolicy: OutputConflictPolicy = .failIfExists
     ) -> [ExportResult] {
+        let fileManager = FileManager()
         let destination = destinationDirectory.standardizedFileURL
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: destination.path, isDirectory: &isDirectory),

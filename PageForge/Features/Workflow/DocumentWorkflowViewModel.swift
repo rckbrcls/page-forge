@@ -114,7 +114,7 @@ final class DocumentWorkflowViewModel: ObservableObject {
 
     func removeSelected() {
         guard !queue.isProcessing else { return }
-        queue.items.removeAll(\.isSelected)
+        queue.items.removeAll { $0.isSelected }
     }
 
     func remove(_ id: UUID) {
@@ -192,18 +192,7 @@ final class DocumentWorkflowViewModel: ObservableObject {
                 destinationDirectory: directory,
                 conflictPolicy: replacingExisting ? .replaceConfirmed : .failIfExists
             )
-            await MainActor.run {
-                guard let self else { return }
-                for result in results {
-                    guard let item = self.queue.items.first(where: {
-                        $0.preparedOutput?.outputURL.standardizedFileURL == result.sourceOutputURL.standardizedFileURL
-                    }) else { continue }
-                    self.mutateItem(item.id) { $0.saveResult = result }
-                }
-                self.isSaving = false
-                let successes = results.filter { $0.state == .succeeded }.count
-                self.statusMessage = "Saved \(successes) of \(results.count) file(s)."
-            }
+            await self?.applyExportResults(results)
         }
     }
 
@@ -243,13 +232,9 @@ final class DocumentWorkflowViewModel: ObservableObject {
                         message: error.localizedDescription
                     )
                 }
-                await MainActor.run { self?.mutateItem(item.id) { $0.deliveryResult = result } }
+                await self?.applyDeliveryResult(result, to: item.id)
             }
-            await MainActor.run {
-                self?.isSending = false
-                self?.deliveryTask = nil
-                self?.statusMessage = "Send operation finished."
-            }
+            await self?.finishDelivery()
         }
     }
 
@@ -313,7 +298,7 @@ final class DocumentWorkflowViewModel: ObservableObject {
     }
 
     func aggressiveRepair(_ id: UUID) {
-        aggressiveRepair(id, confirmed: true)
+        aggressiveRepair(id, confirmed: false)
     }
 
     func aggressiveRepair(_ id: UUID, confirmed: Bool) {
@@ -334,11 +319,42 @@ final class DocumentWorkflowViewModel: ObservableObject {
                     overwrite: false,
                     onProgress: nil
                 )
-                await MainActor.run { self?.statusMessage = "Aggressive repair completed for \(item.displayName)" }
+                await self?.setStatusMessage(
+                    "Aggressive repair completed for \(item.displayName)"
+                )
             } catch {
-                await MainActor.run { self?.statusMessage = error.localizedDescription }
+                await self?.setStatusMessage(error.localizedDescription)
             }
         }
+    }
+
+    private func applyExportResults(_ results: [ExportResult]) {
+        for result in results {
+            guard let item = queue.items.first(where: {
+                $0.preparedOutput?.outputURL.standardizedFileURL
+                    == result.sourceOutputURL.standardizedFileURL
+            }) else {
+                continue
+            }
+            mutateItem(item.id) { $0.saveResult = result }
+        }
+        isSaving = false
+        let successes = results.filter { $0.state == .succeeded }.count
+        statusMessage = "Saved \(successes) of \(results.count) file(s)."
+    }
+
+    private func applyDeliveryResult(_ result: DocumentDeliveryResult, to id: UUID) {
+        mutateItem(id) { $0.deliveryResult = result }
+    }
+
+    private func finishDelivery() {
+        isSending = false
+        deliveryTask = nil
+        statusMessage = "Send operation finished."
+    }
+
+    private func setStatusMessage(_ message: String) {
+        statusMessage = message
     }
 
     private func item(_ id: UUID) -> DocumentItem? {

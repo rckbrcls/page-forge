@@ -1,6 +1,6 @@
 import Foundation
 
-struct DocumentIntakeService: Sendable {
+struct DocumentIntakeService {
     private let fileManager: FileManager
 
     init(fileManager: FileManager = .default) {
