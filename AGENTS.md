@@ -67,7 +67,7 @@
 
 ## Dependencies And Platform
 
-- Desktop: Swift / SwiftUI, macOS 14+
+- Desktop: Swift / SwiftUI, macOS 26+
 - External: Calibre tools (`ebook-convert`, `ebook-meta`, `ebook-polish`)
 - Secrets: macOS Keychain
 - Optional discovery overrides: `EBOOK_CONVERT_PATH`, `EBOOK_META_PATH`, `EBOOK_POLISH_PATH`

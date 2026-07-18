@@ -21,7 +21,9 @@ struct ProfileEditorView: View {
             SecureField(hasSecret ? "Replace SMTP password/token" : "SMTP password/token", text: $secretDraft)
             Text(hasSecret ? "Secret present in Keychain" : "Secret missing")
                 .font(.caption)
-                .foregroundStyle(hasSecret ? .green : .orange)
+                .foregroundStyle(
+                    hasSecret ? Color.Theme.success : Color.Theme.warning
+                )
             Button("Save Profile") { onSave() }
                 .buttonStyle(.borderedProminent)
         }

@@ -47,9 +47,10 @@ final class SendViewModel: ObservableObject {
         errorMessage = nil
         let jobID = appState.jobCoordinator.start(kind: .send, sources: [sourceURL], message: "Sending to Kindle")
         let profileName = selectedProfileName
+        let deliveryService = appState.deliveryService
         Task.detached {
             do {
-                let result = try appState.deliveryService.send(source: sourceURL, profileName: profileName)
+                let result = try deliveryService.send(source: sourceURL, profileName: profileName)
                 await MainActor.run {
                     self.lastResult = result
                     self.isRunning = false

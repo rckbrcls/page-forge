@@ -14,12 +14,18 @@ struct FileDropIntakeView: View {
         VStack(spacing: 12) {
             Image(systemName: "arrow.down.doc")
                 .font(.system(size: 28, weight: .light))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.accentColor)
+                .padding(14)
+                .glassEffect(
+                    .regular.tint(Color.accentColor.opacity(0.14)),
+                    in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                )
             Text(title)
                 .font(.title3.weight(.semibold))
+                .foregroundStyle(Color.Theme.textPrimary)
             Text(subtitle)
                 .font(.callout)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.Theme.textSecondary)
                 .multilineTextAlignment(.center)
             Button("Choose…") {
                 presentPanel()
@@ -28,17 +34,22 @@ struct FileDropIntakeView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 160)
         .padding(24)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(isTargeted ? Color.accentColor.opacity(0.12) : Color.secondary.opacity(0.08))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(
-                    isTargeted ? Color.accentColor : Color.secondary.opacity(0.25),
+        .background {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(
+                    isTargeted
+                        ? Color.accentColor.opacity(0.12)
+                        : Color.Theme.tertiaryBackground
+                )
+                .shadow(color: .black.opacity(0.06), radius: 24, x: 3, y: 3)
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(
+                    isTargeted ? Color.accentColor : Color.Theme.border,
                     style: StrokeStyle(lineWidth: 1.5, dash: [8, 6])
                 )
-        )
+        }
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
             handleDrop(providers)
         }

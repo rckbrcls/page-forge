@@ -9,9 +9,9 @@ struct BatchView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Batch")
-                    .font(.largeTitle.weight(.semibold))
+                    .appLargeTitleStyle()
                 Text("Process a folder of books with progress and summary counts.")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.Theme.textSecondary)
 
                 FileDropIntakeView(
                     title: "Drop a folder",
@@ -19,48 +19,54 @@ struct BatchView: View {
                     allowFolders: true
                 ) { viewModel.setFolder($0) }
 
-                if let folderURL = viewModel.folderURL {
-                    LabeledContent("Folder") {
-                        Text(folderURL.path).textSelection(.enabled)
+                VStack(alignment: .leading, spacing: 12) {
+                    if let folderURL = viewModel.folderURL {
+                        LabeledContent("Folder") {
+                            Text(folderURL.path).textSelection(.enabled)
+                        }
                     }
-                }
 
-                Picker("Operation", selection: $viewModel.operation) {
-                    ForEach(BatchViewModel.Operation.allCases) { op in
-                        Text(op.rawValue).tag(op)
+                    Picker("Operation", selection: $viewModel.operation) {
+                        ForEach(BatchViewModel.Operation.allCases) { op in
+                            Text(op.rawValue).tag(op)
+                        }
                     }
-                }
 
-                HStack {
-                    Button("Choose Output Directory…") { pickOutputDirectory() }
-                    if let outputDirectory = viewModel.outputDirectory {
-                        Text(outputDirectory.path)
-                            .foregroundStyle(.secondary)
+                    HStack {
+                        Button("Choose Output Directory…") { pickOutputDirectory() }
+                        if let outputDirectory = viewModel.outputDirectory {
+                            Text(outputDirectory.path)
+                                .foregroundStyle(Color.Theme.textSecondary)
+                                .textSelection(.enabled)
+                        }
+                    }
+
+                    Toggle("Overwrite outputs", isOn: $viewModel.overwrite)
+                        .toggleStyle(.checkbox)
+
+                    Button("Run Batch") { viewModel.run() }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(viewModel.isRunning)
+
+                    OperationStatusView(
+                        message: viewModel.statusMessage,
+                        errorMessage: viewModel.errorMessage,
+                        isRunning: viewModel.isRunning
+                    )
+
+                    if let summary = viewModel.summary {
+                        Text(summary)
+                            .font(.body.weight(.medium))
                             .textSelection(.enabled)
                     }
                 }
-
-                Toggle("Overwrite outputs", isOn: $viewModel.overwrite)
-                    .toggleStyle(.checkbox)
-
-                Button("Run Batch") { viewModel.run() }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(viewModel.isRunning)
-
-                OperationStatusView(
-                    message: viewModel.statusMessage,
-                    errorMessage: viewModel.errorMessage,
-                    isRunning: viewModel.isRunning
-                )
-
-                if let summary = viewModel.summary {
-                    Text(summary)
-                        .font(.body.weight(.medium))
-                        .textSelection(.enabled)
-                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .cardStyle()
             }
             .padding(28)
         }
+        .themedScreenBackground()
         .onAppear { viewModel.bind(appState: appState) }
     }
 

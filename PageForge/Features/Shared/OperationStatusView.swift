@@ -12,15 +12,15 @@ struct OperationStatusView: View {
                     ProgressView()
                         .controlSize(.small)
                     Text(message ?? "Working…")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.Theme.textSecondary)
                 }
             } else if let errorMessage, !errorMessage.isEmpty {
                 Text(errorMessage)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color.Theme.destructive)
                     .textSelection(.enabled)
             } else if let message, !message.isEmpty {
                 Text(message)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.Theme.textSecondary)
                     .textSelection(.enabled)
             }
         }
@@ -43,9 +43,9 @@ struct StatusChip: View {
 
     private var color: Color {
         switch status {
-        case .ready: return .green
-        case .needsFixes: return .orange
-        case .blocked: return .red
+        case .ready: return Color.Theme.success
+        case .needsFixes: return Color.Theme.warning
+        case .blocked: return Color.Theme.destructive
         }
     }
 }

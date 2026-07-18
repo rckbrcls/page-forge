@@ -58,6 +58,8 @@ Two layers:
 1. **PageForge desktop app** (SwiftUI)
 2. **Calibre** external engine
 
+The desktop app requires macOS 26 or later and Xcode 26 or later for development.
+
 Calibre is required because conversion/metadata/polish are delegated to its tools.
 PageForge owns workflow UX, readiness diagnosis, and safe structural repair.
 

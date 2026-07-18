@@ -30,9 +30,10 @@ final class MetadataViewModel: ObservableObject {
         isRunning = true
         errorMessage = nil
         let jobID = appState.jobCoordinator.start(kind: .metadataInspect, sources: [sourceURL], message: "Inspecting metadata")
+        let metadataService = appState.metadataService
         Task.detached {
             do {
-                let metadata = try MetadataJobRunner(service: appState.metadataService).inspect(source: sourceURL)
+                let metadata = try MetadataJobRunner(service: metadataService).inspect(source: sourceURL)
                 await MainActor.run {
                     self.titleText = metadata.title
                     self.authorText = metadata.author
@@ -61,9 +62,10 @@ final class MetadataViewModel: ObservableObject {
         let jobID = appState.jobCoordinator.start(kind: .metadataUpdate, sources: [sourceURL], message: "Updating metadata")
         let title = titleText
         let author = authorText
+        let metadataService = appState.metadataService
         Task.detached {
             do {
-                let metadata = try MetadataJobRunner(service: appState.metadataService).update(
+                let metadata = try MetadataJobRunner(service: metadataService).update(
                     source: sourceURL,
                     title: title,
                     author: author

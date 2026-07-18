@@ -51,12 +51,14 @@ final class ConvertViewModel: ObservableObject {
 
         let op = operation
         let overwrite = overwrite
+        let conversionService = appState.conversionService
+        let repairService = appState.repairService
         Task.detached {
             do {
                 let output: URL
                 switch op {
                 case .mobiToEpub, .pdfToEpub:
-                    let result = try ConversionJobRunner(service: appState.conversionService).run(
+                    let result = try ConversionJobRunner(service: conversionService).run(
                         source: sourceURL,
                         target: .epub,
                         overwrite: overwrite
@@ -68,7 +70,7 @@ final class ConvertViewModel: ObservableObject {
                     }
                     output = result.outputPath
                 case .epubToMobi:
-                    let result = try ConversionJobRunner(service: appState.conversionService).run(
+                    let result = try ConversionJobRunner(service: conversionService).run(
                         source: sourceURL,
                         target: .mobi,
                         overwrite: overwrite
@@ -80,7 +82,7 @@ final class ConvertViewModel: ObservableObject {
                     }
                     output = result.outputPath
                 case .safeRepair, .aggressiveRepair:
-                    let result = try RepairJobRunner(service: appState.repairService).run(
+                    let result = try RepairJobRunner(service: repairService).run(
                         source: sourceURL,
                         mode: op == .safeRepair ? .safe : .aggressive,
                         overwrite: overwrite

@@ -10,13 +10,19 @@ struct ReadinessDependencyBanner: View {
                     .font(.headline)
                 Text(message)
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.Theme.textSecondary)
                     .textSelection(.enabled)
             }
-            .padding(12)
+            .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.orange.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .background(
+                Color.Theme.warning.opacity(0.12),
+                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.Theme.warning.opacity(0.3), lineWidth: 1)
+            }
         }
     }
 }

@@ -2,13 +2,31 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var themeManager: ThemeManager
     @StateObject private var viewModel = SettingsViewModel()
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 Text("Settings")
-                    .font(.largeTitle.weight(.semibold))
+                    .appLargeTitleStyle()
+
+                section("Appearance") {
+                    Picker("Theme", selection: Binding(
+                        get: { themeManager.currentTheme },
+                        set: { themeManager.setTheme($0) }
+                    )) {
+                        ForEach(AppTheme.allCases) { theme in
+                            Label(theme.displayName, systemImage: theme.systemImage)
+                                .tag(theme)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    Text("Choose whether PageForge follows the system appearance or always uses a light or dark theme.")
+                        .font(.caption)
+                        .foregroundStyle(Color.Theme.textSecondary)
+                }
 
                 section("Calibre status") {
                     Text(viewModel.dependencyMessage)
@@ -54,17 +72,17 @@ struct SettingsView: View {
                     Text("App update")
                         .font(.headline)
                     Text(viewModel.appUpdateText)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.Theme.textSecondary)
                     Text("Calibre update")
                         .font(.headline)
                         .padding(.top, 8)
                     Text(viewModel.calibreUpdateText)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.Theme.textSecondary)
                 }
 
                 section("Install guidance") {
                     Text(viewModel.calibreInstallText)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.Theme.textSecondary)
                         .textSelection(.enabled)
                 }
 
@@ -76,6 +94,7 @@ struct SettingsView: View {
             }
             .padding(28)
         }
+        .themedScreenBackground()
         .onAppear { viewModel.bind(appState: appState) }
     }
 
@@ -86,9 +105,8 @@ struct SettingsView: View {
                 .font(.title2.weight(.semibold))
             content()
         }
-        .padding(16)
+        .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.secondary.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .cardStyle()
     }
 }

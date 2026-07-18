@@ -41,8 +41,9 @@ final class ReadinessViewModel: ObservableObject {
             errorMessage = "Drop or choose an ebook first."
             return
         }
+        let readinessService = appState.readinessService
         run(appState: appState, kind: .readinessAudit, label: "Auditing readiness") { progress in
-            let report = try ReadinessAuditJob(service: appState.readinessService).run(source: sourceURL)
+            let report = try ReadinessAuditJob(service: readinessService).run(source: sourceURL)
             progress("Audit complete")
             return report
         }
@@ -53,8 +54,9 @@ final class ReadinessViewModel: ObservableObject {
             errorMessage = "Drop or choose an ebook first."
             return
         }
+        let readinessService = appState.readinessService
         run(appState: appState, kind: .readinessPrepare, label: "Preparing Kindle-ready EPUB") { [overwrite] progress in
-            try ReadinessPrepareJob(service: appState.readinessService).run(
+            try ReadinessPrepareJob(service: readinessService).run(
                 source: sourceURL,
                 overwrite: overwrite,
                 onProgress: progress

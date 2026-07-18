@@ -8,7 +8,7 @@ struct LogsView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Logs")
-                    .font(.largeTitle.weight(.semibold))
+                    .appLargeTitleStyle()
                 Spacer()
                 Button("Refresh") { viewModel.refresh() }
             }
@@ -17,7 +17,7 @@ struct LogsView: View {
 
             if viewModel.entries.isEmpty {
                 Text("No log entries yet.")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.Theme.textSecondary)
                     .padding(.horizontal, 28)
                 Spacer()
             } else {
@@ -26,18 +26,30 @@ struct LogsView: View {
                         HStack {
                             Text(entry.level.rawValue.uppercased())
                                 .font(.caption.weight(.bold))
-                                .foregroundStyle(entry.level == .error ? .red : .secondary)
+                                .foregroundStyle(
+                                    entry.level == .error
+                                        ? Color.Theme.destructive
+                                        : Color.Theme.textSecondary
+                                )
                             Text(entry.timestamp.formatted(date: .omitted, time: .standard))
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.Theme.textSecondary)
                         }
                         Text(entry.message)
                             .textSelection(.enabled)
                     }
-                    .padding(.vertical, 4)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .cardStyle(cornerRadius: 16)
+                    .listRowInsets(.init(top: 6, leading: 28, bottom: 6, trailing: 28))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
             }
         }
+        .themedScreenBackground()
         .onAppear {
             viewModel.bind(appState: appState)
         }

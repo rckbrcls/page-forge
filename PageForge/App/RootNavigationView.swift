@@ -9,6 +9,7 @@ struct RootNavigationView: View {
                 Label(destination.rawValue, systemImage: destination.systemImage)
                     .tag(destination)
             }
+            .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 260)
             .navigationTitle("PageForge")
         } detail: {
