@@ -62,6 +62,18 @@ The desktop app requires macOS 26 or later and Xcode 26 or later for development
 Calibre is required because conversion/metadata/polish are delegated to its tools.
 PageForge owns workflow UX, readiness diagnosis, and safe structural repair.
 
+
+## Install (macOS release)
+
+```bash
+curl -fsSL https://rckbrcls.com/api/page-forge/install | bash
+open /Applications/PageForge.app
+```
+
+Updates ship automatically via Sparkle. Manual check: **PageForge → Check for Updates…**
+
+Release operators: GitHub Actions → **Release** workflow (`workflow_dispatch`).
+
 ## Open / Develop
 
 ```bash
