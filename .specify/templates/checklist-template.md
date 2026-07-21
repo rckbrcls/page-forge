@@ -22,12 +22,13 @@
 
 ## Constitution Compliance
 
-- [ ] CHK001 Feature stays inside README mission scope (readiness/convert/repair/metadata/batch/send)
-- [ ] CHK002 No DRM removal, OCR promises, or Amazon login/upload automation introduced
-- [ ] CHK003 Local-first and safe explicit operations preserved; aggressive repair stays secondary
-- [ ] CHK004 UI remains Readiness-first, calm, lightweight, and progressive-disclosure friendly
-- [ ] CHK005 Domain rules live outside Views/CLI entrypoints and remain testable
-- [ ] CHK006 Output contracts preserved (`*-repaired.epub` vs `*-kindle-ready.epub`)
+- [ ] CHK001 Feature directly supports local EPUB selection, inspection, safe repair, corrected-copy generation, or explicit Kindle delivery
+- [ ] CHK002 No conversion, DRM removal, editor, reader, library, cloud, account, desktop/mobile, AI, chat, agent, or generic-document scope introduced
+- [ ] CHK003 No Calibre, EPUBCheck, binary, helper process, local service, executable download, or user-installed dependency introduced
+- [ ] CHK004 Original EPUBs remain immutable; outputs are collision-safe, reported, revalidated, and contain no new critical errors
+- [ ] CHK005 Archive and XML handling is bounded and safe against traversal, ZIP bombs, duplicates, entities, symlinks, remote references, memory pressure, and UI blocking
+- [ ] CHK006 Findings are typed and transparent; engine rules stay outside React; every audit and automatic repair has focused fixtures and tests
+- [ ] CHK007 Delivery is explicit; content stays local otherwise; credentials are protected through Raycast secure preferences when applicable
 
 ## [Category 1]
 

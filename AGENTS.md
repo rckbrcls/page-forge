@@ -22,65 +22,61 @@
 ## Project Context
 
 - Governance source: `.specify/memory/constitution.md`.
-- Product baseline + workflow docs: `README.md`, `docs/desktop-migration.md`, `specs/002-simplify-document-workflow/`.
-- PageForge is a macOS-only ebook preparation utility.
-- **Primary surface**: native SwiftUI desktop app in `PageForge/` via `PageForge.xcodeproj`.
-- **Legacy surface**: Python TUI/CLI archived under `legacy/python-tui-cli/` for reference only.
-- Main desktop areas:
-  - `PageForge/App/`: app entry, commands, and main window composition
-  - `PageForge/Features/Workflow/`: the single document queue and primary actions
-  - `PageForge/Features/Settings/`: the separate native Settings window
-  - `PageForge/Features/Shared/`: shared intake and presentation components
-  - `PageForge/Domain/`: models, services, jobs
-  - `PageForge/Integrations/`: Calibre, Keychain, Mail, FileSystem
-  - `PageForgeTests/`: domain tests
+- Active product specification and plan: `specs/004-raycast-epub-workflow/`.
+- Page Forge is a macOS-only, public, self-contained Raycast extension for EPUB inspection, safe repair, revalidation, and explicit Kindle delivery.
+- The final repository contains one npm package and one Raycast extension. Swift, SwiftUI, Xcode, Python, Calibre, and the previous desktop distribution are obsolete and must not be retained as a parallel product.
+- Required dependency direction: `Raycast Commands -> Application Services -> EPUB Audit and Repair Engine -> Archive, XML, Filesystem, and Delivery Adapters`.
+- Planned source areas:
+  - `src/commands/`: Raycast view composition only
+  - `src/application/`: intake, batch, inspect, prepare, and send orchestration
+  - `src/domain/audit/`: EPUB rules and health derivation
+  - `src/domain/repair/`: repair planning, application, and comparison
+  - `src/domain/models/`: typed reports, failures, plans, results, and state
+  - `src/adapters/`: archive, XML, filesystem, SMTP, and Raycast boundaries
+  - `tests/fixtures/`: small valid, malformed, ambiguous, and malicious EPUB fixtures
 
 ## Product Positioning
 
-- Do not frame PageForge as a Calibre replacement.
-- Treat Calibre as the underlying ebook engine.
-- PageForge adds value through one focused Kindle-ready workflow: add local files, diagnose and safely prepare them, then save or send the results.
-- The default experience is files-first and queue-first, with no mode sidebar.
-- Readiness, conversion, and delivery are steps in the main workflow rather than peer destinations.
-- Metadata, advanced repair, and troubleshooting remain contextual capabilities.
-- Configuration belongs in the separate native Settings window.
-- For Kindle delivery, keep two paths clear:
-  - SMTP email delivery through configured profiles.
-  - Handoff to Amazon Send to Kindle web/app/USB flow.
+- Page Forge is not a Calibre replacement and must not depend on Calibre or any installed ebook engine.
+- Keep one focused pipeline: `Select EPUB -> Inspect Health -> Apply Safe Repairs -> Validate Repaired Copy -> Send to Kindle`.
+- Support EPUB only. Do not add conversion or PDF, MOBI, AZW, AZW3, or KFX handling.
+- Expose exactly three first-version commands: Inspect EPUB, Prepare EPUB for Kindle, and Send EPUB to Kindle.
+- Keep SMTP delivery and the official Send to Kindle web handoff distinct and explicit.
 - Do not promise direct Amazon upload automation or Amazon login automation.
 - Do not implement DRM removal.
-- Do not promise OCR for scanned PDFs.
 - Keep the product fast, light, minimal, and visually calm.
 
 ## Implementation Conventions
 
-- Keep one shared intake path for drag-and-drop, picker, toolbar, and File menu.
-- Process a stable selected snapshot sequentially and isolate failures per file.
-- New files added during processing remain queued for a later run.
-- Cancellation stops pending scheduling; do not claim hard cancellation of an active Calibre process.
-- Keep `repair` behavior separate from Readiness prepare behavior:
-  - Repair output remains `*-repaired.epub`.
-  - Readiness prepare output uses `*-kindle-ready.epub`.
-- Keep shared logic in domain services. Avoid embedding readiness/repair/conversion rules in SwiftUI views.
-- Do not restore separate top-level Readiness, Convert, Batch, Send, Metadata, or Logs navigation without an approved product change.
-- For user-facing statuses, use:
-  - `ready`
-  - `needs_fixes`
-  - `blocked`
-- For Readiness issues, use:
+- Keep one shared intake path for Finder-selected files and the Raycast file picker.
+- Process a stable selected snapshot sequentially, one EPUB and one archive entry at a time, and isolate failures per file.
+- Cancellation stops pending scheduling and cooperatively interrupts active streams; SMTP may become `delivery_unknown` after message data begins.
+- Never modify or overwrite an original. Preparation creates `*-kindle-ready.epub`, then `-2`, `-3`, and so on.
+- Apply only repairs listed in a reviewed plan and revalidate the written copy before atomic final promotion.
+- Keep audit and repair rules out of React components.
+- Use health states:
+  - `healthy`
+  - `repairable`
+  - `needs_review`
+  - `unsupported`
+  - `unsafe`
+- Use finding severities:
   - `info`
   - `warning`
   - `error`
-  - `fixable`
-- Do not develop new features in `legacy/`.
+  - `critical`
+- Represent repairability separately from severity.
+- Use typed expected failures; never expose raw archive, XML, filesystem, or SMTP exceptions.
+- Every audit and automatic repair rule requires a focused fixture-backed test.
+- Do not develop or preserve production features in obsolete `PageForge/` or `legacy/` trees.
 
 ## Dependencies And Platform
 
-- Desktop: Swift / SwiftUI, macOS 26+
-- External: Calibre tools (`ebook-convert`, `ebook-meta`, `ebook-polish`)
-- Secrets: macOS Keychain
-- Optional discovery overrides: `EBOOK_CONVERT_PATH`, `EBOOK_META_PATH`, `EBOOK_POLISH_PATH`
-- Legacy Python tree remains only as reference under `legacy/python-tui-cli/`
+- Product surface: TypeScript, React, `@raycast/api`, and Node.js APIs available in Raycast.
+- Planned archive/XML/delivery dependencies: `yauzl`, `yazl`, `saxes`, and `nodemailer`, plus narrowly justified integrity/path helpers.
+- Tests: Vitest with small deterministic EPUB fixtures.
+- Secrets: Raycast password preferences; never direct Keychain access, project files, logs, or remote storage.
+- Forbidden: native binaries, helper processes, executable downloads, Calibre, installed EPUBCheck, Python, Java, Docker, local services, and user-installed processing tools.
 
 ## Verification
 

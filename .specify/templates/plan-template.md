@@ -18,51 +18,51 @@
   the iteration process.
 -->
 
-**Language/Version**: [e.g., Swift 6 / SwiftUI, Python 3.11 transitional CLI or NEEDS CLARIFICATION]
+**Language/Version**: [TypeScript version or NEEDS CLARIFICATION]
 
-**Primary Dependencies**: [e.g., SwiftUI, Calibre CLI tools, Security/Keychain or NEEDS CLARIFICATION]
+**Primary Dependencies**: [e.g., @raycast/api, a justified pure JS/TS archive or XML package]
 
-**Storage**: [local files + app config; Keychain for secrets; no cloud DB by default]
+**Storage**: [local EPUB input and explicitly selected output paths; Raycast preferences only when needed]
 
-**Testing**: [e.g., XCTest/Swift Testing for domain; pytest only for transitional Python surfaces]
+**Testing**: [TypeScript test runner; small EPUB and malicious-archive fixtures]
 
-**Target Platform**: [macOS desktop only]
+**Target Platform**: [Raycast extension runtime]
 
-**Project Type**: [native desktop utility app]
+**Project Type**: [single-package public Raycast extension]
 
-**Performance Goals**: [e.g., instant drop feedback, non-blocking UI during convert/repair, low idle memory]
+**Performance Goals**: [responsive Raycast UI; bounded archive processing and memory use]
 
-**Constraints**: [mission-only scope; local-first; no DRM removal; no Amazon login automation; Calibre remains external engine]
+**Constraints**: [EPUB-only; local processing; safe deterministic repairs; no external executable, service, or engine]
 
-**Scale/Scope**: [single-user local utility; small screen count; focused Kindle-ready workflow]
+**Scale/Scope**: [small command set; inspect, prepare, and explicitly send Kindle-ready EPUBs]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Verify against `.specify/memory/constitution.md` and README baseline:
+Verify against `.specify/memory/constitution.md`:
 
-- **Mission fit**: Feature improves intake, readiness, conversion, repair,
-  metadata cleanup, batch preparation, or Kindle send/handoff. Reject generic
-  library-manager, cloud sync, or platform scope.
-- **Fast/light/beautiful**: Design keeps the UI responsive and restrained. No
-  Electron/web-shell runtime or unjustified heavy dependency.
-- **Readiness-first**: Default user journey still centers Readiness; supporting
-  surfaces stay secondary (Convert, Batch, Metadata, Settings, Logs).
-- **Calibre boundary**: Conversion/metadata/polish remain Calibre-orchestrated.
-  PageForge owns workflow, diagnosis, safe repair, setup/doctor, and delivery UX.
-- **Safe local-first**: Local files, Keychain secrets, explicit transforms. No DRM
-  removal. No Amazon login/upload automation. Aggressive repair only as labeled
-  secondary mode. No OCR promises for scanned PDFs.
-- **Status vocabulary**: Readiness uses `ready` / `needs_fixes` / `blocked`.
-  Issues use `info` / `warning` / `error` / `fixable`.
-- **Output contracts**: Keep `*-repaired.epub` distinct from
-  `*-kindle-ready.epub`. Preserve CLI behavior during desktop migration unless a
-  breaking change is explicit.
-- **Architecture**: Domain logic lives in testable services; UI/CLI do not
-  duplicate readiness/repair/conversion rules.
-- **Complexity**: Any extra abstraction or surface has a written justification in
-  Complexity Tracking.
+- **Mission fit**: Feature directly supports EPUB selection, health inspection,
+  safe repair, corrected-copy generation, or explicit Kindle delivery.
+- **Boundary**: Accept EPUB only. Reject conversion, editing, reading, library,
+  cloud, account, desktop-app, AI, and generic-document scope.
+- **Runtime**: Use TypeScript, React, `@raycast/api`, justified pure JS/TS npm
+  packages, and Node.js APIs available in Raycast. Reject binaries, processes,
+  Calibre, machine-installed EPUBCheck, and user-installed dependencies.
+- **Archive safety**: Define limits and safe handling for traversal, absolute or
+  escaping paths, ZIP bombs, duplicate entries, XML entities, symlinks, remote
+  references, memory pressure, and UI responsiveness.
+- **Repair safety**: Auto-repair only unambiguous, explainable, testable changes
+  that preserve meaning. Ambiguity remains diagnostic-only.
+- **Output and validation**: Never mutate an original. Create a collision-safe new
+  output, revalidate it, compare reports, and reject new critical errors.
+- **Architecture and types**: Keep UI separate from application, EPUB engine, and
+  adapters. Use typed expected results and failures, not loose strings.
+- **Tests and privacy**: Plan fixtures for every audit and repair; process locally;
+  require explicit external delivery intent; protect credentials in Raycast secure
+  preferences if email delivery is included.
+- **Complexity**: Keep one package and one extension. Any exception has a written,
+  approved constitutional amendment.
 
 ## Project Structure
 
@@ -81,38 +81,25 @@ specs/[###-feature]/
 ### Source Code (repository root)
 <!--
   ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Prefer the macOS desktop structure. Keep transitional Python
-  paths only when the feature still touches the legacy CLI/TUI surface.
+   for this feature. Keep a single TypeScript package and separate Raycast commands
+   from application, EPUB-engine, and adapter code.
   The delivered plan must not include Option labels.
 -->
 
 ```text
-# Preferred: macOS SwiftUI desktop utility
-PageForge/
-├── App/
-├── Features/
-│   ├── DropIntake/
-│   ├── Readiness/
-│   ├── Prepare/
-│   └── Delivery/
-├── Domain/
-│   ├── Models/
-│   ├── Services/
-│   └── Readiness/
-├── Integrations/
-│   ├── Calibre/
-│   ├── Keychain/
-│   └── Mail/
-└── Resources/
-
-PageForgeTests/
-├── Domain/
-├── Integrations/
-└── Features/
-
-# Transitional only: legacy Python CLI/TUI surface
-src/page_forge/
+src/
+├── commands/
+├── application/
+├── domain/
+│   ├── audit/
+│   ├── repair/
+│   └── models/
+└── adapters/
+    ├── archive/
+    ├── xml/
+    └── filesystem/
 tests/
+└── fixtures/
 ```
 
 **Structure Decision**: [Document the selected structure and reference the real

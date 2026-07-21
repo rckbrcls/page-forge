@@ -83,17 +83,17 @@
 <!--
   ACTION REQUIRED: The content in this section represents placeholders.
   Fill them out with the right functional requirements.
-  Keep requirements mission-aligned with the PageForge constitution:
-  local ebook preparation and Kindle-ready delivery on macOS.
+  Keep requirements aligned with the Page Forge constitution: local EPUB health
+  inspection, safe repair, corrected-copy generation, and explicit Kindle delivery.
 -->
 
 ### Functional Requirements
 
-- **FR-001**: System MUST [specific capability, e.g., "accept dropped EPUB/MOBI/PDF files"]
-- **FR-002**: System MUST [specific capability, e.g., "report readiness as ready/needs_fixes/blocked"]
-- **FR-003**: Users MUST be able to [key interaction, e.g., "prepare a Kindle-ready EPUB"]
-- **FR-004**: System MUST [data requirement, e.g., "keep SMTP secrets in macOS Keychain"]
-- **FR-005**: System MUST [behavior, e.g., "surface missing Calibre tools with recovery guidance"]
+- **FR-001**: System MUST [specific capability, e.g., "accept selected EPUB files"]
+- **FR-002**: System MUST [specific capability, e.g., "report concrete EPUB findings with stable codes"]
+- **FR-003**: Users MUST be able to [key interaction, e.g., "create a revalidated Kindle-ready EPUB copy"]
+- **FR-004**: System MUST [data requirement, e.g., "report a collision-safe generated output path"]
+- **FR-005**: System MUST [behavior, e.g., "require explicit user intent before Kindle delivery"]
 
 *Example of marking unclear requirements:*
 
@@ -102,23 +102,27 @@
 
 ### Constitution Constraints *(mandatory)*
 
-- **CC-001**: Feature MUST stay inside README mission scope: intake, readiness,
-  conversion, repair, metadata cleanup, batch preparation, or Kindle send/handoff
-- **CC-002**: Feature MUST preserve local-first operation and safe explicit actions
-- **CC-003**: Feature MUST NOT introduce DRM removal, OCR promises for scanned PDFs,
-  or Amazon login/upload automation
-- **CC-004**: Feature MUST keep Readiness-first UX order; advanced controls use
-  progressive disclosure
-- **CC-005**: Feature MUST keep long-running work non-blocking and report
-  progress/failures clearly
-- **CC-006**: Feature MUST preserve output contracts (`*-repaired.epub` vs
-  `*-kindle-ready.epub`) unless an explicit breaking change is approved
+- **CC-001**: Feature MUST directly support the EPUB-to-Kindle pipeline and accept
+  EPUB only
+- **CC-002**: Feature MUST keep processing local, preserve originals, and require
+  explicit delivery intent
+- **CC-003**: Feature MUST NOT introduce conversion, DRM removal, content editing,
+  reading, library, cloud, account, desktop-app, AI, or generic-document scope
+- **CC-004**: Feature MUST use Raycast UI and preserve a small keyboard-first
+  command set
+- **CC-005**: Feature MUST define safe, bounded untrusted-archive processing and
+  keep the interface responsive
+- **CC-006**: Feature MUST use typed reports and failures, separate engine rules
+  from React, and test every audit rule and automatic repair with fixtures
+- **CC-007**: Feature MUST NOT add Calibre, EPUBCheck, binaries, external services,
+  helper processes, or user-installed dependencies
 
 ### Key Entities *(include if feature involves data)*
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
-- **ReadinessReport** *(when relevant)*: Status (`ready`/`needs_fixes`/`blocked`) plus issues with severity (`info`/`warning`/`error`/`fixable`)
+- **HealthReport** *(when relevant)*: Derived classification plus findings with
+  stable code, severity, location, repairability, applied repair, and revalidation result
 
 ## Success Criteria *(mandatory)*
 
@@ -133,7 +137,7 @@
 - **SC-001**: [Measurable metric, e.g., "User can drop one ebook and see readiness status in under 10 seconds for typical files"]
 - **SC-002**: [Measurable metric, e.g., "Primary prepare flow completes with explicit output path and status"]
 - **SC-003**: [User satisfaction metric, e.g., "First-time user can complete diagnose -> prepare without reading docs"]
-- **SC-004**: [Quality metric, e.g., "UI remains interactive while conversion/repair runs"]
+- **SC-004**: [Quality metric, e.g., "Raycast remains responsive while bounded inspection or repair runs"]
 
 ## Assumptions
 
@@ -143,8 +147,8 @@
   chosen when the feature description did not specify certain details.
 -->
 
-- Target user is an individual preparing ebooks on macOS
-- Calibre remains an external dependency for conversion/metadata/polish
-- Multi-platform desktop support is out of scope unless constitution is amended
-- Cloud sync/accounts are out of scope by default
+- Target user has Raycast installed and selects local EPUB files
+- Processing uses only the Raycast runtime, local Node.js APIs, and justified pure JS/TS packages
+- Kindle transmission requires explicit user intent and may prepare a file for a user-controlled flow
+- Cloud sync, accounts, external engines, and non-EPUB inputs are out of scope
 - [Additional feature-specific assumption]

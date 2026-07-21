@@ -9,7 +9,8 @@ description: "Task list template for feature implementation"
 
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
+**Tests**: Tests are REQUIRED for every EPUB audit rule and automatic repair. Include
+fixture-backed tests for archive safety and revalidation behavior where relevant.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -21,23 +22,18 @@ description: "Task list template for feature implementation"
 
 ## Path Conventions
 
-- **macOS desktop**: `PageForge/App/`, `PageForge/Domain/`, `PageForge/Features/Workflow/`, `PageForge/Features/Settings/`, `PageForge/Integrations/`, `PageForgeTests/`
-- **Legacy reference only**: `legacy/python-tui-cli/` (never a new-feature target)
-- **Web app**: not used for PageForge product work under the constitution
+- **Raycast extension**: `src/commands/`, `src/application/`, `src/domain/`, `src/adapters/`, `tests/fixtures/`
+- **Single package**: do not introduce a monorepo, companion app, local service, or helper process
 - Paths shown below are examples - adjust based on plan.md structure
 
 ## Constitution Task Expectations
 
-- Foundational work MUST establish domain services before feature UI polish
-- Readiness/repair/conversion rules MUST land in `Domain` or equivalent services, not Views
-- Any Calibre invocation tasks MUST include missing-tool/doctor/setup handling
-- UI tasks MUST preserve one files-first queue with shared drag-and-drop, picker, toolbar, and File menu intake
-- Prepare, Save Files, and Send to Kindle MUST remain the primary workflow actions
-- Metadata, advanced repair, logs, and troubleshooting MUST remain contextual
-- Settings tasks MUST use the separate native Settings window
-- Performance-sensitive tasks MUST keep preparation, export, and delivery work non-blocking
-- Security-sensitive tasks (Keychain, SMTP, file writes) MUST include safe-default handling
-- Do not schedule tasks for DRM removal, OCR pipelines, Amazon login automation, or multi-platform shells
+- Foundational work MUST establish typed application and EPUB-engine services before Raycast UI work
+- Audit and repair rules MUST live outside React commands and have focused fixtures and tests
+- Archive tasks MUST include safe limits for traversal, escaping paths, ZIP bombs, duplicates, XML entities, symlinks, remote references, memory, and responsiveness
+- Repair tasks MUST preserve originals, generate collision-safe outputs, revalidate copies, and reject newly introduced critical errors
+- Delivery tasks MUST require explicit user intent and must not expose credentials in files, logs, errors, or reports
+- Do not schedule Calibre, EPUBCheck, format conversion, executables, services, desktop/mobile apps, AI, DRM removal, editing, reading, library, cloud, or account work
 
 <!--
   ============================================================================
@@ -76,12 +72,11 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Create shared workflow models in PageForge/Domain/Models/[WorkflowModels].swift
-- [ ] T005 [P] Define job state invariants in PageForge/Domain/Jobs/[JobCoordinator].swift
-- [ ] T006 [P] Define narrow service contracts in PageForge/Domain/Services/[Service].swift
-- [ ] T007 Create deterministic file fixtures in PageForgeTests/Support/[FixtureFactory].swift
-- [ ] T008 Configure operation feedback in PageForge/Domain/Services/LogService.swift
-- [ ] T009 Register new source and test files in PageForge.xcodeproj/project.pbxproj
+- [ ] T004 Create typed EPUB health and repair models in src/domain/models/[Models].ts
+- [ ] T005 [P] Define audit and repair service contracts in src/application/[Service].ts
+- [ ] T006 [P] Define bounded archive, XML, and filesystem adapter contracts in src/adapters/[Adapter].ts
+- [ ] T007 Create deterministic EPUB and malicious-archive fixtures in tests/fixtures/[Fixture].epub
+- [ ] T008 Add fixture-backed audit and repair tests in tests/[Feature].test.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -93,21 +88,21 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 1 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 1 (REQUIRED for audit or repair behavior)
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Add domain contract tests in PageForgeTests/Domain/[Feature]Tests.swift
-- [ ] T011 [P] [US1] Add workflow tests in PageForgeTests/Features/[Feature]Tests.swift
+- [ ] T010 [P] [US1] Add domain tests and focused fixtures in tests/[Feature].test.ts
+- [ ] T011 [P] [US1] Add Raycast command behavior tests where applicable in tests/[Command].test.tsx
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in PageForge/Domain/Models/[Entity1].swift
-- [ ] T013 [P] [US1] Create [Entity2] model in PageForge/Domain/Models/[Entity2].swift
-- [ ] T014 [US1] Implement [Service] in PageForge/Domain/Services/[Service].swift (depends on T012, T013)
-- [ ] T015 [US1] Implement workflow behavior in PageForge/Features/Workflow/[Feature].swift
-- [ ] T016 [US1] Add validation and error handling in PageForge/Domain/Services/[Service].swift
-- [ ] T017 [US1] Add operation feedback in PageForge/Features/Workflow/[Feature].swift
+- [ ] T012 [P] [US1] Create [Entity1] model in src/domain/models/[Entity1].ts
+- [ ] T013 [P] [US1] Create [Entity2] model in src/domain/models/[Entity2].ts
+- [ ] T014 [US1] Implement [Service] in src/application/[Service].ts (depends on T012, T013)
+- [ ] T015 [US1] Implement command behavior in src/commands/[Feature].tsx
+- [ ] T016 [US1] Add typed validation and failure handling in src/application/[Service].ts
+- [ ] T017 [US1] Add Raycast result feedback in src/commands/[Feature].tsx
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -119,17 +114,17 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 2 (REQUIRED for audit or repair behavior)
 
-- [ ] T018 [P] [US2] Add domain tests in PageForgeTests/Domain/[Feature]Tests.swift
-- [ ] T019 [P] [US2] Add workflow tests in PageForgeTests/Features/[Feature]Tests.swift
+- [ ] T018 [P] [US2] Add domain tests and focused fixtures in tests/[Feature].test.ts
+- [ ] T019 [P] [US2] Add command tests where applicable in tests/[Command].test.tsx
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in PageForge/Domain/Models/[Entity].swift
-- [ ] T021 [US2] Implement [Service] in PageForge/Domain/Services/[Service].swift
-- [ ] T022 [US2] Implement workflow behavior in PageForge/Features/Workflow/[Feature].swift
-- [ ] T023 [US2] Integrate with the single queue in PageForge/Features/Workflow/[WorkflowViewModel].swift
+- [ ] T020 [P] [US2] Create [Entity] model in src/domain/models/[Entity].ts
+- [ ] T021 [US2] Implement [Service] in src/application/[Service].ts
+- [ ] T022 [US2] Implement command behavior in src/commands/[Feature].tsx
+- [ ] T023 [US2] Integrate typed result presentation in src/commands/[Feature].tsx
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -141,16 +136,16 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 3 (REQUIRED for audit or repair behavior)
 
-- [ ] T024 [P] [US3] Add domain tests in PageForgeTests/Domain/[Feature]Tests.swift
-- [ ] T025 [P] [US3] Add workflow tests in PageForgeTests/Features/[Feature]Tests.swift
+- [ ] T024 [P] [US3] Add domain tests and focused fixtures in tests/[Feature].test.ts
+- [ ] T025 [P] [US3] Add command tests where applicable in tests/[Command].test.tsx
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in PageForge/Domain/Models/[Entity].swift
-- [ ] T027 [US3] Implement [Service] in PageForge/Domain/Services/[Service].swift
-- [ ] T028 [US3] Implement workflow behavior in PageForge/Features/Workflow/[Feature].swift
+- [ ] T026 [P] [US3] Create [Entity] model in src/domain/models/[Entity].ts
+- [ ] T027 [US3] Implement [Service] in src/application/[Service].ts
+- [ ] T028 [US3] Implement command behavior in src/commands/[Feature].tsx
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -166,10 +161,10 @@ Examples of foundational tasks (adjust based on your project):
 
 - [ ] TXXX [P] Documentation updates in docs/
 - [ ] TXXX Code cleanup and refactoring
-- [ ] TXXX Performance pass: drop responsiveness, progress states, cancel/failure clarity
-- [ ] TXXX UI polish pass: spacing, hierarchy, progressive disclosure, accessibility basics
-- [ ] TXXX [P] Additional domain tests for readiness/repair/delivery invariants
-- [ ] TXXX Security hardening for Keychain/SMTP/file output paths
+- [ ] TXXX Performance pass: bounded archive processing, memory use, and responsive Raycast feedback
+- [ ] TXXX UI polish pass: keyboard-first Raycast interaction and clear finding/result presentation
+- [ ] TXXX [P] Additional fixture-backed tests for audit, repair, revalidation, and delivery intent invariants
+- [ ] TXXX Security hardening for archive paths, XML parsing, output paths, and credential handling
 - [ ] TXXX Constitution compliance review against `.specify/memory/constitution.md`
 - [ ] TXXX Run quickstart.md validation
 
@@ -194,7 +189,7 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Within Each User Story
 
-- Tests (if included) MUST be written and FAIL before implementation
+- Required audit and repair tests MUST be written and FAIL before implementation
 - Models before services
 - Services before workflow UI
 - Core implementation before integration
@@ -214,13 +209,13 @@ Examples of foundational tasks (adjust based on your project):
 ## Parallel Example: User Story 1
 
 ```bash
-# Launch all tests for User Story 1 together (if tests requested):
-Task: "Domain contract tests in PageForgeTests/Domain/[Feature]Tests.swift"
-Task: "Workflow tests in PageForgeTests/Features/[Feature]Tests.swift"
+# Launch required audit and repair tests for User Story 1 together:
+Task: "Domain contract tests and fixtures in tests/[Feature].test.ts"
+Task: "Raycast command behavior tests in tests/[Command].test.tsx"
 
 # Launch all models for User Story 1 together:
-Task: "Create [Entity1] model in PageForge/Domain/Models/[Entity1].swift"
-Task: "Create [Entity2] model in PageForge/Domain/Models/[Entity2].swift"
+Task: "Create [Entity1] model in src/domain/models/[Entity1].ts"
+Task: "Create [Entity2] model in src/domain/models/[Entity2].ts"
 ```
 
 ---

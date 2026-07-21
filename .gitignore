@@ -1,44 +1,32 @@
-.DS_Store
-.venv/
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.ruff_cache/
+# Dependencies and Raycast output
+node_modules/
 dist/
 build/
-*.egg-info/
+.raycast/
 
-# Swift / Xcode
-.build/
-DerivedData/
-*.xcuserstate
-*.xccheckout
-*.xcscmblueprint
-xcuserdata/
-*.swiftpm/
-Packages/
-*.moved-aside
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
-*.hmap
-*.ipa
-*.dSYM.zip
-*.dSYM
-timeline.xctimeline
-playground.xcworkspace
-.swiftpm/config/registries.json
-.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
-.netrc
+# Test and tool output
+coverage/
+*.log
+npm-debug.log*
 
-# Editors / OS
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Page Forge temporary EPUB artifacts
+.page-forge-*.epub
+*.epub.tmp
+
+# macOS and editors
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
 .idea/
 .vscode/
 Thumbs.db
 *.tmp
 *.swp
+*~

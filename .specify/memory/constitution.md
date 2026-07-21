@@ -1,238 +1,226 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.0 → 2.0.0
-- Bump rationale: replace the mode-based and folder-first baseline with one
-  files-first queue while retaining advanced capabilities contextually
-- Product impact: one main queue and one Settings window replace peer workflow
-  destinations; Calibre, local-file safety, and delivery boundaries are unchanged
-- Modified principles:
-  - I. Kindle-Ready Ebook Workflow Mission: queue-first primary flow
-  - II. Fast, Light, Beautiful Surface: desktop app is the sole primary surface
-  - V. Readiness-First Progressive UI → V. Files-First Progressive UI
-- Added sections: none
-- Removed sections: none
-- Templates and guidance updated:
+- Version change: 2.0.0 -> 3.0.0
+- Bump rationale: the product surface, supported inputs, runtime, dependencies,
+  architecture, safety model, and delivery constraints are redefined incompatibly.
+- Modified principles: all prior desktop-app, Calibre, queue, conversion, and
+  Settings principles are replaced by the principles below.
+- Added sections: Product Boundary; EPUB Health and Repair Policy; Architecture,
+  Quality, and Distribution.
+- Removed sections: desktop queue baseline, Calibre engine boundary, conversion
+  contracts, native Settings guidance, legacy Python compatibility, and Keychain
+  requirements.
+- Templates updated:
+  - .specify/templates/plan-template.md
+  - .specify/templates/spec-template.md
   - .specify/templates/tasks-template.md
-  - AGENTS.md
-  - README.md
-  - docs/desktop-migration.md
-- Reviewed without changes: plan-template.md, spec-template.md, and
-  checklist-template.md
-- Source of truth: specs/002-simplify-document-workflow/ and the delivered native
-  desktop workflow
+  - .specify/templates/checklist-template.md
+- Reviewed without changes: .specify/templates/constitution-template.md
 - Follow-up TODOs: none
 -->
 
-# PageForge Constitution
+# Page Forge Constitution
 
 ## Core Principles
 
-### I. Kindle-Ready Ebook Workflow Mission
-PageForge is a macOS product for preparing ebook files for Kindle. Its mission is
-to turn a user-selected collection of local EPUB, MOBI, and PDF files into
-Kindle-ready EPUB outputs that can be saved or sent.
+### I. Minimum, EPUB-Only Scope
+Page Forge exists only to inspect EPUB health, apply safe repairs, create a new
+Kindle-ready EPUB copy, and explicitly send or prepare that copy for Kindle.
+Every feature MUST directly serve this pipeline:
 
-The non-negotiable primary flow is:
+`Select EPUB -> Inspect Health -> Apply Safe Repairs -> Generate Repaired Copy -> Send to Kindle`
 
-`add files → prepare sequentially → save or send`
+The product MUST NOT add PDF, MOBI, AZW, AZW3, or KFX conversion; DRM removal;
+an EPUB editor or reader; library management; cloud sync; accounts; remote
+backend; mobile or separate desktop apps; AI, chat, agents; or generic document
+support. Adjacent functionality is out of scope even when it appears useful.
 
-Every feature MUST strengthen that mission. PageForge MUST NOT become a Calibre
-replacement, generic digital library, reader social app, storefront, cloud sync
-service, or plugin platform.
+### II. Self-Contained Raycast Extension
+Page Forge MUST be one public Raycast extension that works immediately after
+installation through Raycast. It MUST use TypeScript, React, `@raycast/api`, and
+`@raycast/utils` only when it provides a concrete benefit. Dependencies MUST be
+JavaScript or TypeScript npm packages, or local Node.js APIs available in the
+Raycast runtime.
 
-Rationale: The README already defines PageForge as a focused preparation utility.
-Breadth without that spine dilutes quality, speed, and trust.
+Swift, SwiftUI, Electron, Tauri, Rust, Python, Java, Docker, helper processes,
+local services, native binaries, executable downloads, Calibre, machine-installed
+EPUBCheck, and user-installed dependencies are FORBIDDEN.
 
-### II. Fast, Light, Beautiful Surface
-PageForge MUST stay fast, lightweight, and visually calm. Local interactions
-MUST feel immediate. Long-running preparation, conversion, export, and delivery
-work MUST run without freezing the interface and MUST expose progress or clear
-status.
+### III. Original Files Are Immutable
+Page Forge MUST NOT modify, overwrite, rename, or remove a selected EPUB. A repair
+MUST create a separate output, normally named `book-kindle-ready.epub`. If that
+path exists, the extension MUST choose a safe unused path and report it; it MUST
+never overwrite an existing file silently.
 
-The native macOS desktop app is the primary product surface. The archived Python
-TUI/CLI is reference material only and MUST NOT constrain the desktop workflow.
+### IV. Safe, Deterministic Repairs Only
+An automatic repair is permitted only when the fault and its correction are
+unambiguous, no content is invented, the book's intended meaning is not changed,
+the operation is testable, and the outcome can be explained to the user.
 
-The desktop surface MUST prioritize drag-and-drop intake, low overhead, and a
-premium but restrained macOS aesthetic. Electron, generic web-shell runtimes, and
-unjustified heavy dependencies are FORBIDDEN. Beauty MUST come from hierarchy,
-spacing, clarity, and progressive disclosure, not ornament or dashboard clutter.
+Initially permitted repairs, when implemented and tested, are rebuilding and
+normalizing the `mimetype` entry; rebuilding `META-INF/container.xml` only with
+one unambiguous OPF; correcting evident MIME types from extensions; normalizing
+unequivocally equivalent internal paths; rebuilding the ZIP while preserving
+content; fixing references with exactly one matching target; and normalizing XML
+encoding without changing meaning.
 
-Rationale: The product is a personal utility. Speed and beauty are part of the
-job, not polish afterthoughts.
+The extension MUST NOT automatically delete chapters, rewrite content, summarize
+text, choose among multiple OPFs or covers, remove scripts or fonts, delete orphan
+resources, reconstruct substantial manifest sections, infer navigation, modify
+title, author, or language, alter CSS for appearance, or destructively repair
+XHTML. Ambiguous cases MUST produce a diagnosis without an automatic change.
 
-### III. Calibre-Powered Engine Boundary
-PageForge has two layers:
+### V. Untrusted-Archive Safety
+Every EPUB MUST be treated as untrusted input. Archive and XML handling MUST
+defend against ZIP traversal, absolute or escaping paths, ZIP bombs, excessive
+file size or entry count, duplicate entries, malicious XML and external entities,
+unexpected remote references, invalid filenames, symlinks or equivalent entries,
+excessive memory consumption, and interface blocking. No internal EPUB content
+may be executed.
 
-1. PageForge experience and workflow orchestration
-2. Calibre as the native ebook engine for `ebook-convert`, `ebook-meta`, and
-   `ebook-polish`
+Limits and rejection behavior MUST be explicit, deterministic, and reported as
+typed processing failures. Inspection and repair work MUST keep the Raycast
+interface responsive.
 
-PageForge MUST orchestrate Calibre for conversion, metadata mutation, and polish.
-PageForge-owned logic covers readiness diagnosis, safe structural repair
-workflow, delivery/handoff UX, setup/doctor guidance, and focused queue
-orchestration. The product MUST NOT claim to replace Calibre.
+### VI. Local Processing and Explicit Delivery
+Inspection and repair MUST run locally. Book content, diagnostics, and metadata
+MUST NOT be sent to servers, APIs, analytics services, or AI models. The only
+permitted external transmission is a user-initiated Kindle delivery action.
 
-Missing or custom Calibre installs MUST be handled explicitly:
+Inspection, repair, and sending MUST be distinct actions or visibly distinct
+steps. Selecting or repairing a file MUST NOT send it automatically. Sending may
+prepare the corrected file for a user-controlled Kindle flow when direct delivery
+is not configured.
 
-- doctor/setup guidance
-- Homebrew-oriented install/update paths on macOS
-- support for custom tool paths when provided
+### VII. Transparent, Evidence-Based Health Reports
+Health classification MAY use `Healthy`, `Repairable`, `Needs Review`,
+`Unsupported`, or `Unsafe`, but it MUST be derived from concrete findings and
+MUST NOT replace them. Every finding MUST include a stable code, severity, title,
+description, location when applicable, repairability, applied repair when any,
+and the result of revalidation.
 
-Rationale: Format edge cases are hard. Reusing Calibre keeps PageForge small and
-useful while the product owns the Kindle-ready workflow.
+The extension MUST NOT present an unexplained generic health score as the primary
+diagnosis.
 
-### IV. Safe Local-First Operations
-All primary work MUST operate on local user-provided files. Secrets for SMTP or
-app tokens MUST live in macOS Keychain and MUST NOT be written to config files.
+### VIII. Validate Before and After Repair
+The repair pipeline MUST inspect the original EPUB, derive a repair plan, create a
+new copy, inspect that copy again, and compare both reports. It MUST report success
+only when the output introduces no new critical errors. A failed or unsafe repair
+MUST preserve the original and clearly report the failure and any output path.
 
-Safety rules:
+### IX. Domain-First, Typed Architecture
+The EPUB engine MUST remain independent of Raycast UI components and testable
+without rendering React. The required dependency direction is:
 
-- Prefer safe repairs and explicit user-initiated transforms
-- Aggressive repair (`EPUB -> MOBI -> EPUB`) is allowed only as a clearly labeled
-  secondary mode when safe repair is insufficient
-- DRM removal is FORBIDDEN
-- Amazon login automation and direct Amazon upload automation are FORBIDDEN
-- Delivery is limited to:
-  - SMTP Send to Kindle through configured local profiles
-  - explicit handoff to Amazon Send to Kindle web/app/USB flows
-- PDF conversion MUST remain direct Calibre conversion without OCR promises;
-  scanned PDFs may produce poor or empty output
+`Raycast Commands -> Application Services -> EPUB Audit and Repair Engine -> Archive, XML, and Filesystem Adapters`
 
-Readiness vocabulary is mandatory:
+React components MUST NOT contain audit or repair rules. Expected outcomes MUST
+use explicit types, including loaded document, finding, severity, repair plan,
+applied repair, report, processing failure, and delivery result. Expected failures
+MUST NOT be represented by unstructured strings or generic exceptions.
 
-- statuses: `ready`, `needs_fixes`, `blocked`
-- severities: `info`, `warning`, `error`, `fixable`
+### X. Fixture-Backed Repair Assurance
+Every audit rule and every automatic repair MUST have focused tests and small,
+specific fixtures. The test corpus MUST cover valid EPUBs; invalid ZIPs; absent,
+compressed, or misordered `mimetype`; absent `container.xml`; absent or ambiguous
+OPFs; invalid manifests and spines; missing resources; incorrect MIME types;
+broken references; malicious paths; duplicate entries; and oversized files.
 
-Rationale: Trust depends on local control, explicit actions, and honest limits.
+An automatic repair without a corresponding test MUST NOT be accepted.
 
-### V. Files-First Progressive UI
-The default experience MUST be one files-first document queue, not a mode picker,
-sidebar, dashboard, settings screen, or collection of peer workflow destinations.
+### XI. Native Raycast Interaction
+The user interface MUST use Raycast components and remain command-first, fast,
+and keyboard usable. It MUST NOT imitate a traditional desktop application inside
+Raycast. The initial command set SHOULD stay small and cover inspection,
+preparation, and explicit Kindle sending for selected EPUBs.
 
-UI rules:
+### XII. Privacy and Credentials
+Credentials MUST NOT be committed, stored in repository files, logged, shown in
+errors or reports, or sent to telemetry. If email delivery is implemented,
+credentials MUST use Raycast secure preferences and the extension README MUST
+describe their handling. The extension MUST NOT collect hidden data.
 
-- Drag-and-drop, picker, toolbar, and File menu MUST feed one shared intake path
-- EPUB, MOBI, and PDF items MUST coexist in one stable queue
-- Prepare, Save Files, and Send to Kindle MUST be the obvious primary actions
-- Settings MUST open in the native separate Settings window
-- Readiness details, metadata, advanced repair, logs, and troubleshooting MUST be
-  contextual or progressively disclosed rather than top-level destinations
-- Advanced or destructive controls use progressive disclosure
-- The UI MUST NOT present every internal engine concept as equal primary
-  navigation
+### XIII. Simple, Reviewable Distribution
+The project MUST remain a single npm package and a single Raycast extension; it
+MUST NOT introduce a monorepo, speculative abstraction, unused layer, dependency
+without a concrete need, or optimization without measurements. Raycast Store
+distribution requires clean build, lint, and typecheck; justified dependencies;
+no downloaded executables; a sufficient README; a publication-compatible license;
+and readable, reviewable code.
 
-Rationale: A single queue keeps the common task obvious while preserving expert
-capabilities without turning engine concepts into navigation.
+## Product Boundary
 
-## Product Baseline
+### Required Capabilities
+- Select one or more EPUBs through Finder-selected files or a Raycast file picker.
+- Inspect EPUB structural health and show clear findings.
+- Apply only permitted safe repairs and create a new corrected copy.
+- Show the final report and generated output path.
+- Explicitly send the corrected EPUB to Kindle or prepare it for user-controlled
+  Kindle delivery.
 
-This constitution treats the files-first desktop workflow as the product
-baseline. Capability preservation does not require preserving legacy navigation,
-folder-oriented entrypoints, or one screen per engine operation.
+### Prohibited Expansion
+No feature may introduce external engines, remote processing, conversion between
+formats, content authoring or reading, library features, or a product surface
+outside Raycast without a constitutional amendment.
 
-### Capability Map
-- One native macOS queue for multi-file EPUB, MOBI, and PDF intake
-- Sequential preparation with independent per-file progress and results
-- Readiness diagnosis and safe preparation inside the primary workflow
-- Safe EPUB repair plus optional aggressive MOBI roundtrip mode
-- Required conversion: `MOBI -> EPUB` and `PDF -> EPUB` before preparation
-- Metadata inspection and repair as contextual advanced capabilities
-- Local output export plus SMTP Send to Kindle or explicit handoff
-- Calibre setup checks with visible feedback
-- App and Calibre guidance in Settings
+## EPUB Health and Repair Policy
 
-### Operational Contracts
-- Readiness audit without write: inspect only
-- Readiness with fix: write `*-kindle-ready.epub`
-- Structural repair command/output remains distinct: `*-repaired.epub`
-- MOBI is legacy input: convert to EPUB before full readiness preparation
-- Multi-file queue processing replaces folder-first batch as the primary model
-- Settings reports local dependency status and provides setup guidance
-- PageForge and Calibre update guidance remain separate because Calibre is a
-  separate native macOS app
-- Custom Calibre binary locations may be provided through configured paths/env
-- SMTP sender email authorization on Amazon remains a user responsibility
-- Named local profiles are supported for delivery configuration
+Health findings MUST use stable, documented identifiers and a defined severity.
+Repair planning MUST preserve enough evidence to explain why each repair is safe,
+which archive entries changed, and why unaddressed findings remain.
 
-### In Scope
-- macOS-only ebook preparation utility
-- Kindle-ready diagnosis, repair, conversion, light metadata edits, and queued processing
-- SMTP delivery and Send to Kindle handoff
-- Local config, Keychain secrets, setup/doctor/update guidance
+Archive reconstruction MUST preserve original content except for the explicitly
+planned repairs. A revalidation report MUST identify resolved, remaining, and newly
+introduced findings.
 
-### Out of Scope
-- Multi-platform product shells unless this constitution is amended
-- Cloud library sync, accounts, collaboration, marketplace, or social features
-- Full library-manager identity as the product center
-- Reader features beyond what preparation requires
-- OCR pipeline for scanned PDFs
-- DRM circumvention
-- Amazon login or upload automation
-- Rebuilding Calibre conversion internals inside PageForge
+## Architecture, Quality, and Distribution
 
-## Architecture & Quality
+### Source Layout
+Plans MUST use one npm package with a structure equivalent to:
 
-### Architecture Rules
-- Use a modular monolith with clear boundaries:
-  - UI surface
-  - domain/workflow services
-  - Calibre integration
-  - config and secrets
-  - delivery
-- Domain rules for readiness, repair, conversion orchestration, and delivery
-  preconditions MUST live in shared services/models
-- UI and legacy entrypoints MUST NOT duplicate business rules
-- New mission-critical behavior SHOULD be implemented in a form reusable by the
-  primary UI and any secondary automation surface
+```text
+src/
+├── commands/
+├── application/
+├── domain/
+│   ├── audit/
+│   ├── repair/
+│   └── models/
+└── adapters/
+    ├── archive/
+    ├── xml/
+    └── filesystem/
+tests/
+└── fixtures/
+```
 
 ### Quality Gates
-- Every feature plan MUST pass a Constitution Check before design acceptance
-- Performance-sensitive paths MUST keep the UI responsive during preparation,
-  conversion, export, and delivery work
-- Security-sensitive changes (Keychain, SMTP, file writes, process execution)
-  MUST use safe defaults and explicit user intent
-- Tests are required for:
-  - readiness status/severity rules
-  - repair safety invariants
-  - conversion orchestration contracts
-  - delivery preconditions
-- UI work MUST preserve accessibility basics: readable contrast, keyboard access
-  to primary actions, and clear status text
-
-### Complexity Policy
-- Choose the simplest design that satisfies the README mission
-- New abstractions require a written reason and a rejected simpler alternative
-- Do not invent platform features, plugin systems, or cloud infrastructure for
-  speculative future use
+- Feature specifications MUST state scope boundaries, processing safety, report
+  semantics, output behavior, and explicit delivery intent where relevant.
+- Plans MUST pass the Constitution Check before research and after design.
+- Tasks MUST include fixture-backed tests for every audit rule and auto-repair.
+- Reviews MUST reject untyped expected failures, UI-embedded engine rules,
+  untested repair behavior, unsafe archive handling, and prohibited dependencies.
+- A feature requiring a constitutional exception MUST identify the violated rule,
+  justify the exception, define its limits, and receive an amendment before work.
 
 ## Governance
 
-This constitution supersedes conflicting convenience decisions and aspirational
-scope. When docs, plans, or code conflict with this file, this file wins until
-amended.
-
-Primary references:
-
-- Product baseline: `README.md`
-- Runtime agent guidance: `AGENTS.md`
-- Governance source: `.specify/memory/constitution.md`
+This constitution supersedes conflicting product guidance, specifications, plans,
+tasks, and code until it is amended. `spec.md`, `plan.md`, `tasks.md`, and code
+reviews MUST explicitly verify compliance with it.
 
 ### Amendments
-1. State motivation, affected principles, and product impact.
-2. Update this file with explicit normative language (`MUST` / `FORBIDDEN`).
-3. Bump version with semantic versioning:
-   - MAJOR: incompatible principle removals or redefinitions
-   - MINOR: new principles/sections or materially expanded guidance
-   - PATCH: clarifications and non-semantic refinements
-4. Propagate changes to Speckit templates and `AGENTS.md`.
-5. Record dates in ISO format (`YYYY-MM-DD`).
+1. State the motivation, affected clauses, product and security impact, and any
+   required migration or removal work.
+2. Record the approved exception or replacement in this file before implementation.
+3. Update dependent Spec Kit templates when they conflict with the amendment.
+4. Bump the version using semantic versioning: MAJOR for incompatible principle or
+   product-boundary changes, MINOR for new or materially expanded obligations, and
+   PATCH for clarifications that do not change obligations.
+5. Keep ratification and amendment dates in ISO `YYYY-MM-DD` format.
 
-### Compliance Review
-- Specs, plans, tasks, and checklists MUST include constitution review
-- Reject work that violates mission, safety, Calibre boundary, or UI order
-- Temporary exceptions require Complexity Tracking with a simpler rejected
-  alternative
-- Product work MUST preserve the single-queue files-first workflow unless an
-  explicit constitution amendment approves a different primary model
+No exception is implicit. A plan or implementation that cannot cite an approved
+constitutional exception MUST be rejected.
 
-**Version**: 2.0.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-18
+**Version**: 3.0.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-20

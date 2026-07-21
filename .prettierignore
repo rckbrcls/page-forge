@@ -1,0 +1,21 @@
+node_modules/
+dist/
+build/
+coverage/
+.raycast/
+
+# Generated dependency metadata
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Binary and generated artifacts
+assets/
+tests/fixtures/
+*.epub
+
+# Obsolete product trees pending removal
+PageForge/
+PageForgeTests/
+PageForge.xcodeproj/
+legacy/
