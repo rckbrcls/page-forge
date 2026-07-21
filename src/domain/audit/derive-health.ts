@@ -31,8 +31,7 @@ export function deriveHealth(findings: readonly Finding[]): HealthState {
 }
 
 export function compareFindings(left: Finding, right: Finding): number {
-  const categoryDifference =
-    CATEGORY_ORDER.indexOf(left.category) - CATEGORY_ORDER.indexOf(right.category);
+  const categoryDifference = CATEGORY_ORDER.indexOf(left.category) - CATEGORY_ORDER.indexOf(right.category);
   if (categoryDifference !== 0) return categoryDifference;
 
   const locationDifference = locationKey(left.location).localeCompare(locationKey(right.location));

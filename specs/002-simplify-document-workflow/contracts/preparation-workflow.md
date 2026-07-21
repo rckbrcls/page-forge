@@ -125,4 +125,3 @@ Hard child-process termination requires a future explicit cancellable
 - Aggressive repair is available only for an appropriate failed/attention EPUB,
   clearly labeled and confirmed.
 - These controls never become default preparation behavior or top-level screens.
-

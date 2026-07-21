@@ -18,7 +18,7 @@
 
 ## 2. Command Surface and File Intake
 
-**Decision**: Expose exactly three `view` commands with the specified public titles. Each command first calls `getSelectedFinderItems()`, validates a stable EPUB snapshot, and renders a multi-select `Form.FilePicker` fallback when Finder is unavailable or yields no supported file.
+**Decision**: Expose exactly one `view` command, `Send Book to Kindle`. It first calls `getSelectedFinderItems()`, validates a stable EPUB/PDF snapshot, and renders a multi-select `Form.FilePicker` fallback when Finder is unavailable or yields no supported file. EPUB inspection and repair are internal stages.
 
 **Rationale**: `getSelectedFinderItems()` is the official Finder-selection API but can reject when Finder is not frontmost. `Form.FilePicker` is the native multi-file fallback; it does not provide a documented EPUB type filter, so extension and regular-file validation must occur after selection. Revalidation at submit time handles files removed or changed after picking.
 
@@ -119,9 +119,9 @@
 
 ## 10. SMTP Delivery
 
-**Decision**: Use `nodemailer` with direct object configuration, no pooling, implicit TLS or mandatory STARTTLS only, certificate validation enabled, TLS 1.2 minimum, bounded DNS/connection/greeting/socket timeouts, and a controlled attachment stream. Keep command preferences optional and store the application password as type `password`. Submit one EPUB per message and map raw errors to a small sanitized result taxonomy.
+**Decision**: Use `nodemailer` with direct object configuration, no pooling, implicit TLS or mandatory STARTTLS only, certificate validation enabled, TLS 1.2 minimum, bounded DNS/connection/greeting/socket timeouts, and a controlled attachment stream. Keep manifest preference fields optional so the command can render its setup gate, require a valid configuration before intake, and store the application password as type `password`. Submit one EPUB per message and map raw errors to a small sanitized result taxonomy.
 
-**Rationale**: Nodemailer is pure JavaScript, mature, stream-capable, dependency-free at runtime, and supports secure SMTP modes without implementing MIME, SASL, STARTTLS, or multiline protocol handling manually. Optional preferences preserve the manual fallback. One attachment per message satisfies explicit selection and isolates provider failures.
+**Rationale**: Nodemailer is pure JavaScript, mature, stream-capable, dependency-free at runtime, and supports secure SMTP modes without implementing MIME, SASL, STARTTLS, or multiline protocol handling manually. Preferences are validated before book intake so setup failures remain separate from book results. One attachment per message satisfies explicit selection and isolates provider failures.
 
 **Alternatives considered**:
 

@@ -35,6 +35,13 @@ function snapshot(stats: Stats): SourceSnapshot {
   return { identity: identity(stats), sizeBytes: stats.size, modifiedAtMs: stats.mtimeMs };
 }
 
+function sourceFormat(path: string): "epub" | "pdf" | undefined {
+  const normalized = path.toLocaleLowerCase("en-US");
+  if (normalized.endsWith(".epub")) return "epub";
+  if (normalized.endsWith(".pdf")) return "pdf";
+  return undefined;
+}
+
 function sameSnapshot(left: SourceSnapshot, right: SourceSnapshot): boolean {
   return (
     left.identity.device === right.identity.device &&
@@ -121,6 +128,7 @@ export async function snapshotSource(path: string): Promise<Result<SelectedEpub,
       displayName: basename(path),
       ...snapshot(after),
       readable: true,
+      format: sourceFormat(path),
     });
   } catch (error) {
     if (errno(error) === "ENOENT") {
@@ -150,18 +158,15 @@ export async function snapshotSelection(
         phase: "selecting",
       });
     }
-    if (!basename(path).toLocaleLowerCase("en-US").endsWith(".epub")) {
-      rejections.push(rejection(selectionIndex, path, "INPUT_NOT_EPUB", "Only EPUB files are supported."));
+    if (sourceFormat(path) === undefined) {
+      rejections.push(rejection(selectionIndex, path, "INPUT_NOT_EPUB", "Only EPUB and PDF files are supported."));
       continue;
     }
 
     const result = await snapshotSource(path);
     if (!result.ok) {
       const code = result.failure.category === "input" ? result.failure.code : "INPUT_UNREADABLE";
-      const inputCode =
-        code === "INPUT_CHANGED" || code === "INPUT_UNREADABLE"
-          ? code
-          : "INPUT_NOT_REGULAR_FILE";
+      const inputCode = code === "INPUT_CHANGED" || code === "INPUT_UNREADABLE" ? code : "INPUT_NOT_REGULAR_FILE";
       rejections.push(rejection(selectionIndex, path, inputCode, result.failure.safeMessage));
       continue;
     }
@@ -184,9 +189,7 @@ export async function openVerifiedSource(
     const current = await handle.stat();
     if (!current.isFile() || !sameSnapshot(selected, snapshot(current))) {
       await handle.close();
-      return err(
-        failure("INPUT_CHANGED", "The selected file no longer matches its snapshot.", "preflight"),
-      );
+      return err(failure("INPUT_CHANGED", "The selected file no longer matches its snapshot.", "preflight"));
     }
     const descriptor: VerifiedReadDescriptor = {
       id: randomUUID() as VerifiedDescriptorId,
@@ -198,19 +201,29 @@ export async function openVerifiedSource(
   } catch (error) {
     await handle?.close().catch(() => undefined);
     if (errno(error) === "ENOENT") {
-      return err(
-        failure("INPUT_CHANGED", "The selected file no longer matches its snapshot.", "preflight"),
-      );
+      return err(failure("INPUT_CHANGED", "The selected file no longer matches its snapshot.", "preflight"));
     }
-    return err(
-      failure("INPUT_UNREADABLE", "The selected file cannot be opened for reading.", "preflight"),
-    );
+    return err(failure("INPUT_UNREADABLE", "The selected file cannot be opened for reading.", "preflight"));
   }
 }
 
 export function resolveVerifiedFileHandle(descriptor: VerifiedReadDescriptor): FileHandle | undefined {
   const openDescriptor = descriptors.get(descriptor.id);
   return openDescriptor?.descriptor === descriptor ? openDescriptor.handle : undefined;
+}
+
+export async function validatePdfHeader(descriptor: VerifiedReadDescriptor): Promise<Result<void, ProcessingFailure>> {
+  const handle = resolveVerifiedFileHandle(descriptor);
+  if (!handle) return err(failure("INPUT_CHANGED", "The selected PDF is no longer available.", "preflight"));
+  try {
+    const signature = Buffer.alloc(5);
+    const { bytesRead } = await handle.read(signature, 0, signature.length, 0);
+    return bytesRead === signature.length && signature.toString("ascii") === "%PDF-"
+      ? ok(undefined)
+      : err(failure("INPUT_UNREADABLE", "The selected file is not a valid PDF document.", "preflight"));
+  } catch {
+    return err(failure("INPUT_UNREADABLE", "The selected PDF could not be read.", "preflight"));
+  }
 }
 
 export async function closeVerifiedSource(
@@ -226,7 +239,7 @@ export async function closeVerifiedSource(
     return err({
       category: "archive",
       code: "ARCHIVE_CLOSE_FAILED",
-      safeMessage: "The EPUB could not be closed safely.",
+      safeMessage: "The book file could not be processed properly.",
       retryable: true,
       phase: "preflight",
     });
@@ -238,9 +251,7 @@ export async function verifyAndCloseVerifiedSource(
 ): Promise<Result<void, ProcessingFailure>> {
   const openDescriptor = descriptors.get(descriptor.id);
   if (!openDescriptor || openDescriptor.descriptor !== descriptor) {
-    return err(
-      failure("INPUT_CHANGED", "The verified file descriptor is no longer available.", "preflight"),
-    );
+    return err(failure("INPUT_CHANGED", "The verified file descriptor is no longer available.", "preflight"));
   }
 
   let unchanged = false;
@@ -255,9 +266,7 @@ export async function verifyAndCloseVerifiedSource(
   if (!closeResult.ok) return closeResult;
   return unchanged
     ? ok(undefined)
-    : err(
-        failure("INPUT_CHANGED", "The selected file changed while it was being read.", "preflight"),
-      );
+    : err(failure("INPUT_CHANGED", "The selected file changed while it was being read.", "preflight"));
 }
 
 export async function fingerprint(
@@ -266,9 +275,7 @@ export async function fingerprint(
 ): Promise<Result<SourceFingerprint, ProcessingFailure>> {
   const handle = resolveVerifiedFileHandle(descriptor);
   if (!handle) {
-    return err(
-      failure("INPUT_CHANGED", "The verified file descriptor is no longer available.", "preflight"),
-    );
+    return err(failure("INPUT_CHANGED", "The verified file descriptor is no longer available.", "preflight"));
   }
   const hash = createHash("sha256");
   const stream = handle.createReadStream({ autoClose: false, start: 0 });
@@ -289,9 +296,7 @@ export async function fingerprint(
     }
     const current = snapshot(await handle.stat());
     if (!sameSnapshot(descriptor.snapshot, current)) {
-      return err(
-        failure("INPUT_CHANGED", "The selected file changed while it was being read.", "preflight"),
-      );
+      return err(failure("INPUT_CHANGED", "The selected file changed while it was being read.", "preflight"));
     }
     return ok({ ...current, sha256: hash.digest("hex") as Sha256Digest });
   } catch {
@@ -307,7 +312,7 @@ export async function fingerprint(
     return err({
       category: "archive",
       code: "ARCHIVE_READ_FAILED",
-      safeMessage: "The EPUB could not be read.",
+      safeMessage: "The book file could not be read.",
       retryable: true,
       phase: "preflight",
     });
@@ -320,6 +325,7 @@ export const localEpubFiles = {
   snapshotSource,
   snapshotSelection,
   openVerifiedSource,
+  validatePdfHeader,
   fingerprint,
   closeVerifiedSource,
   verifyAndCloseVerifiedSource,

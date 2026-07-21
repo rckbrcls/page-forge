@@ -1,12 +1,8 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
-import {
-  ARCHIVE_LIMITS,
-  OPERATION_LIMITS,
-  XML_LIMITS,
-} from "../../../src/domain/audit/limits";
-import type { Finding, HealthState, Severity } from "../../../src/domain/models/finding";
-import type { HealthReport } from "../../../src/domain/models/health-report";
+import { ARCHIVE_LIMITS, OPERATION_LIMITS, XML_LIMITS } from "../../../src/domain/audit/limits";
+import type { Finding, Severity } from "../../../src/domain/models/finding";
+import type { HealthReport, HealthState } from "../../../src/domain/models/health-report";
 import type { BatchItemResult, ProcessingPhase } from "../../../src/domain/models/operation";
 import type { PreparationResult, RepairKind } from "../../../src/domain/models/repair";
 
@@ -59,28 +55,15 @@ describe("domain model contracts", () => {
 
   it("preserves terminal result discriminants", () => {
     expectTypeOf<BatchItemResult["status"]>().toEqualTypeOf<
-      | "pending"
-      | "in_progress"
-      | "inspected"
-      | "prepared"
-      | "submitted"
-      | "failed"
-      | "cancelled"
-      | "delivery_unknown"
+      "pending" | "in_progress" | "inspected" | "prepared" | "submitted" | "failed" | "cancelled" | "delivery_unknown"
     >();
-    expectTypeOf<PreparationResult["status"]>().toEqualTypeOf<
-      "prepared" | "unsuccessful" | "cancelled"
-    >();
+    expectTypeOf<PreparationResult["status"]>().toEqualTypeOf<"prepared" | "unsuccessful" | "cancelled">();
   });
 
   it("allows only the documented operation paths", () => {
     const transitions = {
       selecting: ["preflight", "checking_delivery_eligibility", "failed", "cancelled"],
-      preflight: [
-        "inspecting_container",
-        "failed",
-        "cancelled",
-      ],
+      preflight: ["inspecting_container", "failed", "cancelled"],
       inspecting_container: ["inspecting_package", "completed", "failed", "cancelled"],
       inspecting_package: ["inspecting_content", "completed", "failed", "cancelled"],
       inspecting_content: ["planning", "completed", "failed", "cancelled"],

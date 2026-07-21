@@ -146,7 +146,7 @@ export async function createDeliverySnapshot(
   }
 
   const id = `${Date.now()}-${Math.random()}`;
-  const path = join(dirname(source.sourcePath), `.page-forge-delivery-${id}.tmp`);
+  const path = join(dirname(source.sourcePath), `.book-sender-delivery-${id}.tmp`);
 
   try {
     const digest = await copyAndHashFromHandle(handle, path);

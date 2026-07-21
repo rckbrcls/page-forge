@@ -4,7 +4,7 @@ import { extname, relative, resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-const repositoryRoot = resolve(import.meta.dirname, "../..");
+const repositoryRoot = resolve(__dirname, "../..");
 const domainRoot = resolve(repositoryRoot, "src/domain");
 const sourceExtensions = new Set([".ts", ".tsx"]);
 const nodeBuiltins = new Set(builtinModules.map((name) => name.replace(/^node:/, "")));
@@ -18,7 +18,8 @@ const forbiddenPackages = new Set([
   "saxes",
   "nodemailer",
 ]);
-const importPattern = /(?:import|export)\s+(?:type\s+)?(?:[^"']*?\s+from\s+)?["']([^"']+)["']|require\(\s*["']([^"']+)["']\s*\)|import\(\s*["']([^"']+)["']\s*\)/g;
+const importPattern =
+  /(?:import|export)\s+(?:type\s+)?(?:[^"']*?\s+from\s+)?["']([^"']+)["']|require\(\s*["']([^"']+)["']\s*\)|import\(\s*["']([^"']+)["']\s*\)/g;
 
 async function sourceFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });

@@ -1,10 +1,6 @@
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 
-import {
-  inspectEpubs,
-  type InspectEpubPort,
-  type InspectEpubsPorts,
-} from "../../src/application/inspect-epubs";
+import { inspectEpubs, type InspectEpubPort, type InspectEpubsPorts } from "../../src/application/inspect-epubs";
 import type { ClockPort } from "../../src/application/ports";
 import { FINDING_CODES } from "../../src/domain/audit/finding-codes";
 import type {
@@ -59,10 +55,7 @@ class FakeInspectEpubPort implements InspectEpubPort {
   active = 0;
   maxActive = 0;
 
-  async inspect(
-    source: SelectedEpub,
-    _signal: AbortSignal,
-  ): Promise<Result<HealthReport, ProcessingFailure>> {
+  async inspect(source: SelectedEpub, _signal: AbortSignal): Promise<Result<HealthReport, ProcessingFailure>> {
     this.calls.push(source.id);
     this.active += 1;
     this.maxActive = Math.max(this.maxActive, this.active);
@@ -107,11 +100,7 @@ describe("inspectEpubs", () => {
       phase: "completed",
       cancellationRequested: false,
     });
-    expect(operation.results.map((result) => result.status)).toEqual([
-      "inspected",
-      "failed",
-      "inspected",
-    ]);
+    expect(operation.results.map((result) => result.status)).toEqual(["inspected", "failed", "inspected"]);
     expect(operation.results[1]).toMatchObject({ status: "failed", failure: readFailure });
   });
 

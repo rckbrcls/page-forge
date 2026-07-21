@@ -1,14 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  createInspectionDeadline,
-  inspectArchiveLimits,
-} from "../../../src/adapters/archive/archive-limits";
+import { createInspectionDeadline, inspectArchiveLimits } from "../../../src/adapters/archive/archive-limits";
 import { ARCHIVE_LIMITS } from "../../../src/domain/audit/limits";
-import {
-  archiveLimitFixtures,
-  inspectionTimeoutFixture,
-} from "../../fixtures/malicious/limit-fixtures";
+import { archiveLimitFixtures, inspectionTimeoutFixture } from "../../fixtures/malicious/limit-fixtures";
 
 describe("archive safety limits", () => {
   it.each(archiveLimitFixtures)("classifies $name", ({ metadata, expectedCodes }) => {
@@ -42,10 +36,7 @@ describe("archive safety limits", () => {
   it("uses a fake clock to abort immediately at the 120-second inspection deadline", () => {
     vi.useFakeTimers();
     const parent = new AbortController();
-    const deadline = createInspectionDeadline(
-      parent.signal,
-      inspectionTimeoutFixture.timeoutMs,
-    );
+    const deadline = createInspectionDeadline(parent.signal, inspectionTimeoutFixture.timeoutMs);
 
     vi.advanceTimersByTime(inspectionTimeoutFixture.beforeMs);
     expect(deadline.signal.aborted).toBe(false);
@@ -65,10 +56,7 @@ describe("archive safety limits", () => {
   it("composes user cancellation and clears the pending deadline", () => {
     vi.useFakeTimers();
     const parent = new AbortController();
-    const deadline = createInspectionDeadline(
-      parent.signal,
-      inspectionTimeoutFixture.timeoutMs,
-    );
+    const deadline = createInspectionDeadline(parent.signal, inspectionTimeoutFixture.timeoutMs);
 
     parent.abort("user cancelled");
 

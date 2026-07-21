@@ -31,6 +31,7 @@ export interface SelectedEpub extends SourceSnapshot {
   readonly sourcePath: string;
   readonly displayName: string;
   readonly readable: boolean;
+  readonly format?: "epub" | "pdf";
 }
 
 export interface VerifiedReadDescriptor {

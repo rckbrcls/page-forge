@@ -4,13 +4,7 @@ import type { InternalPath } from "../models/archive";
 import { err, ok, type Result } from "../models/result";
 
 export type InternalPathError =
-  | "absolute"
-  | "traversal"
-  | "empty"
-  | "nul"
-  | "backslash"
-  | "invalid_unicode"
-  | "invalid_directory_marker";
+  "absolute" | "traversal" | "empty" | "nul" | "backslash" | "invalid_unicode" | "invalid_directory_marker";
 
 export interface ParsedInternalPath {
   readonly path: InternalPath;

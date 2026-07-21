@@ -187,16 +187,15 @@ would preserve maintenance cost and contradictory navigation concepts.
 
 ## Resolved Risks
 
-| Risk | Resolution |
-|------|------------|
-| Toolbar drop API availability | Select the compatible overload against macOS 26 SDK; retain `.onDrop` fallback |
+| Risk                          | Resolution                                                                                    |
+| ----------------------------- | --------------------------------------------------------------------------------------------- |
+| Toolbar drop API availability | Select the compatible overload against macOS 26 SDK; retain `.onDrop` fallback                |
 | Tiny or hidden toolbar target | Full label hit area, targeted highlight, help, menu/keyboard action, large drop zone retained |
-| Async provider order | Collect provider results by original index before intake |
-| Duplicate aliases/symlinks | Canonical URL plus resource identifier when available |
-| Source moves after intake | Revalidate existence/readability immediately before preparation |
-| PDF support gap | Two-stage conversion and readiness preparation |
-| Output collision | Never overwrite silently; return per-item attention result |
-| Active Calibre cancellation | Cancel pending scheduling first; do not claim hard process cancellation |
-| AppState service duplication | Construct shared service instances once and inject them into composed services |
-| Dead feature screens | Remove obsolete views/view models from target after contextual behavior is relocated |
-
+| Async provider order          | Collect provider results by original index before intake                                      |
+| Duplicate aliases/symlinks    | Canonical URL plus resource identifier when available                                         |
+| Source moves after intake     | Revalidate existence/readability immediately before preparation                               |
+| PDF support gap               | Two-stage conversion and readiness preparation                                                |
+| Output collision              | Never overwrite silently; return per-item attention result                                    |
+| Active Calibre cancellation   | Cancel pending scheduling first; do not claim hard process cancellation                       |
+| AppState service duplication  | Construct shared service instances once and inject them into composed services                |
+| Dead feature screens          | Remove obsolete views/view models from target after contextual behavior is relocated          |

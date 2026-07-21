@@ -29,7 +29,7 @@ function writeFailure(): ProcessingFailure {
   return {
     category: "repair",
     code: "REPAIR_WRITE_FAILED",
-    safeMessage: "The repaired EPUB could not be written safely.",
+    safeMessage: "The repaired book file could not be saved.",
     retryable: true,
     phase: "reconstructing",
   };
@@ -55,6 +55,7 @@ function checkedEntryStream(
       const readable = opened.value;
       let entryBytes = 0;
       let checksum = 0;
+      let closeFailure: ReconstructionError | undefined;
       try {
         for await (const value of readable) {
           if (signal.aborted) throw new ReconstructionError("cancelled");
@@ -72,8 +73,9 @@ function checkedEntryStream(
         }
       } finally {
         const closed = await readable.close();
-        if (!closed.ok) throw new ReconstructionError(closed.failure.safeMessage);
+        if (!closed.ok) closeFailure = new ReconstructionError(closed.failure.safeMessage);
       }
+      if (closeFailure !== undefined) throw closeFailure;
     })(),
   );
 }
@@ -116,10 +118,7 @@ export async function rebuildArchive(
   };
 
   try {
-    if (
-      CANONICAL_MIMETYPE.byteLength > limits.maxExpandedEntryBytes ||
-      expandedBytes > limits.maxExpandedTotalBytes
-    ) {
+    if (CANONICAL_MIMETYPE.byteLength > limits.maxExpandedEntryBytes || expandedBytes > limits.maxExpandedTotalBytes) {
       throw new ReconstructionError("mimetype size limit exceeded");
     }
     zip.addBuffer(CANONICAL_MIMETYPE, "mimetype", { compress: false });
@@ -134,8 +133,10 @@ export async function rebuildArchive(
         throw new ReconstructionError("entry size limit exceeded");
       }
       const entryStream = checkedEntryStream(source, entry, limits, signal, addExpandedBytes);
-      entryStream.once("error", (error) => zip.outputStream.destroy(error));
-      zip.outputStream.once("error", () => entryStream.destroy());
+      entryStream.once("error", (error) => {
+        // yazl exposes a Node readable at runtime but types it as a web stream.
+        (zip.outputStream as unknown as Readable).destroy(error);
+      });
       zip.addReadStream(entryStream, entry.originalName, {
         compress: entry.compressionMethod !== 0,
         size: entry.expandedSize,
@@ -150,9 +151,7 @@ export async function rebuildArchive(
       { signal },
     );
 
-    const preservedEntryCount = source.projection.entries.filter(
-      (entry) => !isCanonicalMimetype(entry),
-    ).length;
+    const preservedEntryCount = source.projection.entries.filter((entry) => !isCanonicalMimetype(entry)).length;
     return ok(
       plan.operations.map((operation) => ({
         operationId: operation.id,
@@ -163,7 +162,6 @@ export async function rebuildArchive(
       })),
     );
   } catch {
-    zip.outputStream.destroy();
     return err(signal.aborted ? cancelledFailure() : writeFailure());
   }
 }

@@ -2,12 +2,7 @@ import { Action, ActionPanel, Icon, List } from "@raycast/api";
 
 import type { SelectedEpub, SelectedEpubId } from "../domain/models/epub-document";
 import type { HealthReport, HealthState } from "../domain/models/health-report";
-import type {
-  BatchItemResult,
-  BatchOperation,
-  OperationProgress,
-  ProcessingPhase,
-} from "../domain/models/operation";
+import type { BatchItemResult, BatchOperation, OperationProgress, ProcessingPhase } from "../domain/models/operation";
 import type { PreparedEpub, RepairPlan } from "../domain/models/repair";
 import { healthBadge, healthReportMarkdown } from "./components/health-report-detail";
 import { PreparationActions } from "./components/preparation-actions";
@@ -43,10 +38,7 @@ function operationIsActive(operation: BatchOperation): boolean {
   return !["completed", "failed", "cancelled"].includes(operation.phase);
 }
 
-function resultForSource(
-  results: readonly BatchItemResult[],
-  sourceId: SelectedEpubId,
-): BatchItemResult | undefined {
+function resultForSource(results: readonly BatchItemResult[], sourceId: SelectedEpubId): BatchItemResult | undefined {
   return results.find(({ source }) => source.id === sourceId);
 }
 
@@ -110,10 +102,7 @@ function itemDetail(result: BatchItemResult | undefined, plan: RepairPlan | unde
           <List.Item.Detail.Metadata>
             <List.Item.Detail.Metadata.Label title="Category" text={result.failure.category} />
             <List.Item.Detail.Metadata.Label title="Phase" text={phaseLabel(result.failure.phase)} />
-            <List.Item.Detail.Metadata.Label
-              title="Retryable"
-              text={result.failure.retryable ? "Yes" : "No"}
-            />
+            <List.Item.Detail.Metadata.Label title="Retryable" text={result.failure.retryable ? "Yes" : "No"} />
           </List.Item.Detail.Metadata>
         }
       />
@@ -144,28 +133,13 @@ function itemActions(
   return (
     <ActionPanel>
       {plan && props.operation.phase === "awaiting_confirmation" ? (
-        <Action
-          title="Prepare EPUB"
-          icon={Icon.Hammer}
-          shortcut={{ modifiers: ["cmd"], key: "enter" }}
-          onAction={() => props.onConfirmPlan(plan)}
-        />
+        <Action title="Prepare EPUB" icon={Icon.Hammer} onAction={() => props.onConfirmPlan(plan)} />
       ) : null}
       {result?.status === "failed" && result.failure.retryable ? (
-        <Action
-          title="Retry Failed Items"
-          icon={Icon.RotateClockwise}
-          shortcut={{ modifiers: ["cmd"], key: "r" }}
-          onAction={props.onRetryFailed}
-        />
+        <Action title="Retry Failed Items" icon={Icon.RotateClockwise} onAction={props.onRetryFailed} />
       ) : null}
       {operationIsActive(props.operation) && !props.operation.cancellationRequested ? (
-        <Action
-          title="Cancel Active Operation"
-          icon={Icon.XMarkCircle}
-          shortcut={{ modifiers: ["cmd"], key: "." }}
-          onAction={props.onCancel}
-        />
+        <Action title="Cancel Active Operation" icon={Icon.XMarkCircle} onAction={props.onCancel} />
       ) : null}
     </ActionPanel>
   );
@@ -196,10 +170,7 @@ function itemSubtitle(result: BatchItemResult | undefined, plan: RepairPlan | un
 function itemAccessories(result: BatchItemResult | undefined, plan: RepairPlan | undefined) {
   if (plan) return [{ tag: "plan ready" }, { text: `${plan.operations.length} operations` }];
   if (result?.status === "inspected") {
-    return [
-      { tag: healthBadge(result.report.health) },
-      { text: `${result.report.findings.length} findings` },
-    ];
+    return [{ tag: healthBadge(result.report.health) }, { text: `${result.report.findings.length} findings` }];
   }
   if (result?.status === "prepared") return [{ tag: "healthy" }, { text: result.prepared.displayName }];
   if (result?.status === "in_progress") return [{ tag: phaseLabel(result.phase) }];

@@ -24,7 +24,7 @@ type IntegrityFindingCode =
   | "ARCHIVE_SPECIAL_FILE"
   | "ARCHIVE_ENCRYPTED_ENTRY";
 
-export interface ArchiveIntegrityFinding extends Finding {}
+export type ArchiveIntegrityFinding = Finding;
 
 export interface ArchiveIntegrityOptions {
   readonly bytes: Uint8Array;

@@ -59,36 +59,36 @@ remain contextual rather than top-level navigation
 
 ## Constitution Check
 
-*GATE: Evaluated before research and re-evaluated after design.*
+_GATE: Evaluated before research and re-evaluated after design._
 
 ### Pre-design gate
 
-| Gate | Status | Notes |
-|------|--------|-------|
-| Mission fit | PASS | The feature narrows the app to intake, readiness, safe preparation, and Kindle outcomes |
-| Fast/light/beautiful | PASS | One native screen, no new runtime or third-party dependency |
-| Readiness-first | PASS | Readiness becomes an automatic part of Prepare Files rather than a removed capability |
-| Calibre boundary | PASS | Existing services continue to orchestrate the external ebook engine |
-| Safe local-first | PASS | Sources remain immutable; save/send require explicit intent; Keychain remains mandatory |
-| Status vocabulary | PASS | Existing readiness statuses and severities remain unchanged |
-| Output contracts | PASS | `*-kindle-ready.epub` and `*-repaired.epub` stay distinct |
-| Architecture | PASS | Intake and preparation rules stay in domain services, not views |
-| Complexity | PASS | Two focused services and one exporter replace multiple screen-specific coordinators |
+| Gate                    | Status                              | Notes                                                                                                                                   |
+| ----------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Mission fit             | PASS                                | The feature narrows the app to intake, readiness, safe preparation, and Kindle outcomes                                                 |
+| Fast/light/beautiful    | PASS                                | One native screen, no new runtime or third-party dependency                                                                             |
+| Readiness-first         | PASS                                | Readiness becomes an automatic part of Prepare Files rather than a removed capability                                                   |
+| Calibre boundary        | PASS                                | Existing services continue to orchestrate the external ebook engine                                                                     |
+| Safe local-first        | PASS                                | Sources remain immutable; save/send require explicit intent; Keychain remains mandatory                                                 |
+| Status vocabulary       | PASS                                | Existing readiness statuses and severities remain unchanged                                                                             |
+| Output contracts        | PASS                                | `*-kindle-ready.epub` and `*-repaired.epub` stay distinct                                                                               |
+| Architecture            | PASS                                | Intake and preparation rules stay in domain services, not views                                                                         |
+| Complexity              | PASS                                | Two focused services and one exporter replace multiple screen-specific coordinators                                                     |
 | Baseline surface change | PASS with explicit product decision | The user explicitly requested one N-file workflow; folder batch is no longer a primary surface, while multi-item batch semantics remain |
 
 ### Post-design gate
 
-| Gate | Status | Notes |
-|------|--------|-------|
-| Mission fit | PASS | Contracts contain only import, preparation, save, send, Settings, and contextual support |
-| Fast/light/beautiful | PASS | Sequential background work and a two-control toolbar minimize resource and visual load |
-| Readiness-first | PASS | Every EPUB/MOBI/PDF preparation ends with a readiness result |
-| Calibre boundary | PASS | PDF/MOBI routing composes `ConversionService` and `ReadinessService`; it does not duplicate conversion |
-| Safe local-first | PASS | Export uses copies, conflicts never overwrite silently, and delivery is profile-gated |
-| Status/output contracts | PASS | Data model and contracts retain mandatory vocabularies and filenames |
-| Architecture | PASS | Queue state belongs to one main-actor view model; side effects remain behind focused services |
-| Accessibility | PASS | Drag operations have chooser, menu, keyboard, text status, focus, and progress alternatives |
-| Complexity | PASS | No generic workflow framework, repository layer, or parallel execution system is introduced |
+| Gate                    | Status | Notes                                                                                                  |
+| ----------------------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| Mission fit             | PASS   | Contracts contain only import, preparation, save, send, Settings, and contextual support               |
+| Fast/light/beautiful    | PASS   | Sequential background work and a two-control toolbar minimize resource and visual load                 |
+| Readiness-first         | PASS   | Every EPUB/MOBI/PDF preparation ends with a readiness result                                           |
+| Calibre boundary        | PASS   | PDF/MOBI routing composes `ConversionService` and `ReadinessService`; it does not duplicate conversion |
+| Safe local-first        | PASS   | Export uses copies, conflicts never overwrite silently, and delivery is profile-gated                  |
+| Status/output contracts | PASS   | Data model and contracts retain mandatory vocabularies and filenames                                   |
+| Architecture            | PASS   | Queue state belongs to one main-actor view model; side effects remain behind focused services          |
+| Accessibility           | PASS   | Drag operations have chooser, menu, keyboard, text status, focus, and progress alternatives            |
+| Complexity              | PASS   | No generic workflow framework, repository layer, or parallel execution system is introduced            |
 
 ### Governance scope decision
 
@@ -290,4 +290,3 @@ No agent-context update script exists under `.specify/scripts`, so the required
 automation could not be run. `AGENTS.md` remains the current runtime context. Its
 surface map should be updated during implementation after the new workflow exists,
 so documentation does not claim an undelivered UI.
-

@@ -88,8 +88,9 @@ function report(
 }
 
 const originalFinding = repairableFinding();
-const originalReport = report(source, "repairable", [originalFinding], originalFingerprint) as
-  HealthReport & { readonly health: "repairable" };
+const originalReport = report(source, "repairable", [originalFinding], originalFingerprint) as HealthReport & {
+  readonly health: "repairable";
+};
 const repairOperationId = "canonical-mimetype" as RepairOperationId;
 const plan: RepairPlan = {
   source,
@@ -172,9 +173,7 @@ describe("prepareEpub acceptance", () => {
         });
       }),
       fingerprint: vi.fn(async (descriptor) => {
-        const digest = descriptor.sourceId === source.id
-          ? originalFingerprint
-          : outputFingerprint;
+        const digest = descriptor.sourceId === source.id ? originalFingerprint : outputFingerprint;
         timeline.push(`hash:${descriptor.sourceId}`);
         if (descriptor.sourceId === source.id) originalHashes.push(digest.sha256);
         return ok(digest);
@@ -240,10 +239,7 @@ describe("prepareEpub acceptance", () => {
 
     expect(result.status).toBe("prepared");
     if (result.status !== "prepared") throw new Error("Expected preparation to succeed");
-    expect(originalHashes).toEqual([
-      originalFingerprint.sha256,
-      originalFingerprint.sha256,
-    ]);
+    expect(originalHashes).toEqual([originalFingerprint.sha256, originalFingerprint.sha256]);
     expect(writtenEntries).toEqual([
       {
         path: "mimetype",
@@ -252,9 +248,7 @@ describe("prepareEpub acceptance", () => {
         localHeaderExtraLength: 0,
       },
     ]);
-    expect(timeline.indexOf(`snapshot:${temporary.path}`)).toBeGreaterThan(
-      timeline.indexOf("reconstruct"),
-    );
+    expect(timeline.indexOf(`snapshot:${temporary.path}`)).toBeGreaterThan(timeline.indexOf("reconstruct"));
     expect(timeline.indexOf(`inspect:${temporary.path}`)).toBeGreaterThan(
       timeline.indexOf(`snapshot:${temporary.path}`),
     );

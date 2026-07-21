@@ -16,9 +16,7 @@ const linkMock = vi.hoisted(() => vi.fn());
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:fs/promises")>();
-  linkMock.mockImplementation((existingPath: string, newPath: string) =>
-    actual.link(existingPath, newPath),
-  );
+  linkMock.mockImplementation((existingPath: string, newPath: string) => actual.link(existingPath, newPath));
   return { ...actual, link: linkMock };
 });
 
@@ -70,7 +68,7 @@ describe("atomic output writer", () => {
       if (!result.ok) return;
       expect(dirname(result.value.path)).toBe(dirname(sourcePath));
       expect(result.value.path).not.toBe(prediction.value.candidatePath);
-      expect(basename(result.value.path)).toMatch(/^\.page-forge-.+/u);
+      expect(basename(result.value.path)).toMatch(/^\.book-sender-.+/u);
       const stats = await fsPromises.lstat(result.value.path);
       expect(stats.isFile()).toBe(true);
       expect(stats.mode & 0o777).toBe(0o600);

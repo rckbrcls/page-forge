@@ -8,7 +8,7 @@
 
 **Input**: User description: "$ARGUMENTS"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 <!--
   IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
@@ -78,7 +78,7 @@
 - What happens when [boundary condition]?
 - How does system handle [error scenario]?
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 <!--
   ACTION REQUIRED: The content in this section represents placeholders.
@@ -95,12 +95,12 @@
 - **FR-004**: System MUST [data requirement, e.g., "report a collision-safe generated output path"]
 - **FR-005**: System MUST [behavior, e.g., "require explicit user intent before Kindle delivery"]
 
-*Example of marking unclear requirements:*
+_Example of marking unclear requirements:_
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
 - **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
-### Constitution Constraints *(mandatory)*
+### Constitution Constraints _(mandatory)_
 
 - **CC-001**: Feature MUST directly support the EPUB-to-Kindle pipeline and accept
   EPUB only
@@ -117,14 +117,14 @@
 - **CC-007**: Feature MUST NOT add Calibre, EPUBCheck, binaries, external services,
   helper processes, or user-installed dependencies
 
-### Key Entities *(include if feature involves data)*
+### Key Entities _(include if feature involves data)_
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
-- **HealthReport** *(when relevant)*: Derived classification plus findings with
+- **HealthReport** _(when relevant)_: Derived classification plus findings with
   stable code, severity, location, repairability, applied repair, and revalidation result
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 <!--
   ACTION REQUIRED: Define measurable success criteria.

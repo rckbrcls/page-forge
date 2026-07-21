@@ -19,6 +19,7 @@ type ArchivePathSafetyCode =
 
 interface ValidArchivePathEntry {
   readonly path: InternalPath;
+  readonly kind: ArchiveEntryDescriptor["kind"];
 }
 
 const UTF8_DECODER = new TextDecoder("utf-8", { fatal: true });
@@ -100,9 +101,10 @@ export function inspectArchivePathSafety(entries: readonly ArchiveEntryDescripto
 
     const current: ValidArchivePathEntry = {
       path: normalizedPath,
+      kind: entry.kind,
     };
     for (const prior of validEntries) {
-      if (isFileDirectoryConflict(current.path, prior.path)) {
+      if (isFileDirectoryConflict(current, prior)) {
         const evidencePath =
           prior.path === normalizedPath ? current.path : maybeConflictEvidence(current.path, prior.path);
         addFinding("ARCHIVE_FILE_DIRECTORY_CONFLICT", entry.index, {
@@ -132,12 +134,14 @@ function isValidUtf8(value: Uint8Array): boolean {
   }
 }
 
-function isFileDirectoryConflict(a: InternalPath, b: InternalPath): boolean {
-  if (a === b) return false;
-  const aWithoutMarker = withoutDirectoryMarker(a);
-  const bWithoutMarker = withoutDirectoryMarker(b);
+function isFileDirectoryConflict(a: ValidArchivePathEntry, b: ValidArchivePathEntry): boolean {
+  if (a.path === b.path) return false;
+  const aWithoutMarker = withoutDirectoryMarker(a.path);
+  const bWithoutMarker = withoutDirectoryMarker(b.path);
   if (aWithoutMarker === bWithoutMarker) return true;
-  return isPathAncestor(a, b) || isPathAncestor(b, a);
+  if (isPathAncestor(a.path, b.path)) return a.kind !== "directory";
+  if (isPathAncestor(b.path, a.path)) return b.kind !== "directory";
+  return false;
 }
 
 function maybeConflictEvidence(path: InternalPath, siblingPath: InternalPath): InternalPath {

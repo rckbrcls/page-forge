@@ -34,9 +34,7 @@ describe("content audit rules", () => {
 
   it("keeps active and protected content cases in User Story 3", () => {
     const coveredCodes = new Set(
-      contentRuleFixtures.flatMap((fixture) =>
-        auditContent(fixture.input).map(({ code }) => code),
-      ),
+      contentRuleFixtures.flatMap((fixture) => auditContent(fixture.input).map(({ code }) => code)),
     );
 
     for (const code of deferredToUserStory3) expect(coveredCodes.has(code)).toBe(false);

@@ -18,13 +18,12 @@ export function EpubPicker({ onSubmit, isLoading = false, rejections = [] }: Epu
   return (
     <Form
       isLoading={isLoading}
-      navigationTitle="Select EPUB Files"
+      navigationTitle="Select Books"
       actions={
         <ActionPanel>
           <Action.SubmitForm
-            title="Inspect EPUBs"
-            icon={Icon.MagnifyingGlass}
-            shortcut={{ modifiers: ["cmd"], key: "enter" }}
+            title="Continue"
+            icon={Icon.ArrowRight}
             onSubmit={(values) => onSubmit(values.paths as string[])}
           />
         </ActionPanel>
@@ -32,17 +31,14 @@ export function EpubPicker({ onSubmit, isLoading = false, rejections = [] }: Epu
     >
       <Form.FilePicker
         id="paths"
-        title="EPUB Files"
+        title="EPUB or PDF Files"
         value={paths}
         allowMultipleSelection
         canChooseDirectories={false}
         canChooseFiles
         onChange={setPaths}
       />
-      <Form.Description
-        title="Selection"
-        text="Choose one or more EPUB files. Originals are never modified during inspection."
-      />
+      <Form.Description title="Selection" text="Choose one or more EPUB or PDF books. Originals are never modified." />
       {rejectionSummary ? <Form.Description title="Skipped Items" text={rejectionSummary} /> : null}
     </Form>
   );

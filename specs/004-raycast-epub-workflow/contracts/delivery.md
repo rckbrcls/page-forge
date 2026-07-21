@@ -2,19 +2,19 @@
 
 ## Configuration
 
-The send command reads optional command preferences:
+The send command validates command preferences before book intake:
 
-| Preference | Type | Required at command open | Validation before SMTP |
-|------------|------|--------------------------|------------------------|
-| Sender Address | textfield | No | Valid email; no CR/LF |
-| SMTP Host | textfield | No | Non-empty hostname; no control characters |
-| SMTP Port | textfield | No | Integer `1...65535` |
-| Security Mode | dropdown | No | `Implicit TLS` or `STARTTLS` |
-| Username | textfield | No | Non-empty |
-| App Password | password | No | Non-empty; never displayed or logged |
-| Kindle Address | textfield | No | Valid email ending exactly in `@kindle.com`, case-insensitively |
+| Preference     | Type      | Required before intake | Validation before SMTP                                          |
+| -------------- | --------- | ---------------------- | --------------------------------------------------------------- |
+| Sender Address | textfield | Yes                    | Valid email; no CR/LF                                           |
+| SMTP Host      | textfield | Yes                    | Non-empty hostname; no control characters                       |
+| SMTP Port      | textfield | No; secure default     | Integer `1...65535`                                             |
+| Security Mode  | dropdown  | No; secure default     | `Implicit TLS` or `STARTTLS`                                    |
+| Username       | textfield | Yes                    | Non-empty                                                       |
+| App Password   | password  | Yes                    | Non-empty; never displayed or logged                            |
+| Kindle Address | textfield | Yes                    | Valid email ending exactly in `@kindle.com`, case-insensitively |
 
-Preferences are optional at command-open time so the manual fallback remains usable. Missing or invalid values block only SMTP submission and provide an action to open command preferences.
+Missing or invalid values show a dedicated setup screen before file selection, inspection, or preparation. Configuration failures are command-level setup issues and must never be attached to individual book results. The official Send to Kindle page remains a secondary action only after configured preparation.
 
 ## Security Modes
 
@@ -71,13 +71,13 @@ The adapter must never add other recipients, attachments, book excerpts, reports
 
 ## Cancellation Semantics
 
-| Phase | Required result |
-|-------|-----------------|
-| Before connection | `cancelled`; no transmission started |
-| DNS/connect/auth | Request socket closure; `cancelled` only when no message data was transmitted |
+| Phase                                    | Required result                                                                           |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Before connection                        | `cancelled`; no transmission started                                                      |
+| DNS/connect/auth                         | Request socket closure; `cancelled` only when no message data was transmitted             |
 | Attachment stream before DATA completion | Destroy stream and connection; `delivery_unknown` if server acceptance cannot be excluded |
-| After DATA may have completed | `delivery_unknown` unless a definitive SMTP response is received |
-| After SMTP 2xx | `submitted`; cancellation cannot revoke it |
+| After DATA may have completed            | `delivery_unknown` unless a definitive SMTP response is received                          |
+| After SMTP 2xx                           | `submitted`; cancellation cannot revoke it                                                |
 
 No unknown or failed submission is retried automatically.
 
@@ -101,18 +101,18 @@ Cancellation completed before any possible message acceptance.
 
 ## Sanitized Failure Mapping
 
-| Internal category | Public message |
-|-------------------|----------------|
-| Authentication | `Authentication failed. Check the username and app password.` |
-| TLS | `A secure connection could not be established.` |
-| DNS | `The SMTP host could not be resolved.` |
-| Connection | `The SMTP server could not be reached.` |
-| Timeout before DATA | `The SMTP connection timed out before submission.` |
+| Internal category                  | Public message                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------ |
+| Authentication                     | `Authentication failed. Check the username and app password.`            |
+| TLS                                | `A secure connection could not be established.`                          |
+| DNS                                | `The SMTP host could not be resolved.`                                   |
+| Connection                         | `The SMTP server could not be reached.`                                  |
+| Timeout before DATA                | `The SMTP connection timed out before submission.`                       |
 | Timeout/connection loss after DATA | `Submission could not be confirmed. The message may have been accepted.` |
-| Envelope | `The sender or Kindle address was rejected.` |
-| Message/size | `The SMTP server rejected the message or attachment size.` |
-| File stream | `The EPUB could not be read completely.` |
-| Unknown | `The message could not be submitted.` |
+| Envelope                           | `The sender or Kindle address was rejected.`                             |
+| Message/size                       | `The SMTP server rejected the message or attachment size.`               |
+| File stream                        | `The EPUB could not be read completely.`                                 |
+| Unknown                            | `The message could not be submitted.`                                    |
 
 Raw exception messages, response text, stack traces, host, username, password, complete addresses, local paths, and message content must not cross the adapter boundary.
 

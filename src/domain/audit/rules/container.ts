@@ -17,14 +17,15 @@ export interface ContainerAuditInput {
 export function auditContainer(input: ContainerAuditInput): Finding[] {
   const findings: Finding[] = [];
   const uniquePackage = input.packages.length === 1 ? input.packages[0] : undefined;
-  const conditionalRepair = uniquePackage === undefined
-    ? {}
-    : {
-        repairability: "automatic" as const,
-        stateImpact: "repairable" as const,
-        recommendedRepair: "rebuild_container_for_single_opf" as const,
-        evidence: { packagePath: uniquePackage.path },
-      };
+  const conditionalRepair =
+    uniquePackage === undefined
+      ? {}
+      : {
+          repairability: "automatic" as const,
+          stateImpact: "repairable" as const,
+          recommendedRepair: "rebuild_container_for_single_opf" as const,
+          evidence: { packagePath: uniquePackage.path },
+        };
   const containerLocation = { kind: "internal_path" as const, path: CONTAINER_PATH };
 
   if (input.containerXmlInvalid === true) {
@@ -63,8 +64,7 @@ export function auditContainer(input: ContainerAuditInput): Finding[] {
       (input.packages.some((packageDocument) => packageDocument.path === referencedPackage) ||
         input.entryIndex?.has(referencedPackage) === true ||
         (input.packageXmlInvalid === true &&
-          (input.packageXmlInvalidPath === undefined ||
-            input.packageXmlInvalidPath === referencedPackage)));
+          (input.packageXmlInvalidPath === undefined || input.packageXmlInvalidPath === referencedPackage)));
     if (!referencedExists) {
       findings.push(
         createFinding("CONTAINER_PACKAGE_MISSING", {

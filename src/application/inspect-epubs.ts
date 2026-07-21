@@ -1,20 +1,12 @@
 import type { ClockPort } from "./ports";
 import type { SelectedEpub, SelectionSnapshot } from "../domain/models/epub-document";
 import type { HealthReport } from "../domain/models/health-report";
-import type {
-  BatchItemResult,
-  BatchOperation,
-  BatchOperationId,
-  ProgressEvent,
-} from "../domain/models/operation";
+import type { BatchItemResult, BatchOperation, BatchOperationId, ProgressEvent } from "../domain/models/operation";
 import type { ProcessingFailure } from "../domain/models/processing-failure";
 import type { Result } from "../domain/models/result";
 
 export interface InspectEpubPort {
-  readonly inspect: (
-    source: SelectedEpub,
-    signal: AbortSignal,
-  ) => Promise<Result<HealthReport, ProcessingFailure>>;
+  readonly inspect: (source: SelectedEpub, signal: AbortSignal) => Promise<Result<HealthReport, ProcessingFailure>>;
 }
 
 export interface InspectEpubsPorts {
@@ -28,7 +20,7 @@ function internalFailure(): ProcessingFailure {
   return {
     category: "internal",
     code: "INTERNAL_FAILURE",
-    safeMessage: "The EPUB could not be inspected.",
+    safeMessage: "The book file could not be inspected.",
     retryable: true,
     phase: "preflight",
   };

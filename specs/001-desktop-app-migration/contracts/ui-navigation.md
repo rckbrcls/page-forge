@@ -25,6 +25,7 @@ No additional top-level product destinations are allowed without a constitution 
 ## Intake contract
 
 ### Single-file surfaces (`Readiness`, `Convert`, `Send`, `Metadata`)
+
 - Accept drag-and-drop of one supported file.
 - Provide an explicit file picker action.
 - If multiple files are dropped:
@@ -33,18 +34,21 @@ No additional top-level product destinations are allowed without a constitution 
   - do not silently process an arbitrary hidden subset without feedback
 
 ### Folder surfaces (`Batch`)
+
 - Accept folder drop or folder picker.
 - Show discovered eligible files before or during processing summary.
 
 ## Readiness surface contract
 
 Required actions:
+
 - Audit / Diagnose
 - Prepare / Fix (safe Kindle-ready preparation)
 - Open Send to Kindle handoff (when useful)
 - Navigate or deep-link to Send with current output when ready
 
 Required visible data:
+
 - source file name/path
 - status chip/text: `ready` | `needs_fixes` | `blocked`
 - issue list with severity labels
@@ -53,6 +57,7 @@ Required visible data:
 ## Convert surface contract
 
 Required actions:
+
 - Convert MOBI → EPUB
 - Convert PDF → EPUB
 - Convert EPUB → MOBI
@@ -60,6 +65,7 @@ Required actions:
 - Aggressive repair EPUB (explicit secondary confirmation)
 
 Required visible data:
+
 - source
 - selected operation
 - output path
@@ -68,11 +74,13 @@ Required visible data:
 ## Batch surface contract
 
 Required actions:
+
 - Batch readiness prepare/fix
 - Batch repair
 - Batch convert to EPUB
 
 Required visible data:
+
 - folder path
 - progress
 - summary counts
@@ -81,11 +89,13 @@ Required visible data:
 ## Send surface contract
 
 Required actions:
+
 - Send via selected profile
 - Open handoff
 - Jump to profile setup if incomplete
 
 Required visible data:
+
 - selected file
 - selected profile
 - profile readiness state
@@ -94,6 +104,7 @@ Required visible data:
 ## Metadata surface contract
 
 Required actions:
+
 - Inspect
 - Update title
 - Update author
@@ -101,6 +112,7 @@ Required actions:
 ## Settings surface contract
 
 Required content:
+
 - Calibre/dependency status
 - recovery guidance when tools missing
 - delivery profile management

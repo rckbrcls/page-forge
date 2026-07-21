@@ -56,13 +56,15 @@ const fixtureRegistry = [
   ["PACKAGE_XML_INVALID", containerPackageFixtures.invalidPackageXml.name],
   ["PACKAGE_VERSION_UNSUPPORTED", containerPackageFixtures.unsupportedPackageVersion.name],
   ...manifestRuleFixtures
-    .filter(({ expectedCode }, index, fixtures) =>
-      fixtures.findIndex((fixture) => fixture.expectedCode === expectedCode) === index,
+    .filter(
+      ({ expectedCode }, index, fixtures) =>
+        fixtures.findIndex((fixture) => fixture.expectedCode === expectedCode) === index,
     )
     .map(({ expectedCode, name }) => [expectedCode, name] as const),
   ...readingOrderRuleFixtures
-    .filter(({ expectedCode }, index, fixtures) =>
-      fixtures.findIndex((fixture) => fixture.expectedCode === expectedCode) === index,
+    .filter(
+      ({ expectedCode }, index, fixtures) =>
+        fixtures.findIndex((fixture) => fixture.expectedCode === expectedCode) === index,
     )
     .map(({ expectedCode, name }) => [expectedCode, name] as const),
   ["XML_ENCODING_INVALID", "xml-invalid-encoding.epub"],
@@ -100,9 +102,10 @@ const fixtureRegistry = [
   ["CONTENT_ENCRYPTED", "content-encrypted.epub"],
 ] as const satisfies readonly (readonly [FindingCode, string])[];
 
-const auditRuleFixtureRegistry: readonly FixtureRegistration[] = fixtureRegistry.map(
-  ([code, fixture]) => ({ code, fixture }),
-);
+const auditRuleFixtureRegistry: readonly FixtureRegistration[] = fixtureRegistry.map(([code, fixture]) => ({
+  code,
+  fixture,
+}));
 
 describe("v1 audit rule fixture matrix", () => {
   it("maps every finding code to exactly one focused fixture", () => {

@@ -1,16 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { createFinding } from "../../../src/domain/audit/finding-catalog";
-import {
-  compareReports,
-  createUnsuccessfulPreparationResult,
-} from "../../../src/domain/repair/compare-revalidation";
+import { compareReports, createUnsuccessfulPreparationResult } from "../../../src/domain/repair/compare-revalidation";
 import type { InternalPath } from "../../../src/domain/models/archive";
-import type {
-  SelectedEpubId,
-  Sha256Digest,
-  SourceFingerprint,
-} from "../../../src/domain/models/epub-document";
+import type { SelectedEpubId, Sha256Digest, SourceFingerprint } from "../../../src/domain/models/epub-document";
 import type { Finding } from "../../../src/domain/models/finding";
 import type { HealthReport, HealthState } from "../../../src/domain/models/health-report";
 import type { ProcessingFailure } from "../../../src/domain/models/processing-failure";
@@ -81,9 +74,7 @@ describe("compareReports", () => {
 
     expect(comparison.resolved).toEqual([resolvedFinding.identity]);
     expect(comparison.remaining).toEqual([remainingFinding.identity]);
-    expect(comparison.introduced).toEqual([
-      expect.objectContaining({ identity: introducedFinding.identity }),
-    ]);
+    expect(comparison.introduced).toEqual([expect.objectContaining({ identity: introducedFinding.identity })]);
     expect(comparison.finalHealth).toBe("needs_review");
   });
 
@@ -116,11 +107,7 @@ describe("compareReports", () => {
       failure: repairFailure("REPAIR_WRITE_FAILED", "reconstructing"),
     };
 
-    const comparison = compareReports(
-      report("repairable", [resolvedFinding]),
-      report("healthy", []),
-      [failedRepair],
-    );
+    const comparison = compareReports(report("repairable", [resolvedFinding]), report("healthy", []), [failedRepair]);
 
     expect(comparison.finalHealth).toBe("healthy");
     expect(comparison.successful).toBe(false);
@@ -130,11 +117,9 @@ describe("compareReports", () => {
   it.each<HealthState>(["repairable", "needs_review", "unsupported", "unsafe"])(
     "rejects final non-Healthy state %s even when no new error is introduced",
     (health) => {
-      const comparison = compareReports(
-        report("repairable", [resolvedFinding]),
-        report(health, [remainingFinding]),
-        [appliedRepair],
-      );
+      const comparison = compareReports(report("repairable", [resolvedFinding]), report(health, [remainingFinding]), [
+        appliedRepair,
+      ]);
 
       expect(comparison.finalHealth).toBe(health);
       expect(comparison.successful).toBe(false);
@@ -142,11 +127,9 @@ describe("compareReports", () => {
   );
 
   it("rejects a newly introduced Error even if an inconsistent caller labels the report Healthy", () => {
-    const comparison = compareReports(
-      report("repairable", [resolvedFinding]),
-      report("healthy", [introducedFinding]),
-      [appliedRepair],
-    );
+    const comparison = compareReports(report("repairable", [resolvedFinding]), report("healthy", [introducedFinding]), [
+      appliedRepair,
+    ]);
 
     expect(introducedFinding.severity).toBe("error");
     expect(comparison.introduced).toHaveLength(1);
@@ -160,11 +143,10 @@ describe("compareReports", () => {
       outcome: "already_satisfied",
       changedEntries: [],
     };
-    const comparison = compareReports(
-      report("repairable", [resolvedFinding]),
-      report("healthy", []),
-      [appliedRepair, alreadySatisfied],
-    );
+    const comparison = compareReports(report("repairable", [resolvedFinding]), report("healthy", []), [
+      appliedRepair,
+      alreadySatisfied,
+    ]);
 
     expect(comparison.successful).toBe(true);
     expect(comparison.finalHealth).toBe("healthy");

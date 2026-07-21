@@ -1,11 +1,6 @@
 import type { InternalPath } from "../models/archive";
 import type { ProcessingFailure } from "../models/processing-failure";
-import type {
-  AppliedRepair,
-  RepairOperation,
-  RepairOperationId,
-  RepairPlan,
-} from "../models/repair";
+import type { AppliedRepair, RepairOperation, RepairOperationId, RepairPlan } from "../models/repair";
 import {
   correctManifestMediaType,
   correctUniqueReference,
@@ -34,7 +29,12 @@ export function applyRepairPlan(
 ): RepairOperationApplication {
   const operation = plan.operations.find(({ id }) => id === operationId);
   if (operation === undefined) {
-    return failedApplication(operationId, [], input.preservedEntryCount, "The operation is not present in the confirmed repair plan.");
+    return failedApplication(
+      operationId,
+      [],
+      input.preservedEntryCount,
+      "The operation is not present in the confirmed repair plan.",
+    );
   }
 
   try {
@@ -51,15 +51,18 @@ export function applyRepairPlan(
 
 export const applyRepairOperation = applyRepairPlan;
 
-function dispatch(
-  operation: RepairOperation,
-  input: RepairOperationInput,
-): RepairOperationApplication {
+function dispatch(operation: RepairOperation, input: RepairOperationInput): RepairOperationApplication {
   const preservedEntryCount = validCount(input.preservedEntryCount);
   switch (operation.kind) {
     case "write_canonical_mimetype":
       requireOptionalEntryPath(input, "mimetype" as InternalPath);
-      return bytesApplication(operation, "mimetype" as InternalPath, input.content, writeCanonicalMimetype(), preservedEntryCount);
+      return bytesApplication(
+        operation,
+        "mimetype" as InternalPath,
+        input.content,
+        writeCanonicalMimetype(),
+        preservedEntryCount,
+      );
     case "rebuild_container_for_single_opf":
       requireOptionalEntryPath(input, "META-INF/container.xml" as InternalPath);
       return bytesApplication(
@@ -85,21 +88,13 @@ function dispatch(
         operation,
         operation.ownerPath,
         input.content,
-        correctUniqueReference(
-          input.content!,
-          operation.originalReference,
-          operation.replacementReference,
-        ),
+        correctUniqueReference(input.content!, operation.originalReference, operation.replacementReference),
         preservedEntryCount,
       );
     }
     case "normalize_equivalent_internal_path": {
       requireEntry(input, operation.sourcePath);
-      const normalized = normalizeEquivalentInternalPath(
-        operation.sourcePath,
-        operation.targetPath,
-        input.content!,
-      );
+      const normalized = normalizeEquivalentInternalPath(operation.sourcePath, operation.targetPath, input.content!);
       return {
         ...normalized,
         repair: appliedEvidence(operation, operation.changedPaths, preservedEntryCount),
@@ -171,10 +166,7 @@ function appliedEvidence(
   };
 }
 
-function alreadySatisfiedEvidence(
-  operation: RepairOperation,
-  preservedEntryCount: number,
-): AppliedRepair {
+function alreadySatisfiedEvidence(operation: RepairOperation, preservedEntryCount: number): AppliedRepair {
   return {
     operationId: operation.id,
     outcome: "already_satisfied",

@@ -26,6 +26,7 @@ Required logical fields:
 - `defaultOutputDir` (optional)
 
 Derived:
+
 - `loginUsername = smtpUsername` if non-empty else `senderEmail`
 - `isSendReady` requires sender/kindle/host/port/loginUsername and keychain secret present
 
@@ -43,17 +44,20 @@ Derived:
 ## SMTP send contract
 
 Preconditions:
+
 1. Source file exists and is readable
 2. Selected profile exists
 3. Profile is send-ready
 4. Secret exists in Keychain
 
 Behavior:
+
 - Send the selected file to `kindleEmail` from `senderEmail` through configured SMTP settings
 - On success, return `SendResult`
 - On failure, return/throw actionable delivery error (auth, network, recipient, attachment)
 
 Forbidden:
+
 - Storing plaintext password in config
 - Logging secret values
 - Automating Amazon website login
@@ -68,6 +72,7 @@ Forbidden:
 ## Settings UX obligations
 
 Settings MUST show:
+
 - whether each profile is send-ready
 - whether secret is present (boolean only)
 - Calibre dependency status
@@ -76,6 +81,7 @@ Settings MUST show:
 ## Migration note from legacy
 
 Legacy behavior to preserve:
+
 - named profiles
 - default profile
 - Keychain-backed secret by profile

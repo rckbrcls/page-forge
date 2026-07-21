@@ -51,10 +51,7 @@ export function createCancellationContext(
   };
 }
 
-export function cancellationCheckpoint(
-  signal: AbortSignal,
-  phase: ProcessingPhase,
-): CancellationCheckpoint {
+export function cancellationCheckpoint(signal: AbortSignal, phase: ProcessingPhase): CancellationCheckpoint {
   if (!signal.aborted) return { status: "continue" };
   if (signal.reason === "deadline") return { status: "deadline", phase };
   return {

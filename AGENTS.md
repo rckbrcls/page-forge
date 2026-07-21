@@ -23,7 +23,7 @@
 
 - Governance source: `.specify/memory/constitution.md`.
 - Active product specification and plan: `specs/004-raycast-epub-workflow/`.
-- Page Forge is a macOS-only, public, self-contained Raycast extension for EPUB inspection, safe repair, revalidation, and explicit Kindle delivery.
+- Book Sender is a macOS-only, public, self-contained Raycast extension that checks, safely repairs when possible, and sends EPUB or PDF books to Kindle through one command.
 - The final repository contains one npm package and one Raycast extension. Swift, SwiftUI, Xcode, Python, Calibre, and the previous desktop distribution are obsolete and must not be retained as a parallel product.
 - Required dependency direction: `Raycast Commands -> Application Services -> EPUB Audit and Repair Engine -> Archive, XML, Filesystem, and Delivery Adapters`.
 - Planned source areas:
@@ -37,10 +37,10 @@
 
 ## Product Positioning
 
-- Page Forge is not a Calibre replacement and must not depend on Calibre or any installed ebook engine.
-- Keep one focused pipeline: `Select EPUB -> Inspect Health -> Apply Safe Repairs -> Validate Repaired Copy -> Send to Kindle`.
-- Support EPUB only. Do not add conversion or PDF, MOBI, AZW, AZW3, or KFX handling.
-- Expose exactly three first-version commands: Inspect EPUB, Prepare EPUB for Kindle, and Send EPUB to Kindle.
+- Book Sender is not a Calibre replacement and must not depend on Calibre or any installed ebook engine.
+- Keep one focused pipeline: `Select Book -> Check -> Apply Safe EPUB Repairs -> Validate -> Confirm -> Send to Kindle`.
+- Support EPUB inspection/repair and direct PDF delivery. Do not add conversion or MOBI, AZW, AZW3, or KFX handling.
+- Expose exactly one command: Send Book to Kindle. Inspection and repair are internal stages of that command.
 - Keep SMTP delivery and the official Send to Kindle web handoff distinct and explicit.
 - Do not promise direct Amazon upload automation or Amazon login automation.
 - Do not implement DRM removal.
@@ -51,8 +51,8 @@
 - Keep one shared intake path for Finder-selected files and the Raycast file picker.
 - Process a stable selected snapshot sequentially, one EPUB and one archive entry at a time, and isolate failures per file.
 - Cancellation stops pending scheduling and cooperatively interrupts active streams; SMTP may become `delivery_unknown` after message data begins.
-- Never modify or overwrite an original. Preparation creates `*-kindle-ready.epub`, then `-2`, `-3`, and so on.
-- Apply only repairs listed in a reviewed plan and revalidate the written copy before atomic final promotion.
+- Never modify or overwrite an original. EPUB repair uses a separate copy and preserves the original display name for Kindle delivery.
+- Apply only deterministic permitted repairs and revalidate the written copy before delivery.
 - Keep audit and repair rules out of React components.
 - Use health states:
   - `healthy`

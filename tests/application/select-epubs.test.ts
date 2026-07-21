@@ -8,6 +8,7 @@ import {
   duplicateIdentitySelection,
   mixedFinderSelection,
   pickerFallbackSelection,
+  selectedEpub,
   type InputFixtureDefinition,
 } from "../fixtures/input/fixture-definitions";
 
@@ -32,6 +33,21 @@ async function runSelection(fixture: InputFixtureDefinition) {
 }
 
 describe("selectEpubs", () => {
+  it("accepts PDF books without sending them through EPUB intake rejection", async () => {
+    const pdf = selectedEpub("/fixtures/book.pdf", "book.pdf", "pdf-book", { format: "pdf" });
+    const snapshot = { items: [pdf], rejections: [], selectedAtMs: Date.now() };
+    const port: SelectionPort = {
+      selectedFinderPaths: vi.fn(async () => ok([pdf.sourcePath])),
+      pickEpubPaths: vi.fn(async () => ok([])),
+      snapshotSelection: vi.fn(async () => ok(snapshot)),
+    };
+
+    const result = await selectEpubs(port, new AbortController().signal);
+
+    expect(result).toEqual(ok(snapshot));
+    expect(port.pickEpubPaths).not.toHaveBeenCalled();
+  });
+
   it("keeps supported Finder EPUBs in first-selection order and reports every rejected item", async () => {
     const { port, snapshot } = await runSelection(mixedFinderSelection);
 

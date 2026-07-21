@@ -19,9 +19,7 @@ describe("active and protected content audit", () => {
       location: { kind: "internal_path", path: fixture.expected.location },
     });
     expect(findings[0]?.recommendedRepair).toBeUndefined();
-    expect(deriveHealth(findings)).toBe(
-      fixture.expected.stateImpact === "unsafe" ? "unsafe" : "needs_review",
-    );
+    expect(deriveHealth(findings)).toBe(fixture.expected.stateImpact === "unsafe" ? "unsafe" : "needs_review");
     expect(fixture.forbiddenEffects).toEqual({
       payloadReads: 0,
       networkAccesses: 0,

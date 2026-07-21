@@ -206,7 +206,7 @@ describe("smtp client contract", () => {
       expect(String(message?.from ?? "")).toContain(configuration.senderAddress);
       expect(String(message?.to ?? "")).toContain(configuration.kindleAddress);
       expect([message?.subject, message?.text, message?.html]).toSatisfy((values: readonly unknown[]) =>
-        values.some((value) => value === undefined || value === "" || String(value).includes("Page Forge")),
+        values.some((value) => value === undefined || value === "" || String(value).includes("Book Sender")),
       );
 
       const attachments = message?.attachments;

@@ -12,9 +12,7 @@
     "turns": 43
   },
   "model": "antigravity/gemini-3.5-flash:medium",
-  "attemptedModels": [
-    "antigravity/gemini-3.5-flash:medium"
-  ],
+  "attemptedModels": ["antigravity/gemini-3.5-flash:medium"],
   "modelAttempts": [
     {
       "model": "antigravity/gemini-3.5-flash:medium",

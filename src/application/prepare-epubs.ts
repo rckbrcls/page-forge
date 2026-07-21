@@ -52,7 +52,7 @@ function internalFailure(phase: ProcessingPhase): ProcessingFailure {
   return {
     category: "internal",
     code: "INTERNAL_FAILURE",
-    safeMessage: "The EPUB could not be prepared.",
+    safeMessage: "The book could not be prepared for delivery.",
     retryable: true,
     phase,
   };
@@ -62,7 +62,7 @@ function stalePlanFailure(): ProcessingFailure {
   return {
     category: "repair",
     code: "REPAIR_PLAN_STALE",
-    safeMessage: "The EPUB no longer matches the confirmed repair plan.",
+    safeMessage: "The book file changed unexpectedly during processing.",
     retryable: false,
     phase: "reconstructing",
   };
@@ -133,7 +133,7 @@ async function cleanupTemporary(
       failure: {
         category: "repair",
         code: "REPAIR_TEMP_CLEANUP_FAILED",
-        safeMessage: "The temporary repaired EPUB could not be removed safely.",
+        safeMessage: "Temporary files from the repair process could not be cleaned up.",
         retryable: true,
         phase: "reconstructing",
       },

@@ -29,9 +29,7 @@ describe("reference and XML repairs", () => {
     expect(first).toEqual(fixture.expected);
     expect(second).toEqual(first);
     expect(fixture.input).toEqual(original);
-    expect(Buffer.from(first).toString("utf8")).toContain(
-      "Keep text/plain &amp; punctuation exactly.",
-    );
+    expect(Buffer.from(first).toString("utf8")).toContain("Keep text/plain &amp; punctuation exactly.");
     expect(Buffer.from(first).toString("utf8")).toContain('data-note="text/plain"');
   });
 
@@ -40,51 +38,28 @@ describe("reference and XML repairs", () => {
     expectEpubFixture(fixture.epub);
     const original = Buffer.from(fixture.input);
 
-    const first = correctUniqueReference(
-      fixture.input,
-      fixture.originalReference,
-      fixture.replacementReference,
-    );
-    const second = correctUniqueReference(
-      fixture.input,
-      fixture.originalReference,
-      fixture.replacementReference,
-    );
+    const first = correctUniqueReference(fixture.input, fixture.originalReference, fixture.replacementReference);
+    const second = correctUniqueReference(fixture.input, fixture.originalReference, fixture.replacementReference);
 
     expect(first).toEqual(fixture.expected);
     expect(second).toEqual(first);
     expect(fixture.input).toEqual(original);
-    expect(Buffer.from(first).toString("utf8")).toContain(
-      `Keep ${fixture.originalReference} as authored text.`,
-    );
-    expect(Buffer.from(first).toString("utf8")).toContain(
-      `data-note="${fixture.originalReference}"`,
-    );
+    expect(Buffer.from(first).toString("utf8")).toContain(`Keep ${fixture.originalReference} as authored text.`);
+    expect(Buffer.from(first).toString("utf8")).toContain(`data-note="${fixture.originalReference}"`);
   });
 
-  it.each(equivalentPathRepairFixtures)(
-    "normalizes $name without changing resource bytes",
-    (fixture) => {
-      expectEpubFixture(fixture.epub);
-      const original = Buffer.from(fixture.content);
+  it.each(equivalentPathRepairFixtures)("normalizes $name without changing resource bytes", (fixture) => {
+    expectEpubFixture(fixture.epub);
+    const original = Buffer.from(fixture.content);
 
-      const first = normalizeEquivalentInternalPath(
-        fixture.sourcePath,
-        fixture.targetPath,
-        fixture.content,
-      );
-      const second = normalizeEquivalentInternalPath(
-        fixture.sourcePath,
-        fixture.targetPath,
-        fixture.content,
-      );
+    const first = normalizeEquivalentInternalPath(fixture.sourcePath, fixture.targetPath, fixture.content);
+    const second = normalizeEquivalentInternalPath(fixture.sourcePath, fixture.targetPath, fixture.content);
 
-      expect(first).toEqual({ path: fixture.targetPath, content: fixture.content });
-      expect(second).toEqual(first);
-      expect(first.content).toEqual(original);
-      expect(fixture.content).toEqual(original);
-    },
-  );
+    expect(first).toEqual({ path: fixture.targetPath, content: fixture.content });
+    expect(second).toEqual(first);
+    expect(first.content).toEqual(original);
+    expect(fixture.content).toEqual(original);
+  });
 
   it.each(xmlEncodingRepairFixtures)(
     "normalizes $name to UTF-8 without changing XML meaning or editorial data",

@@ -67,19 +67,10 @@ export function RepairPlanDetail({ plan }: RepairPlanDetailProps) {
       metadata={
         <List.Item.Detail.Metadata>
           <List.Item.Detail.Metadata.Label title="Source" text={plan.source.displayName} />
-          <List.Item.Detail.Metadata.Label
-            title="Operations"
-            text={String(plan.operations.length)}
-          />
-          <List.Item.Detail.Metadata.Label
-            title="Unresolved Findings"
-            text={String(plan.unresolvedFindings.length)}
-          />
+          <List.Item.Detail.Metadata.Label title="Operations" text={String(plan.operations.length)} />
+          <List.Item.Detail.Metadata.Label title="Unresolved Findings" text={String(plan.unresolvedFindings.length)} />
           <List.Item.Detail.Metadata.Separator />
-          <List.Item.Detail.Metadata.Label
-            title="Predicted Output"
-            text={basename(plan.predictedOutputPath)}
-          />
+          <List.Item.Detail.Metadata.Label title="Predicted Output" text={basename(plan.predictedOutputPath)} />
         </List.Item.Detail.Metadata>
       }
     />

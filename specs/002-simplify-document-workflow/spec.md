@@ -8,7 +8,7 @@
 
 **Input**: User description: "Refactor PageForge into one simple screen where users import multiple Kindle-compatible documents, convert and prepare them with the existing ebook engine, then send them through the configured Kindle delivery profile or save the results. Preserve the current drag-and-drop component, add a compact drop target to the standard window toolbar, and move settings into a separate window opened by one button."
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Import a document collection (Priority: P1)
 
@@ -151,7 +151,7 @@ close the window, and confirm that the main queue and its progress are preserved
 - The toolbar is too narrow to show every item at full size; import and Settings
   remain discoverable and keyboard-accessible.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -210,7 +210,7 @@ close the window, and confirm that the main queue and its progress are preserved
 - **FR-023**: Advanced diagnostics and preparation details MAY use progressive
   disclosure but MUST NOT restore separate top-level workflow destinations.
 
-### Constitution Constraints *(mandatory)*
+### Constitution Constraints _(mandatory)_
 
 - **CC-001**: The feature MUST remain a focused local Kindle-ready workflow:
   intake, readiness, safe preparation, conversion when needed, and send or save.
@@ -229,7 +229,7 @@ close the window, and confirm that the main queue and its progress are preserved
 - **CC-008**: The feature MUST favor the smallest maintainable product surface;
   advanced controls use progressive disclosure and require demonstrated need.
 
-### Key Entities *(include if feature involves data)*
+### Key Entities _(include if feature involves data)_
 
 - **DocumentItem**: One imported source file, including its identity, supported
   format, selection state, current workflow status, progress, issue summary,
@@ -246,7 +246,7 @@ close the window, and confirm that the main queue and its progress are preserved
 - **ReadinessReport**: A result with status `ready`, `needs_fixes`, or `blocked`
   and issues classified as `info`, `warning`, `error`, or `fixable`.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
@@ -293,4 +293,3 @@ close the window, and confirm that the main queue and its progress are preserved
   path for this feature; Amazon web/app/USB handoff is not expanded by this work.
 - No account system, cloud library, synchronization, OCR, or DRM workflow is
   introduced.
-

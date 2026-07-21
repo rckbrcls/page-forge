@@ -35,7 +35,7 @@ function internalFailure(phase: ProcessingPhase): ProcessingFailure {
   return {
     category: "internal",
     code: "INTERNAL_FAILURE",
-    safeMessage: "The EPUB could not be sent.",
+    safeMessage: "The book could not be sent.",
     retryable: true,
     phase,
   };
@@ -55,8 +55,8 @@ function changedFailure(phase: ProcessingPhase): ProcessingFailure {
   return {
     category: "input",
     code: "INPUT_CHANGED",
-    safeMessage: "The reviewed EPUB changed before submission.",
-    retryable: true,
+    safeMessage: "The book file changed unexpectedly before it could be sent.",
+    retryable: false,
     phase,
   };
 }

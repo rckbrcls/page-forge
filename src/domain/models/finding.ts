@@ -6,22 +6,10 @@ declare const findingIdentityBrand: unique symbol;
 
 export type Severity = "info" | "warning" | "error" | "critical";
 export type FindingCategory =
-  | "input"
-  | "archive"
-  | "mimetype"
-  | "container"
-  | "package"
-  | "content"
-  | "compatibility"
-  | "delivery";
+  "input" | "archive" | "mimetype" | "container" | "package" | "content" | "compatibility" | "delivery";
 export type Repairability = "none" | "automatic";
 export type RevalidationStatus = "not_compared" | "resolved" | "remaining" | "introduced";
-export type FindingStateImpact =
-  | "healthy"
-  | "repairable"
-  | "needs_review"
-  | "unsupported"
-  | "unsafe";
+export type FindingStateImpact = "healthy" | "repairable" | "needs_review" | "unsupported" | "unsafe";
 
 export type FindingLocation =
   | { readonly kind: "internal_path"; readonly path: InternalPath }
@@ -66,11 +54,7 @@ export function createFindingIdentity(
   targetIdentifier?: string,
 ): FindingIdentity {
   const normalizedLocation = location === undefined ? null : normalizeLocation(location);
-  return JSON.stringify([
-    code,
-    normalizedLocation,
-    targetIdentifier?.normalize("NFC") ?? null,
-  ]) as FindingIdentity;
+  return JSON.stringify([code, normalizedLocation, targetIdentifier?.normalize("NFC") ?? null]) as FindingIdentity;
 }
 
 function normalizeLocation(location: FindingLocation): readonly (string | number | null)[] {
@@ -78,12 +62,7 @@ function normalizeLocation(location: FindingLocation): readonly (string | number
     case "internal_path":
       return [location.kind, normalizePath(location.path)];
     case "xml":
-      return [
-        location.kind,
-        normalizePath(location.path),
-        location.line ?? null,
-        location.column ?? null,
-      ];
+      return [location.kind, normalizePath(location.path), location.line ?? null, location.column ?? null];
     case "manifest_item":
       return [location.kind, normalizePath(location.path), location.manifestId.normalize("NFC")];
     case "spine_item":

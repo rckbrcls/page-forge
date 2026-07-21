@@ -137,9 +137,7 @@ function auditSpine(packageDocument: PackageProjection, findings: Finding[]): vo
   }
 
   const manifestIds = new Set(packageDocument.manifest.map(({ id }) => id));
-  const absentItem = packageDocument.spine.find(
-    ({ idref }) => isNonEmpty(idref ?? "") && !manifestIds.has(idref!),
-  );
+  const absentItem = packageDocument.spine.find(({ idref }) => isNonEmpty(idref ?? "") && !manifestIds.has(idref!));
   if (absentItem?.idref !== undefined) {
     findings.push(
       createFinding("SPINE_ITEM_NOT_IN_MANIFEST", {
@@ -154,8 +152,7 @@ function auditSpine(packageDocument: PackageProjection, findings: Finding[]): vo
   }
 
   const hasLinearReadingOrder = packageDocument.spine.some(
-    ({ idref, linear }) =>
-      isNonEmpty(idref ?? "") && linear !== false && manifestIds.has(idref!),
+    ({ idref, linear }) => isNonEmpty(idref ?? "") && linear !== false && manifestIds.has(idref!),
   );
   if (!hasLinearReadingOrder && missingId === undefined && absentItem === undefined) {
     findings.push(
@@ -170,21 +167,26 @@ function auditNavigationAndCover(packageDocument: PackageProjection, findings: F
   const navigation =
     packageDocument.version === "2"
       ? packageDocument.manifest.filter(
-          ({ id, mediaType }) =>
-            id === packageDocument.spineToc && mediaType === "application/x-dtbncx+xml",
+          ({ id, mediaType }) => id === packageDocument.spineToc && mediaType === "application/x-dtbncx+xml",
         )
       : packageDocument.manifest.filter(({ properties }) => properties.includes("nav"));
   if (navigation.length === 0) {
-    findings.push(createFinding("NAVIGATION_MISSING", { location: { kind: "internal_path", path: packageDocument.path } }));
+    findings.push(
+      createFinding("NAVIGATION_MISSING", { location: { kind: "internal_path", path: packageDocument.path } }),
+    );
   } else if (navigation.length > 1) {
-    findings.push(createFinding("NAVIGATION_AMBIGUOUS", { location: { kind: "internal_path", path: packageDocument.path } }));
+    findings.push(
+      createFinding("NAVIGATION_AMBIGUOUS", { location: { kind: "internal_path", path: packageDocument.path } }),
+    );
   }
 
   const covers = packageDocument.manifest.filter(isCoverCandidate);
   if (covers.length === 0) {
     findings.push(createFinding("COVER_MISSING", { location: { kind: "internal_path", path: packageDocument.path } }));
   } else if (covers.length > 1) {
-    findings.push(createFinding("COVER_AMBIGUOUS", { location: { kind: "internal_path", path: packageDocument.path } }));
+    findings.push(
+      createFinding("COVER_AMBIGUOUS", { location: { kind: "internal_path", path: packageDocument.path } }),
+    );
   }
 }
 

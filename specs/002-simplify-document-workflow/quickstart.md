@@ -220,4 +220,3 @@ Expected:
 - Existing readiness/status/output/security contracts remain intact.
 - All static checks and local tests pass; visual and interactive scenarios are
   confirmed on macOS.
-

@@ -41,10 +41,7 @@ function findingSummary(findings: readonly Finding[]): string {
   return [...counts].map(([label, count]) => `${count} ${label}`).join(", ");
 }
 
-function resultForSource(
-  results: readonly BatchItemResult[],
-  sourceId: SelectedEpubId,
-): BatchItemResult | undefined {
+function resultForSource(results: readonly BatchItemResult[], sourceId: SelectedEpubId): BatchItemResult | undefined {
   return results.find(({ source }) => source.id === sourceId);
 }
 
@@ -74,12 +71,7 @@ function reportMetadata(report: HealthReport) {
 
 function itemDetail(result: BatchItemResult | undefined) {
   if (result?.status === "inspected") {
-    return (
-      <List.Item.Detail
-        markdown={healthReportMarkdown(result.report)}
-        metadata={reportMetadata(result.report)}
-      />
-    );
+    return <List.Item.Detail markdown={healthReportMarkdown(result.report)} metadata={reportMetadata(result.report)} />;
   }
   if (result?.status === "failed") {
     return (
@@ -90,19 +82,13 @@ function itemDetail(result: BatchItemResult | undefined) {
             <List.Item.Detail.Metadata.Label title="Code" text={result.failure.code} />
             <List.Item.Detail.Metadata.Label title="Category" text={result.failure.category} />
             <List.Item.Detail.Metadata.Label title="Phase" text={phaseLabel(result.failure.phase)} />
-            <List.Item.Detail.Metadata.Label
-              title="Retryable"
-              text={result.failure.retryable ? "Yes" : "No"}
-            />
+            <List.Item.Detail.Metadata.Label title="Retryable" text={result.failure.retryable ? "Yes" : "No"} />
           </List.Item.Detail.Metadata>
         }
       />
     );
   }
-  const phase =
-    result?.status === "in_progress" || result?.status === "cancelled"
-      ? result.phase
-      : "selecting";
+  const phase = result?.status === "in_progress" || result?.status === "cancelled" ? result.phase : "selecting";
   return (
     <List.Item.Detail
       markdown={`# ${result?.status === "cancelled" ? "Cancelled" : "Pending"}\n\n${phaseLabel(phase)}`}
@@ -112,68 +98,35 @@ function itemDetail(result: BatchItemResult | undefined) {
 
 function itemAccessories(result: BatchItemResult | undefined) {
   if (result?.status === "inspected") {
-    return [
-      { tag: healthBadge(result.report.health) },
-      { text: `${result.report.findings.length} findings` },
-    ];
+    return [{ tag: healthBadge(result.report.health) }, { text: `${result.report.findings.length} findings` }];
   }
   if (result?.status === "failed") return [{ tag: "failed" }, { text: result.failure.code }];
   if (result?.status === "in_progress") return [{ tag: phaseLabel(result.phase) }];
   return [{ tag: result?.status ?? "pending" }];
 }
 
-function itemActions(
-  source: SelectedEpub,
-  result: BatchItemResult | undefined,
-  props: InspectCommandViewProps,
-) {
+function itemActions(source: SelectedEpub, result: BatchItemResult | undefined, props: InspectCommandViewProps) {
   const report = result?.status === "inspected" ? result.report : undefined;
   return (
     <ActionPanel>
       {report ? (
-        <Action
-          title="View Full Report"
-          icon={Icon.Eye}
-          shortcut={{ modifiers: ["cmd"], key: "enter" }}
-          onAction={() => props.onViewReport(source, report)}
-        />
+        <Action title="View Full Report" icon={Icon.Eye} onAction={() => props.onViewReport(source, report)} />
       ) : null}
       {report?.health === "repairable"
         ? createElement(ActionWithSourceId, {
             title: "Prepare EPUB",
             icon: Icon.Hammer,
-            shortcut: { modifiers: ["cmd", "shift"], key: "p" },
             sourceId: source.id,
             onAction: () => props.onPrepare(source),
           })
         : null}
-      <Action
-        title="Reveal in Finder"
-        icon={Icon.Finder}
-        shortcut={{ modifiers: ["cmd", "shift"], key: "f" }}
-        onAction={() => props.onReveal(source)}
-      />
-      <Action
-        title="Copy File Path"
-        icon={Icon.Clipboard}
-        shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
-        onAction={() => props.onCopyPath(source)}
-      />
+      <Action title="Reveal in Finder" icon={Icon.Finder} onAction={() => props.onReveal(source)} />
+      <Action title="Copy File Path" icon={Icon.Clipboard} onAction={() => props.onCopyPath(source)} />
       {result?.status === "failed" && result.failure.retryable ? (
-        <Action
-          title="Retry Failed Items"
-          icon={Icon.RotateClockwise}
-          shortcut={{ modifiers: ["cmd"], key: "r" }}
-          onAction={props.onRetryFailed}
-        />
+        <Action title="Retry Failed Items" icon={Icon.RotateClockwise} onAction={props.onRetryFailed} />
       ) : null}
       {operationIsActive(props.operation) && !props.operation.cancellationRequested ? (
-        <Action
-          title="Cancel Active Operation"
-          icon={Icon.XMarkCircle}
-          shortcut={{ modifiers: ["cmd"], key: "." }}
-          onAction={props.onCancel}
-        />
+        <Action title="Cancel Active Operation" icon={Icon.XMarkCircle} onAction={props.onCancel} />
       ) : null}
     </ActionPanel>
   );
@@ -199,7 +152,7 @@ export function InspectCommandView(props: InspectCommandViewProps) {
               ? result.failure.safeMessage
               : result?.status === "in_progress"
                 ? phaseLabel(result.phase)
-                : result?.status ?? "pending";
+                : (result?.status ?? "pending");
         return (
           <List.Item
             key={source.id}

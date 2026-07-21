@@ -26,7 +26,7 @@ export function createFilePickerSource(provider: PickerPathProvider): {
         return err({
           category: "internal",
           code: "INTERNAL_FAILURE",
-          safeMessage: "The selected files could not be received.",
+          safeMessage: "The selected files could not be opened.",
           retryable: true,
           phase: "selecting",
         });

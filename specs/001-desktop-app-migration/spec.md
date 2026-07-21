@@ -8,7 +8,7 @@
 
 **Input**: User description: "vamos planejar a refatoracao inteira do codigo que tem hoje para uma versao desktop dela, com swiftui e etc, coloque o tui antigo em uma pasta legacy, vamos so usar de inspiracao"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Drop a book and see Kindle readiness (Priority: P1)
 
@@ -236,7 +236,7 @@ surface and the old terminal UI lives only under a clearly marked legacy area.
 - User quits while a long conversion/repair/batch is running
 - Aggressive repair is attempted on a book that should remain on safe-only path
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -292,7 +292,7 @@ surface and the old terminal UI lives only under a clearly marked legacy area.
 - **FR-024**: App update guidance and Calibre update guidance MUST remain
   separate concerns.
 
-### Constitution Constraints *(mandatory)*
+### Constitution Constraints _(mandatory)_
 
 - **CC-001**: Feature MUST stay inside README mission scope: intake, readiness,
   conversion, repair, metadata cleanup, batch preparation, or Kindle send/handoff
@@ -320,7 +320,7 @@ surface and the old terminal UI lives only under a clearly marked legacy area.
 - **OperationLogEntry**: Timestamped message from an app operation
 - **LegacyReferenceCode**: Archived terminal UI retained only for inspiration
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
@@ -366,6 +366,7 @@ surface and the old terminal UI lives only under a clearly marked legacy area.
 ## Scope Boundaries
 
 ### In Scope
+
 - Full product migration from terminal-first experience to desktop-first experience
 - Preservation of readiness, convert, repair, batch, metadata, send/handoff,
   settings, logs, and dependency guidance
@@ -373,6 +374,7 @@ surface and the old terminal UI lives only under a clearly marked legacy area.
 - Interaction model upgrades appropriate to desktop, especially drag-and-drop
 
 ### Out of Scope
+
 - Rebuilding a full Calibre GUI
 - Multi-platform desktop support
 - Cloud sync, accounts, collaboration, marketplace, or social features

@@ -199,9 +199,7 @@ function materializeEntry(entry: ZipFixtureEntry): MaterializedEntry {
 }
 
 export function buildZip(options: ZipFixtureOptions | readonly ZipFixtureEntry[]): Buffer {
-  const fixture: ZipFixtureOptions = Array.isArray(options)
-    ? { entries: options }
-    : (options as ZipFixtureOptions);
+  const fixture: ZipFixtureOptions = Array.isArray(options) ? { entries: options } : (options as ZipFixtureOptions);
   const prefix = bytes(fixture.prefix);
   const materialized = fixture.entries.map(materializeEntry);
   const localRecords: Buffer[] = [];
@@ -222,21 +220,11 @@ export function buildZip(options: ZipFixtureOptions | readonly ZipFixtureEntry[]
   end.writeUInt16LE(uint16(fixture.centralDirectoryDisk ?? 0, "centralDirectoryDisk"), 6);
   end.writeUInt16LE(uint16(fixture.entriesOnDisk ?? fixture.entries.length, "entriesOnDisk"), 8);
   end.writeUInt16LE(uint16(fixture.totalEntries ?? fixture.entries.length, "totalEntries"), 10);
-  end.writeUInt32LE(
-    uint32(fixture.centralDirectorySize ?? centralDirectory.length, "centralDirectorySize"),
-    12,
-  );
+  end.writeUInt32LE(uint32(fixture.centralDirectorySize ?? centralDirectory.length, "centralDirectorySize"), 12);
   end.writeUInt32LE(uint32(fixture.centralDirectoryOffset ?? offset, "centralDirectoryOffset"), 16);
   end.writeUInt16LE(uint16(comment.length, "archive comment length"), 20);
 
-  return Buffer.concat([
-    prefix,
-    ...localRecords,
-    centralDirectory,
-    end,
-    comment,
-    bytes(fixture.suffix),
-  ]);
+  return Buffer.concat([prefix, ...localRecords, centralDirectory, end, comment, bytes(fixture.suffix)]);
 }
 
 export function crc32(input: FixtureBytes): number {

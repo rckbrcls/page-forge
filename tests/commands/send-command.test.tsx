@@ -2,6 +2,7 @@ import { isValidElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SendCommandView, type SendCommandViewProps } from "../../src/commands/send-command";
+import { SetupRequiredDetail } from "../../src/commands/components/setup-required-detail";
 import type { DeliveryConfiguration } from "../../src/domain/models/delivery";
 import type { HealthReport, HealthState } from "../../src/domain/models/health-report";
 import type { BatchOperation, BatchOperationId } from "../../src/domain/models/operation";
@@ -74,10 +75,6 @@ function actionByTitle(tree: readonly FlatElement[], title: string) {
   return actions(tree).find((entry) => String(entry.props.title) === title);
 }
 
-function actionByTitleContains(tree: readonly FlatElement[], title: string) {
-  return actions(tree).find((entry) => String(entry.props.title).includes(title));
-}
-
 function reportFor(source: ReturnType<typeof selectedEpub>, health: HealthState): HealthReport {
   return {
     sourceId: source.id,
@@ -143,7 +140,7 @@ function view(operation: BatchOperation, override: Partial<SendCommandViewProps>
 describe("SendCommandView", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("supports optional settings by showing preference action and manual handoff with no SMTP block", () => {
+  it("renders a defensive setup fallback instead of treating missing SMTP as a book failure", () => {
     const operation: BatchOperation = {
       id: "send-operation-no-config" as BatchOperationId,
       intent: "send",
@@ -159,18 +156,36 @@ describe("SendCommandView", () => {
 
     const tree = view(operation);
     const titles = actions(tree).map(({ props }) => String(props.title));
+    const renderedContract = JSON.stringify(tree.map(({ props }) => props));
 
     expect(titles).toContain("Open Delivery Preferences");
-    expect(titles).toContain("Open Send to Kindle");
+    expect(titles).not.toContain("Open Send to Kindle");
+    expect(renderedContract).toContain("Delivery Setup Required");
+    expect(renderedContract).not.toContain("Book Could Not Be Prepared");
 
     const prefAction = actionByTitle(tree, "Open Delivery Preferences");
-    const handoffAction = actionByTitleContains(tree, "Send to Kindle");
 
     expect(prefAction).toBeDefined();
-    expect(handoffAction).toBeDefined();
 
     expect(typeof prefAction?.props.onAction).toBe("function");
-    expect(typeof handoffAction?.props.onAction).toBe("function");
+  });
+
+  it("renders the setup gate with preference and explicit re-check actions", () => {
+    const tree = flatten(
+      SetupRequiredDetail({
+        issue: "SMTP settings are incomplete.",
+        onOpenPreferences: handlers.onOpenDeliveryPreferences,
+        onCheckAgain: handlers.onRetryFailed,
+      }) as ReactNode,
+    );
+    const renderedContract = JSON.stringify(tree.map(({ props }) => props));
+    const titles = actions(tree).map(({ props }) => String(props.title));
+
+    expect(renderedContract).toContain("Set Up Kindle Delivery");
+    expect(renderedContract).toContain("SMTP settings are incomplete.");
+    expect(renderedContract).toContain("not been selected or checked");
+    expect(titles).toContain("Open Delivery Preferences");
+    expect(titles).toContain("Check Setup Again");
   });
 
   it("renders confirmation detail with configured settings and confirms the eligible set", () => {
@@ -189,14 +204,15 @@ describe("SendCommandView", () => {
 
     const tree = view(operation, { deliveryConfiguration: confirmedConfiguration });
     const renderedContract = JSON.stringify(tree.map(({ props }) => props));
-    const sendAction = actionByTitle(tree, "Send EPUBs");
+    const sendAction = actionByTitle(tree, "Send Books");
 
     expect(renderedContract).toContain("healthy.epub");
     expect(renderedContract).toContain("repairable.epub");
     expect(renderedContract).toContain("sender@example.com");
     expect(renderedContract).toContain("reader@kindle.com");
     expect(renderedContract).toContain("Implicit TLS");
-    expect(renderedContract).toContain("2");
+    expect(renderedContract).toContain('"title":"Ready Books","text":"1"');
+    expect(renderedContract).toContain('"title":"Needs Attention","text":"1"');
     expect(sendAction).toBeDefined();
 
     expect(typeof sendAction?.props.onAction).toBe("function");

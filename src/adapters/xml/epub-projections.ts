@@ -12,7 +12,6 @@ import type {
 import {
   parseSafeXml,
   type SafeXmlLimits,
-  type XmlAttribute,
   type XmlByteSource,
   type XmlCloseElement,
   type XmlOpenElement,
@@ -173,9 +172,7 @@ export async function parseContentProjection(
       if (isElement(element, XHTML_NS, "script")) scripted = true;
       if (
         element.uri === XHTML_NS &&
-        ["audio", "button", "canvas", "form", "input", "select", "textarea", "video"].includes(
-          element.local,
-        )
+        ["audio", "button", "canvas", "form", "input", "select", "textarea", "video"].includes(element.local)
       ) {
         interactive = true;
       }
@@ -236,13 +233,8 @@ function isElement(
   return element.uri === uri && element.local === local;
 }
 
-function attributeValue(
-  element: XmlOpenElement,
-  local: string,
-  uri = "",
-): string | undefined {
-  return element.attributes.find((attribute) => attribute.uri === uri && attribute.local === local)
-    ?.value;
+function attributeValue(element: XmlOpenElement, local: string, uri = ""): string | undefined {
+  return element.attributes.find((attribute) => attribute.uri === uri && attribute.local === local)?.value;
 }
 
 function tokens(value: string | undefined): readonly string[] {
@@ -269,17 +261,12 @@ function contentReference(
   }
   if (element.uri === SVG_NS && element.local === "image") {
     return (
-      referenceFromAttribute(element, "href", "image") ??
-      referenceFromAttribute(element, "href", "image", XLINK_NS)
+      referenceFromAttribute(element, "href", "image") ?? referenceFromAttribute(element, "href", "image", XLINK_NS)
     );
   }
   if (element.uri === XHTML_NS && element.local === "link") {
     const relation = tokens(attributeValue(element, "rel")).map((value) => value.toLowerCase());
-    return referenceFromAttribute(
-      element,
-      "href",
-      relation.includes("stylesheet") ? "stylesheet" : "other",
-    );
+    return referenceFromAttribute(element, "href", relation.includes("stylesheet") ? "stylesheet" : "other");
   }
   if (element.uri === XHTML_NS && ["audio", "embed", "iframe", "script", "video"].includes(element.local)) {
     return referenceFromAttribute(element, "src", "other");
@@ -302,7 +289,6 @@ function referenceFromAttribute(
 
 function isUsefulElement(element: XmlOpenElement): boolean {
   return (
-    (element.uri === XHTML_NS && ["img", "object", "svg", "video"].includes(element.local)) ||
-    element.uri === SVG_NS
+    (element.uri === XHTML_NS && ["img", "object", "svg", "video"].includes(element.local)) || element.uri === SVG_NS
   );
 }

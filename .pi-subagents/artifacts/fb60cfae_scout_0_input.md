@@ -5,6 +5,7 @@ Map the Kindle Readiness Doctor / readiness flow in the PageForge repo at /Users
 Goal: produce a concise handoff-ready map of the readiness flow only (not the whole app).
 
 Investigate and report:
+
 1. Entry points (CLI, TUI, public APIs)
 2. Core modules/files and their roles
 3. Call graph / orchestration order: audit → fix → status → send/handoff
@@ -15,32 +16,44 @@ Investigate and report:
 8. Important functions/classes/symbols with file paths
 
 Constraints:
+
 - Read-only recon only
 - Prefer rg/file reads; do not run app/build/tests
 - Focus strictly on readiness/doctor/kindle-ready path
 - Return ONLY a structured handoff for the parent agent (no fluff)
 
 Return format:
+
 ## Handoff: Readiness Flow
+
 ### Entry points
+
 ### Core files
+
 ### Flow (ordered)
+
 ### Contracts & vocabulary
+
 ### Boundaries
+
 ### Key symbols
+
 ### Open risks / unknowns (if any)
 
 ## Acceptance Contract
+
 Acceptance level: attested
 Completion is not accepted from prose alone. End with a structured acceptance report.
 
 Criteria:
+
 - criterion-1: Return concrete findings with file paths and severity when applicable
 
 Required evidence: review-findings, residual-risks
 
 Finish with a fenced JSON block tagged `acceptance-report` in this shape:
 Use empty arrays when no items apply; array fields contain strings unless object entries are shown.
+
 ```acceptance-report
 {
   "criteriaSatisfied": [

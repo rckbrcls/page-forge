@@ -99,4 +99,3 @@ alert.
 - Status never relies only on color or an icon.
 - Icon-only compact representations retain accessible labels and help.
 - Focus remains visible for Add Files, Settings, queue rows, and primary actions.
-

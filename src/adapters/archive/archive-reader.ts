@@ -1,6 +1,7 @@
 import crc32 from "buffer-crc32";
-import type { Readable } from "node:stream";
-import { fromFdPromise, type Entry, type ZipFile } from "yauzl";
+import type { FileHandle } from "node:fs/promises";
+import { Readable } from "node:stream";
+import { fromRandomAccessReaderPromise, RandomAccessReader, type Entry, type ZipFile } from "yauzl";
 
 import type { ArchiveLimits, ArchivePreflightResult, ArchiveSession, BoundedReadable } from "../../application/ports";
 import { inspectArchivePathSafety } from "./archive-path-safety";
@@ -26,6 +27,31 @@ function archiveFailure(
   safeMessage: string,
 ): ProcessingFailure {
   return { category: "archive", code, safeMessage, retryable: true, phase: "preflight" };
+}
+
+class FileHandleRandomAccessReader extends RandomAccessReader {
+  constructor(private readonly handle: FileHandle) {
+    super();
+  }
+
+  _readStreamForRange(start: number, end: number): Readable {
+    const handle = this.handle;
+    return Readable.from(
+      (async function* () {
+        for (let position = start; position < end;) {
+          const buffer = Buffer.allocUnsafe(Math.min(64 * 1024, end - position));
+          const { bytesRead } = await handle.read(buffer, 0, buffer.length, position);
+          if (bytesRead === 0) return;
+          position += bytesRead;
+          yield buffer.subarray(0, bytesRead);
+        }
+      })(),
+    );
+  }
+
+  close(callback: (error: Error | null) => void): void {
+    callback(null);
+  }
 }
 
 function zipFinding(code: "ZIP_INVALID" | "ZIP_EMPTY"): Finding {
@@ -229,12 +255,12 @@ class YauzlArchiveSession implements ArchiveSession {
     if (this.closed) return ok(undefined);
     this.closed = true;
     const streamClose = await this.activeReadable?.close();
+    const descriptorClose = await verifyAndCloseVerifiedSource(this.descriptor);
     try {
       this.zip.close();
     } catch {
-      // The descriptor close below remains authoritative for resource ownership.
+      // Closing yauzl releases its reader; the descriptor remains ours.
     }
-    const descriptorClose = await verifyAndCloseVerifiedSource(this.descriptor);
     if (streamClose && !streamClose.ok) return streamClose;
     return descriptorClose;
   }
@@ -260,7 +286,7 @@ export async function preflightArchive(
 
   let zip: ZipFile;
   try {
-    zip = await fromFdPromise(handle.fd, {
+    zip = await fromRandomAccessReaderPromise(new FileHandleRandomAccessReader(handle), descriptor.snapshot.sizeBytes, {
       autoClose: false,
       lazyEntries: true,
       decodeStrings: true,

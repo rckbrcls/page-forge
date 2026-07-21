@@ -3,10 +3,7 @@ import { List } from "@raycast/api";
 import type { Finding, FindingLocation } from "../../domain/models/finding";
 import type { HealthReport } from "../../domain/models/health-report";
 
-export type SafetyResultReport = Extract<
-  HealthReport,
-  { readonly health: "unsafe" | "needs_review" }
->;
+export type SafetyResultReport = Extract<HealthReport, { readonly health: "unsafe" | "needs_review" }>;
 
 export interface SafetyResultDetailProps {
   readonly report: SafetyResultReport;
@@ -54,8 +51,8 @@ export function safetyResultMarkdown(report: SafetyResultReport): string {
   const unsafe = report.health === "unsafe";
   const state = unsafe ? "Unsafe" : "Needs Review";
   const explanation = unsafe
-    ? "Page Forge stopped automatic processing because this EPUB contains a safety risk. The original file was not modified."
-    : "Page Forge found an issue that cannot be resolved safely without your review. The original file was not modified.";
+    ? "Book Sender stopped automatic processing because this EPUB contains a safety risk. The original file was not modified."
+    : "Book Sender found an issue that cannot be resolved safely without your review. The original file was not modified.";
   const nextStep = unsafe
     ? "Review the findings below and obtain a safe, trusted copy of the EPUB before trying again."
     : "Review the findings below and correct the source EPUB manually before inspecting it again.";
@@ -88,10 +85,7 @@ export function SafetyResultDetail({ report }: SafetyResultDetailProps) {
           <List.Item.Detail.Metadata.Separator />
           <List.Item.Detail.Metadata.TagList title="Finding Codes">
             {report.findings.map((finding) => (
-              <List.Item.Detail.Metadata.TagList.Item
-                key={finding.identity}
-                text={finding.code}
-              />
+              <List.Item.Detail.Metadata.TagList.Item key={finding.identity} text={finding.code} />
             ))}
           </List.Item.Detail.Metadata.TagList>
         </List.Item.Detail.Metadata>

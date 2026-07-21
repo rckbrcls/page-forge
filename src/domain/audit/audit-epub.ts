@@ -70,16 +70,19 @@ export interface AuditEpubPorts {
   readonly xml: {
     readonly parseContainer: (
       xml: AuditReadable,
+      path: InternalPath,
       limits: typeof XML_LIMITS,
       signal: AbortSignal,
     ) => Promise<Result<ParseOutcome<ContainerProjection>, ProcessingFailure>>;
     readonly parsePackage: (
       xml: AuditReadable,
+      path: InternalPath,
       limits: typeof XML_LIMITS,
       signal: AbortSignal,
     ) => Promise<Result<ParseOutcome<PackageProjection>, ProcessingFailure>>;
     readonly parseContentReferences: (
       xml: AuditReadable,
+      path: InternalPath,
       mediaType: string,
       limits: typeof XML_LIMITS,
       signal: AbortSignal,
@@ -183,7 +186,7 @@ async function auditSession(
   let containerXmlInvalid = false;
   if (containerEntry !== undefined) {
     const parsed = await parseEntry(session, containerEntry, signal, (readable) =>
-      ports.xml.parseContainer(readable, XML_LIMITS, signal),
+      ports.xml.parseContainer(readable, containerEntry.path as InternalPath, XML_LIMITS, signal),
     );
     if (!parsed.ok) return parsed;
     container = parsed.value.projection;
@@ -199,7 +202,7 @@ async function auditSession(
   let packageXmlInvalidPath: InternalPath | undefined;
   for (const entry of packageEntries) {
     const parsed = await parseEntry(session, entry, signal, (readable) =>
-      ports.xml.parsePackage(readable, XML_LIMITS, signal),
+      ports.xml.parsePackage(readable, entry.path as InternalPath, XML_LIMITS, signal),
     );
     if (!parsed.ok) return parsed;
     findings.push(...parsed.value.findings);
@@ -245,7 +248,7 @@ async function auditSession(
     const entry = projection.entryIndex.get(item.resolvedPath);
     if (entry === undefined) continue;
     const parsed = await parseEntry(session, entry, signal, (readable) =>
-      ports.xml.parseContentReferences(readable, item.mediaType!, XML_LIMITS, signal),
+      ports.xml.parseContentReferences(readable, entry.path as InternalPath, item.mediaType!, XML_LIMITS, signal),
     );
     if (!parsed.ok) return parsed;
     findings.push(...parsed.value.findings);

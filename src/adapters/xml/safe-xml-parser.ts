@@ -132,11 +132,7 @@ export async function parseSafeXml(
   return { encoding, byteLength: bytes.byteLength };
 }
 
-async function readBoundedBytes(
-  source: XmlByteSource,
-  maxBytes: number,
-  signal: AbortSignal,
-): Promise<Uint8Array> {
+async function readBoundedBytes(source: XmlByteSource, maxBytes: number, signal: AbortSignal): Promise<Uint8Array> {
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 0) {
     throw new RangeError("maxBytes must be a non-negative safe integer.");
   }
@@ -205,9 +201,7 @@ function validateDeclaredEncoding(text: string, actual: ParsedXml["encoding"]): 
   if (declared === undefined) return;
 
   const accepted =
-    actual === "utf-8"
-      ? declared === "utf-8" || declared === "utf8"
-      : declared === "utf-16" || declared === actual;
+    actual === "utf-8" ? declared === "utf-8" || declared === "utf8" : declared === "utf-16" || declared === actual;
   if (!accepted) {
     throw new SafeXmlError("encoding_invalid", "The XML declaration does not match its bytes.");
   }
@@ -240,11 +234,7 @@ function location(parser: SaxesParser<{ xmlns: true }>): XmlLocation {
   return { line: parser.line, column: parser.column };
 }
 
-function xmlError(
-  parser: SaxesParser<{ xmlns: true }>,
-  code: SafeXmlErrorCode,
-  message: string,
-): SafeXmlError {
+function xmlError(parser: SaxesParser<{ xmlns: true }>, code: SafeXmlErrorCode, message: string): SafeXmlError {
   return new SafeXmlError(code, message, location(parser));
 }
 

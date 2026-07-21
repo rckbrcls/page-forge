@@ -9,9 +9,7 @@ describe("valid EPUB and ZIP reports", () => {
 
     expect(report.epubVersion).toBe(fixture.epubVersion);
     expect(report.health).toBe(fixture.health);
-    expect(report.findings.map(({ code, severity }) => ({ code, severity }))).toEqual(
-      fixture.findings,
-    );
+    expect(report.findings.map(({ code, severity }) => ({ code, severity }))).toEqual(fixture.findings);
   });
 
   it("keeps fixed-layout information compatible with a Healthy report", async () => {

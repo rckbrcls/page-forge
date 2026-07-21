@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  rebuildContainerForSingleOpf,
-  writeCanonicalMimetype,
-} from "../../../src/domain/repair/xml-transformations";
+import { rebuildContainerForSingleOpf, writeCanonicalMimetype } from "../../../src/domain/repair/xml-transformations";
 import {
   canonicalContainer,
   canonicalMimetype,
@@ -24,24 +21,19 @@ describe("mimetype and container repairs", () => {
     expect(Buffer.from(first).toString("ascii")).toBe("application/epub+zip");
   });
 
-  it.each(containerRepairFixtures)(
-    "rebuilds a canonical container for the sole OPF in $name",
-    (fixture) => {
-      expect(fixture.epub.subarray(0, 4)).toEqual(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
-      const originalSource = fixture.source && Buffer.from(fixture.source);
+  it.each(containerRepairFixtures)("rebuilds a canonical container for the sole OPF in $name", (fixture) => {
+    expect(fixture.epub.subarray(0, 4)).toEqual(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+    const originalSource = fixture.source && Buffer.from(fixture.source);
 
-      const first = rebuildContainerForSingleOpf(fixture.packagePath);
-      const second = rebuildContainerForSingleOpf(fixture.packagePath);
+    const first = rebuildContainerForSingleOpf(fixture.packagePath);
+    const second = rebuildContainerForSingleOpf(fixture.packagePath);
 
-      expect(first).toEqual(fixture.expected);
-      expect(second).toEqual(first);
-      expect(first).toEqual(canonicalContainer);
-      expect(Buffer.from(first).toString("utf8")).toContain(
-        'full-path="EPUB/O&apos;Brien &amp; Notes.opf"',
-      );
-      expect(fixture.source).toEqual(originalSource);
-    },
-  );
+    expect(first).toEqual(fixture.expected);
+    expect(second).toEqual(first);
+    expect(first).toEqual(canonicalContainer);
+    expect(Buffer.from(first).toString("utf8")).toContain('full-path="EPUB/O&apos;Brien &amp; Notes.opf"');
+    expect(fixture.source).toEqual(originalSource);
+  });
 
   it("does not copy malformed container markup or editorial package data", () => {
     const malformed = containerRepairFixtures.find(({ source }) =>

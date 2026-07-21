@@ -21,31 +21,11 @@ export function PreparationActions({
 }: PreparationActionsProps) {
   return (
     <ActionPanel>
-      <Action
-        title="Reveal Output in Finder"
-        icon={Icon.Finder}
-        onAction={() => onRevealOutput(prepared)}
-      />
-      <Action
-        title="Copy Output Path"
-        icon={Icon.Clipboard}
-        onAction={() => onCopyOutputPath(prepared)}
-      />
-      <Action
-        title="Open Containing Folder"
-        icon={Icon.Folder}
-        onAction={() => onOpenContainingFolder(prepared)}
-      />
-      <Action
-        title="View Final Report"
-        icon={Icon.Eye}
-        onAction={() => onViewFinalReport(prepared)}
-      />
-      <Action
-        title="Send EPUB to Kindle"
-        icon={Icon.Envelope}
-        onAction={() => onSendToKindle(prepared)}
-      />
+      <Action title="Reveal Output in Finder" icon={Icon.Finder} onAction={() => onRevealOutput(prepared)} />
+      <Action title="Copy Output Path" icon={Icon.Clipboard} onAction={() => onCopyOutputPath(prepared)} />
+      <Action title="Open Containing Folder" icon={Icon.Folder} onAction={() => onOpenContainingFolder(prepared)} />
+      <Action title="View Final Report" icon={Icon.Eye} onAction={() => onViewFinalReport(prepared)} />
+      <Action title="Send EPUB to Kindle" icon={Icon.Envelope} onAction={() => onSendToKindle(prepared)} />
     </ActionPanel>
   );
 }

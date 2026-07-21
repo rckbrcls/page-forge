@@ -3,12 +3,7 @@ import { FINDING_CODES, type FindingCode } from "./finding-codes";
 import type { Finding } from "../models/finding";
 import type { RuleResult } from "../models/health-report";
 
-export type AuditRuleStage =
-  | "preflight"
-  | "mimetype"
-  | "discovery"
-  | "package"
-  | "content";
+export type AuditRuleStage = "preflight" | "mimetype" | "discovery" | "package" | "content";
 
 export interface AuditRuleDefinition {
   readonly ruleId: `finding:${FindingCode}`;
@@ -37,10 +32,7 @@ export interface RuleAccountingOptions {
   readonly existing?: readonly RuleResult[];
 }
 
-export function accountAuditRules(
-  findings: readonly Finding[],
-  options: RuleAccountingOptions,
-): RuleResult[] {
+export function accountAuditRules(findings: readonly Finding[], options: RuleAccountingOptions): RuleResult[] {
   const findingsByCode = new Map<FindingCode, Finding[]>();
   for (const finding of findings) {
     findingsByCode.set(finding.code, [...(findingsByCode.get(finding.code) ?? []), finding]);

@@ -4,6 +4,7 @@ import { auditEpub } from "../../../src/domain/audit/audit-epub";
 import {
   archivePathSafetyFindingCodes,
   archivePathSafetyFixtures,
+  explicitDirectoryAncestryFixture,
 } from "../../fixtures/malicious/path-fixtures";
 
 describe("archive path safety", () => {
@@ -26,5 +27,11 @@ describe("archive path safety", () => {
     expect(new Set(archivePathSafetyFixtures.map(({ findingCode }) => findingCode))).toEqual(
       new Set(archivePathSafetyFindingCodes),
     );
+  });
+
+  it("allows explicit directory entries to contain descendant files", async () => {
+    const report = await auditEpub({ bytes: explicitDirectoryAncestryFixture, displayName: "explicit-directory.epub" });
+
+    expect(report.findings.some(({ code }) => code === "ARCHIVE_FILE_DIRECTORY_CONFLICT")).toBe(false);
   });
 });

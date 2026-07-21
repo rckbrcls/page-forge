@@ -12,17 +12,10 @@ interface ProcessingFailureBase<C extends string, Code extends string> {
   readonly facts?: SafeFailureFacts;
 }
 
-export type InputFailureCode =
-  | "INPUT_NOT_EPUB"
-  | "INPUT_NOT_REGULAR_FILE"
-  | "INPUT_UNREADABLE"
-  | "INPUT_CHANGED";
+export type InputFailureCode = "INPUT_NOT_EPUB" | "INPUT_NOT_REGULAR_FILE" | "INPUT_UNREADABLE" | "INPUT_CHANGED";
 
 export type ArchiveFailureCode =
-  | "ARCHIVE_OPEN_FAILED"
-  | "ARCHIVE_READ_FAILED"
-  | "ARCHIVE_STREAM_FAILED"
-  | "ARCHIVE_CLOSE_FAILED";
+  "ARCHIVE_OPEN_FAILED" | "ARCHIVE_READ_FAILED" | "ARCHIVE_STREAM_FAILED" | "ARCHIVE_CLOSE_FAILED";
 
 export type XmlFailureCode = "XML_STREAM_FAILED" | "XML_PARSER_FAILED";
 
@@ -36,9 +29,7 @@ export type RepairFailureCode =
   | "REVALIDATION_NEW_ERROR"
   | "REVALIDATION_NEW_CRITICAL";
 
-export type DeliveryConfigurationFailureCode =
-  | "DELIVERY_CONFIG_MISSING"
-  | "DELIVERY_CONFIG_INVALID";
+export type DeliveryConfigurationFailureCode = "DELIVERY_CONFIG_MISSING" | "DELIVERY_CONFIG_INVALID";
 
 export type DeliveryTransportFailureCode =
   | "DELIVERY_DNS_FAILED"

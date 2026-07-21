@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { auditPackageRules } from "../../../src/domain/audit/rules/package";
-import {
-  readingOrderRuleFixtures,
-  type ReadingOrderFindingCode,
-} from "../../fixtures/package/reading-order-fixtures";
+import { readingOrderRuleFixtures, type ReadingOrderFindingCode } from "../../fixtures/package/reading-order-fixtures";
 
 const expectedContracts = {
   SPINE_MISSING: ["error", "needs_review"],
@@ -13,8 +10,8 @@ const expectedContracts = {
   SPINE_READING_ORDER_INVALID: ["error", "needs_review"],
   NAVIGATION_MISSING: ["warning", "needs_review"],
   NAVIGATION_AMBIGUOUS: ["warning", "needs_review"],
-  COVER_MISSING: ["warning", "needs_review"],
-  COVER_AMBIGUOUS: ["warning", "needs_review"],
+  COVER_MISSING: ["warning", "healthy"],
+  COVER_AMBIGUOUS: ["warning", "healthy"],
 } as const satisfies Record<ReadingOrderFindingCode, readonly [string, string]>;
 
 describe("spine, reading order, navigation, and cover rules", () => {
@@ -42,7 +39,10 @@ describe("spine, reading order, navigation, and cover rules", () => {
       const finding = auditPackageRules(fixture.packageDocument, fixture.entryIndex).find(
         ({ code }) => code === fixture.expectedCode,
       );
-      expect(finding).toMatchObject({ repairability: "none", stateImpact: "needs_review" });
+      expect(finding).toMatchObject({
+        repairability: "none",
+        stateImpact: fixture.expectedCode === "COVER_AMBIGUOUS" ? "healthy" : "needs_review",
+      });
       expect(finding?.recommendedRepair).toBeUndefined();
     }
   });

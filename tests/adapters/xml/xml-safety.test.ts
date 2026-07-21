@@ -20,10 +20,7 @@ vi.mock("node:fs/promises", () => ({ readFile: vi.fn() }));
 
 const activeSignal = () => new AbortController().signal;
 
-async function expectXmlError(
-  operation: Promise<unknown>,
-  code: SafeXmlError["code"],
-): Promise<void> {
+async function expectXmlError(operation: Promise<unknown>, code: SafeXmlError["code"]): Promise<void> {
   await expect(operation).rejects.toMatchObject({ name: "SafeXmlError", code });
 }
 
@@ -32,64 +29,49 @@ describe("safe XML parsing", () => {
     await expectXmlError(parseSafeXml(bytes, XML_LIMITS, activeSignal()), code);
   });
 
-  it.each(xmlSizeBoundaries)(
-    "handles XML size $name the 10 MB limit",
-    async ({ byteLength, accepted }) => {
-      const operation = parseSafeXml(sizedXml(byteLength), XML_LIMITS, activeSignal());
+  it.each(xmlSizeBoundaries)("handles XML size $name the 10 MB limit", async ({ byteLength, accepted }) => {
+    const operation = parseSafeXml(sizedXml(byteLength), XML_LIMITS, activeSignal());
 
-      if (accepted) {
-        await expect(operation).resolves.toMatchObject({ byteLength });
-      } else {
-        await expectXmlError(operation, "too_large");
-      }
-    },
-  );
+    if (accepted) {
+      await expect(operation).resolves.toMatchObject({ byteLength });
+    } else {
+      await expectXmlError(operation, "too_large");
+    }
+  });
 
-  it.each(xmlDepthBoundaries)(
-    "handles XML depth $name depth 64",
-    async ({ depth, accepted }) => {
-      const operation = parseSafeXml(nestedXml(depth), XML_LIMITS, activeSignal());
+  it.each(xmlDepthBoundaries)("handles XML depth $name depth 64", async ({ depth, accepted }) => {
+    const operation = parseSafeXml(nestedXml(depth), XML_LIMITS, activeSignal());
 
-      if (accepted) {
-        await expect(operation).resolves.toMatchObject({ encoding: "utf-8" });
-      } else {
-        await expectXmlError(operation, "too_deep");
-      }
-    },
-  );
+    if (accepted) {
+      await expect(operation).resolves.toMatchObject({ encoding: "utf-8" });
+    } else {
+      await expectXmlError(operation, "too_deep");
+    }
+  });
 
   it("bounds recursive entity input without expanding it", async () => {
     const onText = vi.fn();
 
-    await expectXmlError(
-      parseSafeXml(recursiveEntityXml, XML_LIMITS, activeSignal(), { onText }),
-      "doctype_forbidden",
-    );
+    await expectXmlError(parseSafeXml(recursiveEntityXml, XML_LIMITS, activeSignal(), { onText }), "doctype_forbidden");
     expect(onText).not.toHaveBeenCalled();
   });
 
   it("cancels between input chunks", async () => {
     const controller = new AbortController();
 
-    await expectXmlError(
-      parseSafeXml(cancellableXml(controller), XML_LIMITS, controller.signal),
-      "cancelled",
-    );
+    await expectXmlError(parseSafeXml(cancellableXml(controller), XML_LIMITS, controller.signal), "cancelled");
   });
 
-  it.each(externalResolutionXml)(
-    "never resolves local or remote resources",
-    async (bytes) => {
-      const fetch = vi.fn();
-      vi.stubGlobal("fetch", fetch);
-      const readFile = vi.mocked(filesystem.readFile);
+  it.each(externalResolutionXml)("never resolves local or remote resources", async (bytes) => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    const readFile = vi.mocked(filesystem.readFile);
 
-      await expectXmlError(parseSafeXml(bytes, XML_LIMITS, activeSignal()), "doctype_forbidden");
+    await expectXmlError(parseSafeXml(bytes, XML_LIMITS, activeSignal()), "doctype_forbidden");
 
-      expect(fetch).not.toHaveBeenCalled();
-      expect(readFile).not.toHaveBeenCalled();
-    },
-  );
+    expect(fetch).not.toHaveBeenCalled();
+    expect(readFile).not.toHaveBeenCalled();
+  });
 });
 
 afterEach(() => {

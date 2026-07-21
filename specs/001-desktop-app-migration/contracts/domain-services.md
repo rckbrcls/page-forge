@@ -21,6 +21,7 @@ auditFolder(folder: Path, prepare: Bool, outputDir: Path?, overwrite: Bool) -> R
 ```
 
 Behavioral rules:
+
 - Audit never writes output.
 - Prepare writes default `*-kindle-ready.epub` when output omitted.
 - MOBI may be converted first; report may set `convertedFrom`.
@@ -36,6 +37,7 @@ convertFolder(folder: Path, target: ConversionTarget, outputDir: Path?, overwrit
 ```
 
 Behavioral rules:
+
 - Supported transforms only: MOBI/PDF → EPUB, EPUB → MOBI.
 - PDF conversion does not claim OCR.
 - Requires Calibre convert tool.
@@ -48,6 +50,7 @@ repairFolder(folder: Path, mode: RepairMode, outputDir: Path?, overwrite: Bool) 
 ```
 
 Behavioral rules:
+
 - Default mode is `safe`.
 - Default output `*-repaired.epub`.
 - Aggressive mode is explicit and may use Calibre roundtrip.
@@ -61,6 +64,7 @@ update(source: Path, title: String?, author: String?) -> BookMetadata
 ```
 
 Behavioral rules:
+
 - Requires Calibre metadata tool.
 - Update requires at least one provided field.
 
@@ -73,6 +77,7 @@ isProfileSendReady(profileName: String?) -> Bool
 ```
 
 Behavioral rules:
+
 - SMTP send only through configured local profile + Keychain secret.
 - Handoff never automates Amazon login/upload.
 - Incomplete profile blocks send with actionable error.
@@ -87,6 +92,7 @@ requirePolish() -> Path
 ```
 
 Behavioral rules:
+
 - Discovery order should preserve legacy semantics:
   1. explicit configured/env path
   2. PATH
@@ -122,28 +128,28 @@ recent(limit: Int) -> [OperationLogEntry]
 
 Domain errors SHOULD map to stable categories:
 
-| Category | Meaning |
-|----------|---------|
-| `dependency` | Calibre/tool missing or invalid |
-| `validation` | bad input type/path/options |
-| `filesystem` | unreadable source / unwritable output / exists without overwrite |
-| `conversion` | Calibre process failed |
-| `repair` | structural repair failed |
-| `configuration` | profile/config invalid |
-| `delivery` | SMTP send failed |
-| `cancelled` | user/system cancelled job |
+| Category        | Meaning                                                          |
+| --------------- | ---------------------------------------------------------------- |
+| `dependency`    | Calibre/tool missing or invalid                                  |
+| `validation`    | bad input type/path/options                                      |
+| `filesystem`    | unreadable source / unwritable output / exists without overwrite |
+| `conversion`    | Calibre process failed                                           |
+| `repair`        | structural repair failed                                         |
+| `configuration` | profile/config invalid                                           |
+| `delivery`      | SMTP send failed                                                 |
+| `cancelled`     | user/system cancelled job                                        |
 
 Each error exposed to UI MUST include a human-readable message.
 
 ## Parity mapping
 
-| Legacy module | Service |
-|---------------|---------|
-| `readiness.py` | `ReadinessService` |
-| `conversion.py` | `ConversionService` (+ parts of repair orchestration) |
-| `epub_repair.py` | `RepairService` safe path |
-| `metadata.py` | `MetadataService` |
-| `kindle.py` | `DeliveryService` |
-| `config.py` | `ConfigService` + `SecretService` |
-| `calibre.py` | `DependencyService` + Calibre process runner |
-| `updater.py` / `installer.py` | Settings guidance helpers (not core domain path) |
+| Legacy module                 | Service                                               |
+| ----------------------------- | ----------------------------------------------------- |
+| `readiness.py`                | `ReadinessService`                                    |
+| `conversion.py`               | `ConversionService` (+ parts of repair orchestration) |
+| `epub_repair.py`              | `RepairService` safe path                             |
+| `metadata.py`                 | `MetadataService`                                     |
+| `kindle.py`                   | `DeliveryService`                                     |
+| `config.py`                   | `ConfigService` + `SecretService`                     |
+| `calibre.py`                  | `DependencyService` + Calibre process runner          |
+| `updater.py` / `installer.py` | Settings guidance helpers (not core domain path)      |

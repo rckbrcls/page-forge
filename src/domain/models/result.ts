@@ -1,6 +1,4 @@
-export type Result<T, F> =
-  | { readonly ok: true; readonly value: T }
-  | { readonly ok: false; readonly failure: F };
+export type Result<T, F> = { readonly ok: true; readonly value: T } | { readonly ok: false; readonly failure: F };
 
 export const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
 
@@ -10,9 +8,7 @@ export function isOk<T, F>(result: Result<T, F>): result is { readonly ok: true;
   return result.ok;
 }
 
-export function isErr<T, F>(
-  result: Result<T, F>,
-): result is { readonly ok: false; readonly failure: F } {
+export function isErr<T, F>(result: Result<T, F>): result is { readonly ok: false; readonly failure: F } {
   return !result.ok;
 }
 
@@ -34,10 +30,7 @@ export function mapFailure<T, F, G>(result: Result<T, F>, map: (failure: F) => G
   return result.ok ? result : err(map(result.failure));
 }
 
-export function flatMapResult<T, U, F, G>(
-  result: Result<T, F>,
-  map: (value: T) => Result<U, G>,
-): Result<U, F | G> {
+export function flatMapResult<T, U, F, G>(result: Result<T, F>, map: (value: T) => Result<U, G>): Result<U, F | G> {
   return result.ok ? map(result.value) : result;
 }
 

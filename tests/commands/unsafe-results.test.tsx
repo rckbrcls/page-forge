@@ -131,9 +131,7 @@ describe("unsafe and ambiguous inspection results", () => {
 
     const tree = flatten(InspectCommandView({ operation, ...handlers }) as ReactNode);
     const renderedContract = JSON.stringify(tree.map(({ props }) => props));
-    const actionTitles = tree
-      .filter(({ type }) => elementTypeName(type) === "Action")
-      .map(({ props }) => props.title);
+    const actionTitles = tree.filter(({ type }) => elementTypeName(type) === "Action").map(({ props }) => props.title);
 
     expect(renderedContract).toContain(fixture.stateLabel);
     expect(renderedContract).toContain(fixture.finding.code);

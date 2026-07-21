@@ -64,9 +64,7 @@ export async function createTestFilesystem(prefix = "page-forge-test-"): Promise
   };
 }
 
-export async function withTestFilesystem<T>(
-  run: (filesystem: TestFilesystem) => Promise<T>,
-): Promise<T> {
+export async function withTestFilesystem<T>(run: (filesystem: TestFilesystem) => Promise<T>): Promise<T> {
   const filesystem = await createTestFilesystem();
   try {
     return await run(filesystem);

@@ -3,11 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createFinding } from "../../../src/domain/audit/finding-catalog";
 import { createRepairPlan } from "../../../src/domain/repair/create-repair-plan";
 import type { InternalPath } from "../../../src/domain/models/archive";
-import type {
-  SelectedEpub,
-  SelectedEpubId,
-  Sha256Digest,
-} from "../../../src/domain/models/epub-document";
+import type { SelectedEpub, SelectedEpubId, Sha256Digest } from "../../../src/domain/models/epub-document";
 import type { HealthReport } from "../../../src/domain/models/health-report";
 import { ambiguousRepairRefusalFixtures } from "../../fixtures/ambiguous/fixture-definitions";
 
@@ -43,12 +39,7 @@ describe("ambiguous and editorial repair refusal", () => {
       ruleResults: [],
     };
 
-    const result = createRepairPlan(
-      source,
-      report,
-      fixture.candidates,
-      "/Books/Ambiguous-kindle-ready.epub",
-    );
+    const result = createRepairPlan(source, report, fixture.candidates, "/Books/Ambiguous-kindle-ready.epub");
 
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error(result.failure.safeMessage);
@@ -59,18 +50,10 @@ describe("ambiguous and editorial repair refusal", () => {
         reason: expect.stringMatching(fixture.expectedReason),
       },
     ]);
-    expect(
-      result.value.operations.some(({ findingIds }) =>
-        findingIds.includes(fixture.finding.identity),
-      ),
-    ).toBe(false);
-    expect(result.value.operations.map(({ kind }) => kind)).not.toContain(
-      fixture.proposedAction,
-    );
+    expect(result.value.operations.some(({ findingIds }) => findingIds.includes(fixture.finding.identity))).toBe(false);
+    expect(result.value.operations.map(({ kind }) => kind)).not.toContain(fixture.proposedAction);
 
-    const changedPaths = new Set(
-      result.value.operations.flatMap((operation) => operation.changedPaths),
-    );
+    const changedPaths = new Set(result.value.operations.flatMap((operation) => operation.changedPaths));
     for (const protectedPath of fixture.protectedPaths) {
       expect(changedPaths.has(protectedPath)).toBe(false);
     }

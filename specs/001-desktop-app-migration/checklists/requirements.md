@@ -32,6 +32,7 @@
 ## Validation Notes
 
 ### Iteration 1
+
 - Reviewed `spec.md` against constitution v1.1.0 and README baseline.
 - No `[NEEDS CLARIFICATION]` markers present.
 - Implementation approach details are limited to product-level constraints:

@@ -1,10 +1,5 @@
 import type { InternalPath } from "./archive";
-import type {
-  SelectedEpub,
-  Sha256Digest,
-  SourceFingerprint,
-  SourceSnapshot,
-} from "./epub-document";
+import type { SelectedEpub, Sha256Digest, SourceFingerprint, SourceSnapshot } from "./epub-document";
 import type { Finding, FindingIdentity } from "./finding";
 import type { HealthReport, HealthState } from "./health-report";
 import type { ProcessingFailure } from "./processing-failure";

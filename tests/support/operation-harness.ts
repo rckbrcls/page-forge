@@ -64,7 +64,10 @@ export function createAbortHarness(): AbortHarness {
   };
 }
 
-export function abortAfterCheckpoints(count: number, reason?: unknown): {
+export function abortAfterCheckpoints(
+  count: number,
+  reason?: unknown,
+): {
   signal: AbortSignal;
   checkpoint(): void;
 } {

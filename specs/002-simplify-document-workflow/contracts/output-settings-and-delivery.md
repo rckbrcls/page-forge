@@ -117,4 +117,3 @@ uses the profile explicitly selected at send time.
 - A profile error includes an Open Settings action accessible by keyboard.
 - Routine per-file failures appear inline; blocking alerts are reserved for
   destructive replace confirmation or an action that cannot otherwise continue.
-

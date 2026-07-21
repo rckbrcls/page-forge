@@ -2,12 +2,7 @@ import type { InternalPath } from "../models/archive";
 import { internalPathCollisionKey, parseInternalPath } from "./internal-path";
 
 export type ReferenceResolutionKind =
-  | "exact"
-  | "unique_equivalent"
-  | "missing"
-  | "ambiguous_equivalent"
-  | "external"
-  | "invalid";
+  "exact" | "unique_equivalent" | "missing" | "ambiguous_equivalent" | "external" | "invalid";
 
 export interface ReferenceResolution {
   readonly kind: ReferenceResolutionKind;
@@ -47,6 +42,7 @@ export function resolveReferencePath(
   const decodedPath = decodeComponent(rawPath);
   if (
     decodedPath === null ||
+    decodedPath === undefined ||
     decodedPath.startsWith("/") ||
     decodedPath.includes("\\") ||
     hasControlCharacter(decodedPath)
@@ -93,8 +89,24 @@ export function resolveReference(
   availablePaths: Iterable<InternalPath>,
 ): ReferenceResolution {
   const pathResolution = resolveReferencePath(ownerPath, rawReference);
-  if (pathResolution.kind !== "unresolved" || pathResolution.requestedPath === undefined) {
-    return { ...pathResolution, equivalentTargets: [] };
+  if (pathResolution.kind === "external") {
+    return {
+      kind: "external",
+      rawReference: pathResolution.rawReference,
+      ...(pathResolution.fragment === undefined ? {} : { fragment: pathResolution.fragment }),
+      equivalentTargets: [],
+    };
+  }
+  if (pathResolution.kind === "invalid") {
+    return {
+      kind: "invalid",
+      rawReference: pathResolution.rawReference,
+      ...(pathResolution.fragment === undefined ? {} : { fragment: pathResolution.fragment }),
+      equivalentTargets: [],
+    };
+  }
+  if (pathResolution.requestedPath === undefined) {
+    return { kind: "invalid", rawReference, equivalentTargets: [] };
   }
 
   const paths = [...availablePaths];

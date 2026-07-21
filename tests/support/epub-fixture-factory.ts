@@ -44,19 +44,19 @@ export function createContainerXml(packagePath = "EPUB/package.opf"): string {
 </container>`;
 }
 
-export function createXhtmlDocument(options: {
-  title?: string;
-  stylesheetHref?: string;
-  imageSrc?: string;
-  body?: string;
-} = {}): string {
+export function createXhtmlDocument(
+  options: {
+    title?: string;
+    stylesheetHref?: string;
+    imageSrc?: string;
+    body?: string;
+  } = {},
+): string {
   const title = xmlText(options.title ?? "Chapter One");
   const stylesheet = options.stylesheetHref
     ? `\n  <link rel="stylesheet" type="text/css" href="${xmlText(options.stylesheetHref)}"/>`
     : "";
-  const image = options.imageSrc
-    ? `\n    <img src="${xmlText(options.imageSrc)}" alt="Cover"/>`
-    : "";
+  const image = options.imageSrc ? `\n    <img src="${xmlText(options.imageSrc)}" alt="Cover"/>` : "";
   return `<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -89,9 +89,7 @@ export function createNcxDocument(identifier = "urn:uuid:page-forge-fixture"): s
 }
 
 export function createStylesheet(options: { fontHref?: string } = {}): string {
-  const fontFace = options.fontHref
-    ? `@font-face { font-family: Fixture; src: url("${options.fontHref}"); }\n`
-    : "";
+  const fontFace = options.fontHref ? `@font-face { font-family: Fixture; src: url("${options.fontHref}"); }\n` : "";
   return `${fontFace}body { font-family: Fixture, serif; line-height: 1.4; }\nimg { max-width: 100%; }\n`;
 }
 
@@ -131,9 +129,7 @@ export function createPackageDocument(options: PackageDocumentOptions): string {
   const imageItem = options.includeImage
     ? `\n    <item id="cover-image" href="images/cover.png" media-type="image/png"${options.version === 3 ? ' properties="cover-image"' : ""}/>`
     : "";
-  const fontItem = options.includeFont
-    ? '\n    <item id="font" href="fonts/book.woff" media-type="font/woff"/>'
-    : "";
+  const fontItem = options.includeFont ? '\n    <item id="font" href="fonts/book.woff" media-type="font/woff"/>' : "";
   const versionSpecificMetadata =
     options.version === 3
       ? '\n    <meta property="dcterms:modified">2026-01-01T00:00:00Z</meta>'
@@ -165,9 +161,7 @@ export function createMinimalEpubEntries(options: MinimalEpubOptions = {}): ZipF
   const includeStylesheet = options.includeStylesheet ?? true;
   const includeImage = options.includeImage ?? true;
   const includeFont = options.includeFont ?? true;
-  const packageDirectory = packagePath.includes("/")
-    ? packagePath.slice(0, packagePath.lastIndexOf("/"))
-    : "";
+  const packageDirectory = packagePath.includes("/") ? packagePath.slice(0, packagePath.lastIndexOf("/")) : "";
   const resourcePath = (relative: string): string =>
     packageDirectory.length > 0 ? `${packageDirectory}/${relative}` : relative;
 

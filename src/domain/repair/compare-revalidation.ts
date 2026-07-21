@@ -8,10 +8,7 @@ import type {
   TemporaryCleanupStatus,
 } from "../models/repair";
 
-type UnsuccessfulPreparationResult = Extract<
-  PreparationResult,
-  { readonly status: "unsuccessful" }
->;
+type UnsuccessfulPreparationResult = Extract<PreparationResult, { readonly status: "unsuccessful" }>;
 
 interface UnsuccessfulPreparationEvidence<F extends ProcessingFailure = ProcessingFailure> {
   readonly failure: F;
@@ -43,15 +40,9 @@ export function compareReports(
   const remaining = comparedBefore.findings
     .filter(({ revalidation }) => revalidation === "remaining")
     .map(({ identity }) => identity);
-  const introduced = comparedAfter.findings.filter(
-    ({ revalidation }) => revalidation === "introduced",
-  );
-  const hasIntroducedError = introduced.some(
-    ({ severity }) => severity === "error" || severity === "critical",
-  );
-  const everyRepairSucceeded = repairs.every(
-    ({ outcome }) => outcome === "applied" || outcome === "already_satisfied",
-  );
+  const introduced = comparedAfter.findings.filter(({ revalidation }) => revalidation === "introduced");
+  const hasIntroducedError = introduced.some(({ severity }) => severity === "error" || severity === "critical");
+  const everyRepairSucceeded = repairs.every(({ outcome }) => outcome === "applied" || outcome === "already_satisfied");
 
   return {
     before: comparedBefore,
@@ -104,8 +95,7 @@ function enrichReport(
       };
 
       if (appliedRepair === undefined) {
-        const { appliedRepair: _staleReference, ...withoutAppliedRepair } = enriched;
-        return withoutAppliedRepair;
+        return enriched;
       }
 
       return { ...enriched, appliedRepair };

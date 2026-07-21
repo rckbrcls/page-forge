@@ -6,7 +6,7 @@
 
 ## Summary
 
-Replace the SwiftUI, Calibre, Python, and desktop-distribution product with one public macOS Raycast extension exposing exactly three view commands for inspection, safe preparation, and explicit Kindle delivery. Implement a typed, UI-independent EPUB engine that preflights hostile ZIP metadata, parses bounded XML without external resolution, applies only planned deterministic repairs through streaming archive reconstruction, atomically promotes a revalidated output, and submits one eligible EPUB per SMTP message only after explicit review.
+Replace the SwiftUI, Calibre, Python, and desktop-distribution product with Book Sender, one public macOS Raycast extension exposing exactly one view command for Kindle delivery. The command accepts EPUB and PDF, runs EPUB inspection and deterministic repair internally, revalidates repaired copies, and submits one eligible book per SMTP message only after explicit delivery confirmation.
 
 ## Technical Context
 
@@ -30,23 +30,23 @@ Replace the SwiftUI, Calibre, Python, and desktop-distribution product with one 
 
 ## Constitution Check
 
-*GATE: Passed before Phase 0 research and passed again after Phase 1 design.*
+_GATE: Passed before Phase 0 research and passed again after Phase 1 design._
 
-| Principle | Pre-Research Evaluation | Post-Design Evaluation |
-|-----------|-------------------------|------------------------|
-| Minimum, EPUB-only scope | PASS: exactly inspect, prepare, and send EPUB workflows; no conversion or reader/library scope | PASS: contracts expose only the three specified EPUB commands |
-| Self-contained Raycast extension | PASS: one TypeScript/React package with pure JS/TS and Node APIs only | PASS: selected dependencies contain no native runtime binaries or helper services |
-| Original immutability | PASS: source is read-only and outputs are separate | PASS: same-directory temporary output is promoted to a collision-safe final path only after complete write and revalidation |
-| Safe deterministic repairs | PASS: repair allowlist comes directly from the constitution and spec | PASS: the plan contract rejects ambiguous candidates and records exact changed entries |
-| Untrusted archive safety | PASS: explicit ZIP, XML, size, ratio, count, timeout, and active-content limits exist | PASS: central-directory preflight precedes content reads; streamed counters verify metadata; XML rejects DTDs and external resolution |
-| Local processing and explicit delivery | PASS: only user-confirmed SMTP transmits a book | PASS: inspect/prepare have no network adapter; send requires reviewed eligibility and confirmation; web fallback is a handoff only |
-| Evidence-based reports | PASS: health derives from typed findings | PASS: stable finding catalog and report contract define severity, location, repairability, evidence, and revalidation status |
-| Validate before and after repair | PASS: full audit surrounds repair | PASS: comparison blocks Kindle-ready success for any newly introduced Error or Critical finding |
-| Domain-first typed architecture | PASS: required dependency direction is adopted | PASS: commands depend on application ports; domain has no Raycast, ZIP-library, filesystem, or SMTP imports |
-| Fixture-backed assurance | PASS: every rule and repair requires a fixture | PASS: fixture matrix and deterministic adversarial ZIP builder are part of the test design |
-| Native Raycast interaction | PASS: exactly three keyboard-first view commands | PASS: List, Detail, Form, ActionPanel, native file/system actions, progress, and cancellation compose the UI without desktop-app imitation |
-| Privacy and credentials | PASS: no telemetry or remote report storage; password uses secure preference type | PASS: errors are allowlisted and sanitized; raw SMTP errors, paths, filenames, and content are never logged |
-| Simple distribution | PASS: one package, no monorepo | PASS: dependencies are individually justified; desktop release, appcast, scripts, and legacy products are removed |
+| Principle                              | Pre-Research Evaluation                                                                        | Post-Design Evaluation                                                                                                                |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Minimum, EPUB-only scope               | PASS: exactly inspect, prepare, and send EPUB workflows; no conversion or reader/library scope | PASS: contracts expose only the three specified EPUB commands                                                                         |
+| Self-contained Raycast extension       | PASS: one TypeScript/React package with pure JS/TS and Node APIs only                          | PASS: selected dependencies contain no native runtime binaries or helper services                                                     |
+| Original immutability                  | PASS: source is read-only and outputs are separate                                             | PASS: same-directory temporary output is promoted to a collision-safe final path only after complete write and revalidation           |
+| Safe deterministic repairs             | PASS: repair allowlist comes directly from the constitution and spec                           | PASS: the plan contract rejects ambiguous candidates and records exact changed entries                                                |
+| Untrusted archive safety               | PASS: explicit ZIP, XML, size, ratio, count, timeout, and active-content limits exist          | PASS: central-directory preflight precedes content reads; streamed counters verify metadata; XML rejects DTDs and external resolution |
+| Local processing and explicit delivery | PASS: only user-confirmed SMTP transmits a book                                                | PASS: inspect/prepare have no network adapter; send requires reviewed eligibility and confirmation; web fallback is a handoff only    |
+| Evidence-based reports                 | PASS: health derives from typed findings                                                       | PASS: stable finding catalog and report contract define severity, location, repairability, evidence, and revalidation status          |
+| Validate before and after repair       | PASS: full audit surrounds repair                                                              | PASS: comparison blocks Kindle-ready success for any newly introduced Error or Critical finding                                       |
+| Domain-first typed architecture        | PASS: required dependency direction is adopted                                                 | PASS: commands depend on application ports; domain has no Raycast, ZIP-library, filesystem, or SMTP imports                           |
+| Fixture-backed assurance               | PASS: every rule and repair requires a fixture                                                 | PASS: fixture matrix and deterministic adversarial ZIP builder are part of the test design                                            |
+| Native Raycast interaction             | PASS: exactly one keyboard-first view command                                                  | PASS: Detail, Form, ActionPanel, native file/system actions, progress, and cancellation compose the UI without desktop-app imitation  |
+| Privacy and credentials                | PASS: no telemetry or remote report storage; password uses secure preference type              | PASS: errors are allowlisted and sanitized; raw SMTP errors, paths, filenames, and content are never logged                           |
+| Simple distribution                    | PASS: one package, no monorepo                                                                 | PASS: dependencies are individually justified; desktop release, appcast, scripts, and legacy products are removed                     |
 
 No constitutional violation or exception is required.
 

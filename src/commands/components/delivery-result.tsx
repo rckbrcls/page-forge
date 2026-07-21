@@ -10,31 +10,43 @@ export interface DeliveryResultProps {
 }
 
 export function DeliveryResultDetail(props: DeliveryResultProps) {
-  const lines = props.operation.results.map((result) => {
-    if (result.status === "submitted") {
-      return `- **${result.source.displayName}:** Submitted to the SMTP server.`;
-    }
-    if (result.status === "delivery_unknown") {
-      return `- **${result.source.displayName}:** ${result.delivery.safeMessage}`;
-    }
-    if (result.status === "failed") {
-      return `- **${result.source.displayName}:** ${result.failure.safeMessage}`;
-    }
-    if (result.status === "cancelled") return `- **${result.source.displayName}:** Cancelled.`;
-    return `- **${result.source.displayName}:** ${result.status.replaceAll("_", " ")}.`;
-  });
+  const submitted = props.operation.results.filter((result) => result.status === "submitted");
+  const uncertain = props.operation.results.filter((result) => result.status === "delivery_unknown");
+  const needsAttention = props.operation.results.filter(
+    (result) => result.status !== "submitted" && result.status !== "delivery_unknown",
+  );
+  const submittedSection = submitted.length
+    ? `### Submitted\n\n${submitted.map((result) => `- **${result.source.displayName}**: Accepted by the SMTP server.`).join("\n")}\n\n`
+    : "";
+  const uncertainSection = uncertain.length
+    ? `### Delivery Uncertain\n\n${uncertain.map((result) => `- **${result.source.displayName}**: ${result.delivery.safeMessage}`).join("\n")}\n\n`
+    : "";
+  const attentionSection = needsAttention.length
+    ? `### Needs Attention\n\n${needsAttention.map(resultDescription).join("\n")}\n\n`
+    : "";
   const hasUnknown = props.operation.results.some(({ status }) => status === "delivery_unknown");
   const hasRetryableFailure = props.operation.results.some(
     (result) => result.status === "failed" && result.failure.retryable,
   );
+  const title = needsAttention.length === 0 && !hasUnknown ? "Submission Complete" : "Kindle Delivery Results";
 
   return (
     <Detail
-      markdown={`# Kindle Submission Results\n\n${lines.join("\n")}\n\n${
+      navigationTitle={title}
+      markdown={`## ${title}\n\n${submittedSection}${uncertainSection}${attentionSection}${
         hasUnknown
-          ? "Sending again may create a duplicate delivery. Confirm a new Send Again action explicitly."
+          ? "Sending again may create a duplicate. Review the uncertain items before trying again."
           : "SMTP submission does not guarantee Amazon ingestion or Kindle delivery."
       }`}
+      metadata={
+        <Detail.Metadata>
+          <Detail.Metadata.Label title="Submitted" text={String(submitted.length)} />
+          {uncertain.length > 0 ? <Detail.Metadata.Label title="Uncertain" text={String(uncertain.length)} /> : null}
+          {needsAttention.length > 0 ? (
+            <Detail.Metadata.Label title="Needs Attention" text={String(needsAttention.length)} />
+          ) : null}
+        </Detail.Metadata>
+      }
       actions={
         <ActionPanel>
           {hasUnknown ? <Action title="Send Again" icon={Icon.Repeat} onAction={props.onSendAgain} /> : null}
@@ -46,4 +58,10 @@ export function DeliveryResultDetail(props: DeliveryResultProps) {
       }
     />
   );
+}
+
+function resultDescription(result: BatchOperation["results"][number]): string {
+  if (result.status === "failed") return `- **${result.source.displayName}**: ${result.failure.safeMessage}`;
+  if (result.status === "cancelled") return `- **${result.source.displayName}**: Delivery was cancelled.`;
+  return `- **${result.source.displayName}**: The book did not reach a final delivery result.`;
 }

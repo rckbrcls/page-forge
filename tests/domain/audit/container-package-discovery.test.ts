@@ -21,9 +21,7 @@ describe("container and package discovery", () => {
 
   it("covers every container and package-discovery finding code", () => {
     const coveredCodes = new Set(
-      Object.values(containerPackageFixtures).flatMap((fixture) =>
-        fixture.findings.map((finding) => finding.code),
-      ),
+      Object.values(containerPackageFixtures).flatMap((fixture) => fixture.findings.map((finding) => finding.code)),
     );
 
     expect(coveredCodes).toEqual(

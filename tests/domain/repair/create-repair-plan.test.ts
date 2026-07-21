@@ -3,11 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createFinding } from "../../../src/domain/audit/finding-catalog";
 import { createRepairPlan } from "../../../src/domain/repair/create-repair-plan";
 import type { InternalPath } from "../../../src/domain/models/archive";
-import type {
-  SelectedEpub,
-  SelectedEpubId,
-  Sha256Digest,
-} from "../../../src/domain/models/epub-document";
+import type { SelectedEpub, SelectedEpubId, Sha256Digest } from "../../../src/domain/models/epub-document";
 import type { Finding } from "../../../src/domain/models/finding";
 import type { HealthReport } from "../../../src/domain/models/health-report";
 import type { RepairKind } from "../../../src/domain/models/repair";
@@ -156,12 +152,7 @@ describe("createRepairPlan", () => {
 
   it("keeps findings without one deterministic target unresolved with a reviewable reason", () => {
     const report = repairableReport([mimetypeFinding, ambiguousLinkFinding]);
-    const result = createRepairPlan(
-      source,
-      report,
-      { referenceCorrections: [] },
-      "/Books/Book-kindle-ready.epub",
-    );
+    const result = createRepairPlan(source, report, { referenceCorrections: [] }, "/Books/Book-kindle-ready.epub");
 
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error(result.failure.safeMessage);
@@ -172,11 +163,9 @@ describe("createRepairPlan", () => {
         reason: expect.stringMatching(/unique|ambiguous|deterministic/i),
       },
     ]);
-    expect(
-      result.value.operations.some(({ findingIds }) =>
-        findingIds.includes(ambiguousLinkFinding.identity),
-      ),
-    ).toBe(false);
+    expect(result.value.operations.some(({ findingIds }) => findingIds.includes(ambiguousLinkFinding.identity))).toBe(
+      false,
+    );
   });
 
   it("never emits an operation outside the closed allowlist", () => {
@@ -195,9 +184,7 @@ describe("createRepairPlan", () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error(result.failure.safeMessage);
-    expect(result.value.operations.map(({ kind }) => kind)).not.toContain(
-      "execute_external_converter",
-    );
+    expect(result.value.operations.map(({ kind }) => kind)).not.toContain("execute_external_converter");
     expect(result.value.unresolvedFindings).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -229,12 +216,7 @@ describe("createRepairPlan", () => {
 
   it("retains the collision-safe predicted path without creating or rewriting it", () => {
     const predictedOutput = "/Books/Book-kindle-ready-3.epub";
-    const result = createRepairPlan(
-      source,
-      repairableReport([mimetypeFinding]),
-      {},
-      predictedOutput,
-    );
+    const result = createRepairPlan(source, repairableReport([mimetypeFinding]), {}, predictedOutput);
 
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error(result.failure.safeMessage);

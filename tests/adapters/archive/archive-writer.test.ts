@@ -2,19 +2,10 @@ import { inflateRawSync } from "node:zlib";
 
 import { describe, expect, it } from "vitest";
 
-import type {
-  ArchiveLimits,
-  ArchiveSession,
-  BoundedReadable,
-  TemporaryOutput,
-} from "../../../src/application/ports";
+import type { ArchiveLimits, ArchiveSession, BoundedReadable, TemporaryOutput } from "../../../src/application/ports";
 import { ARCHIVE_LIMITS } from "../../../src/domain/audit/limits";
 import { parseInternalPath } from "../../../src/domain/audit/internal-path";
-import type {
-  ArchiveEntryDescriptor,
-  ArchiveProjection,
-  InternalPath,
-} from "../../../src/domain/models/archive";
+import type { ArchiveEntryDescriptor, ArchiveProjection, InternalPath } from "../../../src/domain/models/archive";
 import type { Sha256Digest } from "../../../src/domain/models/epub-document";
 import type { ProcessingFailure } from "../../../src/domain/models/processing-failure";
 import type { RepairOperationId, RepairPlan } from "../../../src/domain/models/repair";
@@ -43,11 +34,7 @@ function internalPath(value: string): InternalPath {
 }
 
 function findEndOfCentralDirectory(archive: Buffer): number {
-  for (
-    let offset = archive.length - 22;
-    offset >= Math.max(0, archive.length - 65_557);
-    offset -= 1
-  ) {
+  for (let offset = archive.length - 22; offset >= Math.max(0, archive.length - 65_557); offset -= 1) {
     if (archive.readUInt32LE(offset) === END_OF_CENTRAL_DIRECTORY) return offset;
   }
   throw new Error("ZIP end-of-central-directory record was not found");
@@ -241,7 +228,7 @@ describe("archive writer", () => {
     await withTestFilesystem(async (filesystem) => {
       const chapter = Buffer.from("chapter".repeat(40_000));
       const image = Buffer.from(Array.from({ length: 48_000 }, (_, index) => index % 251));
-      const packageDocument = Buffer.from("<package version=\"3.0\"/>");
+      const packageDocument = Buffer.from('<package version="3.0"/>');
       const entries = [
         { descriptor: descriptor(0, "EPUB/chapter.xhtml", chapter), data: chapter },
         {
@@ -273,11 +260,7 @@ describe("archive writer", () => {
         crc32: crc32("application/epub+zip"),
       });
       expect(output[0]?.data.toString("ascii")).toBe("application/epub+zip");
-      expect(session.opened).toEqual([
-        "EPUB/chapter.xhtml",
-        "EPUB/images/cover.bin",
-        "EPUB/package.opf",
-      ]);
+      expect(session.opened).toEqual(["EPUB/chapter.xhtml", "EPUB/images/cover.bin", "EPUB/package.opf"]);
       expect(session.maxActive).toBe(1);
       expect(session.yieldedChunks).toBeGreaterThan(50);
     });
@@ -287,10 +270,7 @@ describe("archive writer", () => {
     await withTestFilesystem(async (filesystem) => {
       const resources = new Map<string, Buffer>([
         ["META-INF/container.xml", Buffer.from([0, 1, 2, 3, 254, 255])],
-        [
-          "EPUB/fonts/book.woff",
-          Buffer.from(Array.from({ length: 65_537 }, (_, index) => index % 256)),
-        ],
+        ["EPUB/fonts/book.woff", Buffer.from(Array.from({ length: 65_537 }, (_, index) => index % 256))],
         ["EPUB/styles/book.css", Buffer.from("body { color: #123456; }\n")],
       ]);
       const session = new StreamingArchiveSession(
@@ -341,12 +321,8 @@ describe("archive writer", () => {
   it("stops reconstruction when actual entry or output bytes exceed configured limits", async () => {
     await withTestFilesystem(async (filesystem) => {
       const data = Buffer.alloc(32_000, 0x61);
-      const entryLimited = new StreamingArchiveSession([
-        { descriptor: descriptor(0, "EPUB/large.bin", data), data },
-      ]);
-      const outputLimited = new StreamingArchiveSession([
-        { descriptor: descriptor(0, "EPUB/large.bin", data), data },
-      ]);
+      const entryLimited = new StreamingArchiveSession([{ descriptor: descriptor(0, "EPUB/large.bin", data), data }]);
+      const outputLimited = new StreamingArchiveSession([{ descriptor: descriptor(0, "EPUB/large.bin", data), data }]);
 
       const entryResult = await reconstruct(
         entryLimited,

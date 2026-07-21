@@ -82,23 +82,23 @@ This value is derived from items and is never independently persisted.
 
 One accepted document and its complete session workflow state.
 
-| Field | Type | Rules |
-|------|------|-------|
-| `id` | UUID | Stable for the queue session |
-| `sourceURL` | URL | Original selected local file |
-| `canonicalIdentity` | String | Canonical path/resource identity used for dedupe |
-| `displayName` | String | Source filename |
-| `format` | DocumentFormat | EPUB, MOBI, or PDF |
-| `isSelected` | Bool | Drives Prepare/Save/Send eligibility |
-| `preparationState` | PreparationState | Starts as `queued` |
-| `progressMessage` | String? | Current human-readable step |
-| `progressFraction` | Double? | In `0...1` when determinable |
-| `readinessReport` | ReadinessReport? | Present after readiness evaluation |
-| `preparedOutput` | PreparedOutput? | Present after a successful preparation |
-| `issue` | OperationIssue? | Current actionable warning/failure |
-| `saveResult` | ExportResult? | Independent from delivery |
-| `deliveryResult` | DocumentDeliveryResult? | Independent from save |
-| `securityAccess` | SecurityScopedAccess? | Session access/bookmark metadata; never a secret |
+| Field               | Type                    | Rules                                            |
+| ------------------- | ----------------------- | ------------------------------------------------ |
+| `id`                | UUID                    | Stable for the queue session                     |
+| `sourceURL`         | URL                     | Original selected local file                     |
+| `canonicalIdentity` | String                  | Canonical path/resource identity used for dedupe |
+| `displayName`       | String                  | Source filename                                  |
+| `format`            | DocumentFormat          | EPUB, MOBI, or PDF                               |
+| `isSelected`        | Bool                    | Drives Prepare/Save/Send eligibility             |
+| `preparationState`  | PreparationState        | Starts as `queued`                               |
+| `progressMessage`   | String?                 | Current human-readable step                      |
+| `progressFraction`  | Double?                 | In `0...1` when determinable                     |
+| `readinessReport`   | ReadinessReport?        | Present after readiness evaluation               |
+| `preparedOutput`    | PreparedOutput?         | Present after a successful preparation           |
+| `issue`             | OperationIssue?         | Current actionable warning/failure               |
+| `saveResult`        | ExportResult?           | Independent from delivery                        |
+| `deliveryResult`    | DocumentDeliveryResult? | Independent from save                            |
+| `securityAccess`    | SecurityScopedAccess?   | Session access/bookmark metadata; never a secret |
 
 Validation:
 
@@ -112,12 +112,12 @@ Validation:
 
 The ordered collection rendered by the main screen.
 
-| Field | Type | Rules |
-|------|------|-------|
-| `items` | [DocumentItem] | Stable intake order |
-| `isProcessing` | Bool | True while a preparation sequence is active |
-| `activeItemID` | UUID? | At most one because processing is sequential |
-| `intakeSummary` | IntakeSummary? | Most recent add operation feedback |
+| Field           | Type           | Rules                                        |
+| --------------- | -------------- | -------------------------------------------- |
+| `items`         | [DocumentItem] | Stable intake order                          |
+| `isProcessing`  | Bool           | True while a preparation sequence is active  |
+| `activeItemID`  | UUID?          | At most one because processing is sequential |
+| `intakeSummary` | IntakeSummary? | Most recent add operation feedback           |
 
 Derived values:
 
@@ -138,40 +138,40 @@ Validation:
 
 One result for each URL passed to intake.
 
-| Field | Type | Rules |
-|------|------|-------|
-| `originalURL` | URL | Input value |
-| `acceptedItem` | DocumentItem? | Set only when accepted |
-| `rejection` | IntakeRejection? | Set only when rejected |
-| `inputIndex` | Int | Restores stable order after async resolution |
+| Field          | Type             | Rules                                        |
+| -------------- | ---------------- | -------------------------------------------- |
+| `originalURL`  | URL              | Input value                                  |
+| `acceptedItem` | DocumentItem?    | Set only when accepted                       |
+| `rejection`    | IntakeRejection? | Set only when rejected                       |
+| `inputIndex`   | Int              | Restores stable order after async resolution |
 
 Exactly one of `acceptedItem` or `rejection` is present.
 
 ### IntakeSummary
 
-| Field | Type | Rules |
-|------|------|-------|
-| `outcomes` | [IntakeOutcome] | Same order as source input |
-| `acceptedCount` | Int | Derived |
-| `rejectedCount` | Int | Derived |
+| Field           | Type            | Rules                      |
+| --------------- | --------------- | -------------------------- |
+| `outcomes`      | [IntakeOutcome] | Same order as source input |
+| `acceptedCount` | Int             | Derived                    |
+| `rejectedCount` | Int             | Derived                    |
 
 ### IntakeRejection
 
-| Field | Type | Rules |
-|------|------|-------|
-| `reason` | IntakeRejectionReason | Stable category |
-| `message` | String | Names the affected item and explains rejection |
+| Field     | Type                  | Rules                                          |
+| --------- | --------------------- | ---------------------------------------------- |
+| `reason`  | IntakeRejectionReason | Stable category                                |
+| `message` | String                | Names the affected item and explains rejection |
 
 ### PreparedOutput
 
-| Field | Type | Rules |
-|------|------|-------|
-| `sourceURL` | URL | Original EPUB/MOBI/PDF, never temporary input |
-| `outputURL` | URL | Final local EPUB |
-| `format` | DocumentFormat | Always `epub` for the primary flow |
-| `sizeBytes` | Int64 | Re-read after creation |
-| `readinessStatus` | ReadinessStatus | Must be retained from final report |
-| `createdAt` | Date | Result timestamp |
+| Field             | Type            | Rules                                         |
+| ----------------- | --------------- | --------------------------------------------- |
+| `sourceURL`       | URL             | Original EPUB/MOBI/PDF, never temporary input |
+| `outputURL`       | URL             | Final local EPUB                              |
+| `format`          | DocumentFormat  | Always `epub` for the primary flow            |
+| `sizeBytes`       | Int64           | Re-read after creation                        |
+| `readinessStatus` | ReadinessStatus | Must be retained from final report            |
+| `createdAt`       | Date            | Result timestamp                              |
 
 Rules:
 
@@ -183,56 +183,56 @@ Rules:
 
 ### OperationIssue
 
-| Field | Type | Rules |
-|------|------|-------|
-| `category` | IssueCategory | intake, dependency, validation, filesystem, conversion, repair, configuration, delivery, cancelled |
-| `message` | String | User-facing and secret-free |
-| `recoveryAction` | RecoveryAction? | Retry, Open Settings, Choose Another Folder, Reveal File, or none |
+| Field            | Type            | Rules                                                                                              |
+| ---------------- | --------------- | -------------------------------------------------------------------------------------------------- |
+| `category`       | IssueCategory   | intake, dependency, validation, filesystem, conversion, repair, configuration, delivery, cancelled |
+| `message`        | String          | User-facing and secret-free                                                                        |
+| `recoveryAction` | RecoveryAction? | Retry, Open Settings, Choose Another Folder, Reveal File, or none                                  |
 
 ### ExportRequest
 
-| Field | Type | Rules |
-|------|------|-------|
-| `outputs` | [PreparedOutput] | Selected and readable only |
-| `destinationDirectory` | URL | Existing writable local directory |
-| `conflictPolicy` | OutputConflictPolicy | Defaults to `failIfExists` |
+| Field                  | Type                 | Rules                             |
+| ---------------------- | -------------------- | --------------------------------- |
+| `outputs`              | [PreparedOutput]     | Selected and readable only        |
+| `destinationDirectory` | URL                  | Existing writable local directory |
+| `conflictPolicy`       | OutputConflictPolicy | Defaults to `failIfExists`        |
 
 ### ExportResult
 
-| Field | Type | Rules |
-|------|------|-------|
-| `sourceOutputURL` | URL | Existing prepared output |
-| `destinationURL` | URL | Intended/result path |
-| `state` | OutputActionState | `succeeded` or `failed` terminally |
-| `message` | String | Result or conflict/failure reason |
+| Field             | Type              | Rules                              |
+| ----------------- | ----------------- | ---------------------------------- |
+| `sourceOutputURL` | URL               | Existing prepared output           |
+| `destinationURL`  | URL               | Intended/result path               |
+| `state`           | OutputActionState | `succeeded` or `failed` terminally |
+| `message`         | String            | Result or conflict/failure reason  |
 
 Export uses copy semantics and never removes the source or prepared output.
 
 ### DeliveryRequest
 
-| Field | Type | Rules |
-|------|------|-------|
-| `outputs` | [PreparedOutput] | Selected and readable only |
-| `profileName` | String | Explicit existing profile |
+| Field         | Type             | Rules                      |
+| ------------- | ---------------- | -------------------------- |
+| `outputs`     | [PreparedOutput] | Selected and readable only |
+| `profileName` | String           | Explicit existing profile  |
 
 ### DocumentDeliveryResult
 
-| Field | Type | Rules |
-|------|------|-------|
-| `outputURL` | URL | Sent/attempted prepared output |
-| `profileName` | String | Selected profile |
-| `kindleEmail` | String? | Present on success; safe to display |
-| `state` | OutputActionState | `succeeded` or `failed` terminally |
-| `message` | String | Secret-free result |
+| Field         | Type              | Rules                               |
+| ------------- | ----------------- | ----------------------------------- |
+| `outputURL`   | URL               | Sent/attempted prepared output      |
+| `profileName` | String            | Selected profile                    |
+| `kindleEmail` | String?           | Present on success; safe to display |
+| `state`       | OutputActionState | `succeeded` or `failed` terminally  |
+| `message`     | String            | Secret-free result                  |
 
 ### SecurityScopedAccess
 
 Session metadata required to keep access to a user-selected file valid.
 
-| Field | Type | Rules |
-|------|------|-------|
-| `bookmarkData` | Data? | Security-scoped bookmark when persistence beyond callback is required |
-| `isAccessActive` | Bool | Balanced start/stop access ownership |
+| Field            | Type  | Rules                                                                 |
+| ---------------- | ----- | --------------------------------------------------------------------- |
+| `bookmarkData`   | Data? | Security-scoped bookmark when persistence beyond callback is required |
+| `isAccessActive` | Bool  | Balanced start/stop access ownership                                  |
 
 This is not persisted in queue logs and contains no delivery credential.
 
@@ -280,4 +280,3 @@ failed ──retry──> inProgress
 ```
 
 Save or delivery failure does not change `PreparationState.ready`.
-

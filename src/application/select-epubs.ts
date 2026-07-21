@@ -1,17 +1,10 @@
 import type { SelectionPort } from "./ports";
-import type {
-  SelectedEpub,
-  SelectionRejection,
-  SelectionSnapshot,
-} from "../domain/models/epub-document";
+import type { SelectedEpub, SelectionRejection, SelectionSnapshot } from "../domain/models/epub-document";
 import { createFindingIdentity, type Finding } from "../domain/models/finding";
 import type { ProcessingFailure } from "../domain/models/processing-failure";
 import { err, ok, type Result } from "../domain/models/result";
 
-function inputFinding(
-  code: "INPUT_NOT_EPUB" | "INPUT_UNREADABLE",
-  description: string,
-): Finding {
+function inputFinding(code: "INPUT_NOT_EPUB" | "INPUT_UNREADABLE", description: string): Finding {
   const title = code === "INPUT_NOT_EPUB" ? "Unsupported file type" : "File is not readable";
   return {
     identity: createFindingIdentity(code),
@@ -33,11 +26,11 @@ function normalizeSnapshot(snapshot: SelectionSnapshot): SelectionSnapshot {
   const rejections: SelectionRejection[] = [...snapshot.rejections];
 
   for (const [selectionIndex, item] of snapshot.items.entries()) {
-    if (!item.displayName.toLocaleLowerCase("en-US").endsWith(".epub")) {
+    if (!/\.(?:epub|pdf)$/iu.test(item.displayName)) {
       rejections.push({
         selectionIndex,
         displayName: item.displayName,
-        finding: inputFinding("INPUT_NOT_EPUB", "Only EPUB files are supported."),
+        finding: inputFinding("INPUT_NOT_EPUB", "Only EPUB and PDF files are supported."),
       });
       continue;
     }

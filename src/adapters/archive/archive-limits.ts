@@ -244,7 +244,11 @@ export function createInspectionDeadline(
   timeoutMs: number = OPERATION_LIMITS.perFileTimeoutMs,
 ): InspectionDeadline {
   const controller = new AbortController();
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timer = setTimeout(() => {
+    if (controller.signal.aborted) return;
+    parentSignal.removeEventListener("abort", onParentAbort);
+    controller.abort({ code: "ARCHIVE_TIMEOUT" });
+  }, timeoutMs);
 
   const onParentAbort = (): void => {
     if (controller.signal.aborted) return;
@@ -257,12 +261,6 @@ export function createInspectionDeadline(
   } else {
     parentSignal.addEventListener("abort", onParentAbort, { once: true });
   }
-
-  timer = setTimeout(() => {
-    if (controller.signal.aborted) return;
-    parentSignal.removeEventListener("abort", onParentAbort);
-    controller.abort({ code: "ARCHIVE_TIMEOUT" });
-  }, timeoutMs);
 
   return {
     signal: controller.signal,

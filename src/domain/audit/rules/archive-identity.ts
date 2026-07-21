@@ -11,9 +11,7 @@ export interface ArchiveIdentityInput {
   readonly sizeMismatchEntryIndexes?: readonly number[];
 }
 
-export function auditArchiveIdentity(
-  input: ArchiveIdentityInput | readonly ArchiveEntryDescriptor[],
-): Finding[] {
+export function auditArchiveIdentity(input: ArchiveIdentityInput | readonly ArchiveEntryDescriptor[]): Finding[] {
   const normalized: ArchiveIdentityInput = Array.isArray(input)
     ? { entries: input as readonly ArchiveEntryDescriptor[] }
     : (input as ArchiveIdentityInput);

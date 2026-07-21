@@ -8,7 +8,6 @@ import { DeliveryResultDetail } from "./components/delivery-result";
 export interface SendCommandViewProps {
   readonly operation: BatchOperation;
   readonly deliveryConfiguration?: DeliveryConfiguration;
-  readonly onPrepare?: () => void;
   readonly onOpenDeliveryPreferences?: () => void;
   readonly onOpenPreferences?: () => void;
   readonly onOpenSendToKindle?: () => void;
@@ -67,7 +66,7 @@ export function SendCommandView(props: SendCommandViewProps) {
   return (
     <Detail
       isLoading
-      markdown={`# Sending EPUBs\n\n${phaseLabel(props.operation)}`}
+      markdown={`# Preparing Books for Kindle\n\n${phaseLabel(props.operation)}`}
       actions={
         <ActionPanel>
           {!props.operation.cancellationRequested ? (

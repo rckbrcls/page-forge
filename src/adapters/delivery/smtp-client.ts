@@ -168,7 +168,7 @@ export async function submit(
   }
 
   const bytesStreamed = source.source.sizeBytes;
-  const attachment = basename(source.source.sourcePath);
+  const attachment = basename(source.source.displayName);
   const nowStarted = nowMs();
 
   const transportOptions = {
@@ -201,12 +201,12 @@ export async function submit(
     const mail: MessageOptions = {
       from: configuration.senderAddress,
       to: configuration.kindleAddress,
-      subject: "Page Forge",
-      text: "Page Forge",
+      subject: "Book Sender",
+      text: "Sent with Book Sender",
       attachments: [
         {
           filename: attachment,
-          contentType: "application/epub+zip",
+          contentType: source.source.format === "pdf" ? "application/pdf" : "application/epub+zip",
           content: attachmentStream,
         },
       ],

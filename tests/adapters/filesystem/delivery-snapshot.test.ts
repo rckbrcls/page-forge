@@ -99,7 +99,7 @@ describe("delivery snapshots", () => {
         });
 
         expect(snapshot.path).not.toBe(fixture.source.sourcePath);
-        expect(snapshot.path).toContain(".page-forge-delivery-");
+        expect(snapshot.path).toContain(".book-sender-delivery-");
         const snapshotStats = await fsPromises.lstat(snapshot.path);
         if (process.platform !== "win32") {
           expect(snapshotStats.mode & 0o777).toBe(0o600);

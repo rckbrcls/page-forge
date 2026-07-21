@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { auditPackageRules } from "../../../src/domain/audit/rules/package";
-import {
-  manifestRuleFixtures,
-  type ManifestFindingCode,
-} from "../../fixtures/package/manifest-fixtures";
+import { manifestRuleFixtures, type ManifestFindingCode } from "../../fixtures/package/manifest-fixtures";
 
 const expectedContracts = {
   METADATA_TITLE_MISSING: ["warning", "needs_review", "none"],
@@ -36,9 +33,7 @@ describe("package metadata and manifest rules", () => {
   });
 
   it("offers only the catalogued deterministic media-type repair", () => {
-    const fixture = manifestRuleFixtures.find(
-      ({ expectedCode }) => expectedCode === "MANIFEST_MEDIA_TYPE_MISMATCH",
-    );
+    const fixture = manifestRuleFixtures.find(({ expectedCode }) => expectedCode === "MANIFEST_MEDIA_TYPE_MISMATCH");
     expect(fixture).toBeDefined();
 
     const finding = auditPackageRules(fixture!.packageDocument, fixture!.entryIndex).find(

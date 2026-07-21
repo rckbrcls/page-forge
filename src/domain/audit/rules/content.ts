@@ -43,9 +43,7 @@ export function auditContent(input: ContentAuditInput): Finding[] {
       }
       if (reference.targetPath === undefined || exactPaths.has(reference.targetPath)) continue;
 
-      const equivalentPaths = pathsByCollisionKey.get(
-        internalPathCollisionKey(reference.targetPath),
-      );
+      const equivalentPaths = pathsByCollisionKey.get(internalPathCollisionKey(reference.targetPath));
       if (equivalentPaths?.length === 1) {
         findings.push(
           createFinding("CONTENT_PATH_CASE_MISMATCH", {
@@ -109,11 +107,9 @@ export function auditContent(input: ContentAuditInput): Finding[] {
   return findings;
 }
 
-function missingReferenceCode(kind: ContentProjection["references"][number]["kind"]):
-  | "CONTENT_LINK_BROKEN"
-  | "CONTENT_IMAGE_MISSING"
-  | "CONTENT_STYLESHEET_MISSING"
-  | "CONTENT_FONT_MISSING" {
+function missingReferenceCode(
+  kind: ContentProjection["references"][number]["kind"],
+): "CONTENT_LINK_BROKEN" | "CONTENT_IMAGE_MISSING" | "CONTENT_STYLESHEET_MISSING" | "CONTENT_FONT_MISSING" {
   switch (kind) {
     case "image":
       return "CONTENT_IMAGE_MISSING";

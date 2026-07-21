@@ -3,11 +3,7 @@ import { createReadStream } from "node:fs";
 import { link, lstat, open, unlink, type FileHandle } from "node:fs/promises";
 import { basename, dirname, extname, join } from "node:path";
 
-import type {
-  FinalOutput,
-  PredictedOutput,
-  TemporaryOutput,
-} from "../../application/ports";
+import type { FinalOutput, PredictedOutput, TemporaryOutput } from "../../application/ports";
 import type { Sha256Digest, SourceFingerprint } from "../../domain/models/epub-document";
 import type { ProcessingFailure } from "../../domain/models/processing-failure";
 import { err, ok, type Result } from "../../domain/models/result";
@@ -19,6 +15,7 @@ interface TemporaryIdentity {
 }
 
 const ownedTemporaries = new WeakMap<TemporaryOutput, TemporaryIdentity>();
+const ownedFinals = new Map<string, SourceFingerprint>();
 
 function errno(error: unknown): string | undefined {
   return typeof error === "object" && error !== null && "code" in error
@@ -73,7 +70,7 @@ export async function createSameDirectoryTemporary(
 ): Promise<Result<TemporaryOutput, ProcessingFailure>> {
   let handle: FileHandle | undefined;
   const id = randomUUID();
-  const path = join(dirname(prediction.sourcePath), `.page-forge-${id}.tmp`);
+  const path = join(dirname(prediction.sourcePath), `.book-sender-${id}.tmp`);
   try {
     handle = await open(path, "wx", 0o600);
     await handle.close();
@@ -152,7 +149,9 @@ export async function promoteNoClobber(
     }
 
     try {
-      return ok({ path, displayName: basename(path), fingerprint: await fingerprint(path) });
+      const finalFingerprint = await fingerprint(path);
+      ownedFinals.set(path, finalFingerprint);
+      return ok({ path, displayName: basename(path), fingerprint: finalFingerprint });
     } catch {
       await removeCreatedLink(path, temporary.path);
       return err(failure("REPAIR_OUTPUT_UNWRITABLE", "promoting"));
@@ -161,9 +160,7 @@ export async function promoteNoClobber(
   return err(failure("REPAIR_OUTPUT_UNWRITABLE", "promoting"));
 }
 
-export async function cleanupTemporary(
-  temporary: TemporaryOutput,
-): Promise<Result<void, ProcessingFailure>> {
+export async function cleanupTemporary(temporary: TemporaryOutput): Promise<Result<void, ProcessingFailure>> {
   const owned = ownedTemporaries.get(temporary);
   if (!owned) return ok(undefined);
   try {
@@ -188,9 +185,35 @@ export async function cleanupTemporary(
   }
 }
 
+export async function cleanupPromotedOutput(
+  path: string,
+  expected: SourceFingerprint,
+): Promise<Result<void, ProcessingFailure>> {
+  const owned = ownedFinals.get(path);
+  if (!owned || owned.sha256 !== expected.sha256) return ok(undefined);
+  try {
+    const current = await fingerprint(path);
+    if (
+      current.identity.device !== expected.identity.device ||
+      current.identity.file !== expected.identity.file ||
+      current.sizeBytes !== expected.sizeBytes ||
+      current.modifiedAtMs !== expected.modifiedAtMs ||
+      current.sha256 !== expected.sha256
+    ) {
+      return ok(undefined);
+    }
+    await unlink(path);
+    ownedFinals.delete(path);
+    return ok(undefined);
+  } catch {
+    return ok(undefined);
+  }
+}
+
 export const atomicOutputWriter = {
   predictOutput,
   createSameDirectoryTemporary,
   promoteNoClobber,
   cleanupTemporary,
+  cleanupPromotedOutput,
 } as const;

@@ -69,6 +69,11 @@ export const archivePathSafetyFixtures = [
   ]),
 ] as const satisfies readonly ArchivePathSafetyFixture[];
 
+export const explicitDirectoryAncestryFixture = epubWithEntries([
+  { name: "EPUB/", data: "", method: 0 },
+  namedEntry("EPUB/child.xhtml"),
+]);
+
 export const archivePathSafetyFindingCodes = [
   "ARCHIVE_PATH_ABSOLUTE",
   "ARCHIVE_PATH_TRAVERSAL",

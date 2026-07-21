@@ -1,31 +1,23 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
-  "name": "page-forge",
-  "title": "Page Forge",
-  "description": "Inspect, safely prepare, and explicitly send EPUB files to Kindle.",
+  "name": "book-sender",
+  "title": "Book Sender",
+  "description": "Check, safely repair, and send books to Kindle in one flow.",
   "icon": "extension-icon.png",
   "author": "rckbrcls",
   "license": "MIT",
   "private": true,
-  "platforms": ["macOS"],
-  "categories": ["Productivity"],
+  "platforms": [
+    "macOS"
+  ],
+  "categories": [
+    "Productivity"
+  ],
   "commands": [
     {
-      "name": "inspect-epub",
-      "title": "Page Forge: Inspect EPUB",
-      "description": "Inspect EPUB health without modifying the original file.",
-      "mode": "view"
-    },
-    {
-      "name": "prepare-epub-for-kindle",
-      "title": "Page Forge: Prepare EPUB for Kindle",
-      "description": "Review safe repairs and create a revalidated Kindle-ready EPUB copy.",
-      "mode": "view"
-    },
-    {
-      "name": "send-epub-to-kindle",
-      "title": "Page Forge: Send EPUB to Kindle",
-      "description": "Review eligible EPUB files and explicitly submit them to Kindle.",
+      "name": "send-book-to-kindle",
+      "title": "Send Book to Kindle",
+      "description": "Check, safely repair, and send EPUB or PDF books to Kindle.",
       "mode": "view",
       "preferences": [
         {
@@ -129,7 +121,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
-    "prepublishOnly": "node -e \"throw new Error('Publish Page Forge through the Raycast Store with npm run publish, not npm publish.')\"",
+    "prepublishOnly": "node -e \"throw new Error('Publish Book Sender through the Raycast Store with npm run publish, not npm publish.')\"",
     "publish": "ray publish"
   }
 }

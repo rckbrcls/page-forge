@@ -51,10 +51,7 @@ function flatten(node: ReactNode): FlatElement[] {
   if (!isValidElement(node)) return [];
   const props = node.props as Record<string, unknown> & { children?: ReactNode };
   const nestedNodes = Object.values(props).flatMap(nestedReactNodes);
-  return [
-    { type: node.type, props },
-    ...nestedNodes.flatMap((child) => flatten(child)),
-  ];
+  return [{ type: node.type, props }, ...nestedNodes.flatMap((child) => flatten(child))];
 }
 
 function nestedReactNodes(value: unknown): ReactNode[] {
@@ -89,11 +86,7 @@ function reportFinding(): Finding {
 }
 
 const healthySource = selectedEpub("/fixtures/healthy.epub", "healthy.epub", "healthy");
-const repairableSource = selectedEpub(
-  "/fixtures/repairable.epub",
-  "repairable.epub",
-  "repairable",
-);
+const repairableSource = selectedEpub("/fixtures/repairable.epub", "repairable.epub", "repairable");
 const failedSource = selectedEpub("/fixtures/failed.epub", "failed.epub", "failed");
 
 function report(sourceId: typeof healthySource.id, health: HealthReport["health"]): HealthReport {
@@ -159,11 +152,7 @@ describe("InspectCommandView", () => {
     const tree = flatten(InspectCommandView({ operation, ...handlers }) as ReactNode);
     const items = tree.filter(({ type }) => elementTypeName(type) === "List.Item");
 
-    expect(items.map(({ props }) => props.title)).toEqual([
-      "healthy.epub",
-      "repairable.epub",
-      "failed.epub",
-    ]);
+    expect(items.map(({ props }) => props.title)).toEqual(["healthy.epub", "repairable.epub", "failed.epub"]);
     const renderedContract = JSON.stringify(tree.map(({ props }) => props));
     expect(renderedContract).toContain("healthy");
     expect(renderedContract).toContain("repairable");
@@ -179,9 +168,7 @@ describe("InspectCommandView", () => {
 
   it("offers every required inspection action and Prepare EPUB only for repairable items", () => {
     const tree = flatten(InspectCommandView({ operation, ...handlers }) as ReactNode);
-    const actionTitles = tree
-      .filter(({ type }) => elementTypeName(type) === "Action")
-      .map(({ props }) => props.title);
+    const actionTitles = tree.filter(({ type }) => elementTypeName(type) === "Action").map(({ props }) => props.title);
 
     expect(actionTitles).toContain("View Full Report");
     expect(actionTitles).toContain("Prepare EPUB");
@@ -200,12 +187,10 @@ describe("InspectCommandView", () => {
   it("keeps command composition dependent on callbacks instead of real Raycast side effects", () => {
     const tree = flatten(InspectCommandView({ operation, ...handlers }) as ReactNode);
     const retry = tree.find(
-      ({ type, props }) =>
-        elementTypeName(type) === "Action" && props.title === "Retry Failed Items",
+      ({ type, props }) => elementTypeName(type) === "Action" && props.title === "Retry Failed Items",
     );
     const cancel = tree.find(
-      ({ type, props }) =>
-        elementTypeName(type) === "Action" && props.title === "Cancel Active Operation",
+      ({ type, props }) => elementTypeName(type) === "Action" && props.title === "Cancel Active Operation",
     );
 
     expect(retry?.props.onAction).toBe(handlers.onRetryFailed);

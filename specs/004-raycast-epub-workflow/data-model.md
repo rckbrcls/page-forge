@@ -31,15 +31,15 @@ A validated, relative, slash-separated archive path. It contains no empty, `.`, 
 
 Represents one immutable user-selected source.
 
-| Field | Type | Rules |
-|-------|------|-------|
-| `id` | opaque operation-local ID | Unique within a selection snapshot; not derived from the full path for display or logging |
-| `sourcePath` | local path | Internal use only; never included in logs or copied into reports by default |
-| `displayName` | string | Basename only; Unicode preserved; must end in `.epub` case-insensitively |
-| `identity` | filesystem identity | Used to collapse duplicate selections and detect replacement where available |
-| `sizeBytes` | non-negative safe integer | Values above 200,000,000 are retained as evidence and produce an Unsafe report before archive open |
-| `modifiedAt` | timestamp | Snapshot evidence used to detect changes before repair or delivery |
-| `readable` | boolean | Must be true before inspection |
+| Field         | Type                      | Rules                                                                                              |
+| ------------- | ------------------------- | -------------------------------------------------------------------------------------------------- |
+| `id`          | opaque operation-local ID | Unique within a selection snapshot; not derived from the full path for display or logging          |
+| `sourcePath`  | local path                | Internal use only; never included in logs or copied into reports by default                        |
+| `displayName` | string                    | Basename only; Unicode preserved; must end in `.epub` case-insensitively                           |
+| `identity`    | filesystem identity       | Used to collapse duplicate selections and detect replacement where available                       |
+| `sizeBytes`   | non-negative safe integer | Values above 200,000,000 are retained as evidence and produce an Unsafe report before archive open |
+| `modifiedAt`  | timestamp                 | Snapshot evidence used to detect changes before repair or delivery                                 |
+| `readable`    | boolean                   | Must be true before inspection                                                                     |
 
 Relationships:
 
@@ -51,19 +51,19 @@ Relationships:
 
 Metadata for one central-directory entry, captured before content reads.
 
-| Field | Type | Rules |
-|-------|------|-------|
-| `index` | integer | Physical central-directory order, starting at zero |
-| `originalName` | string/bytes evidence | Never used directly for filesystem access |
-| `path` | `InternalPath` or invalid-path evidence | Valid only after path checks pass |
-| `kind` | `file | directory | symlink | special` | Only file and directory are accepted |
-| `compressionMethod` | integer | Only STORE `0` and DEFLATE `8` accepted |
-| `compressedSize` | integer | Safe non-negative integer |
-| `expandedSize` | integer | Safe non-negative integer and at most 100,000,000 bytes |
-| `crc32` | unsigned integer | Verified while streaming file content |
-| `encrypted` | boolean | Must be false |
-| `externalAttributes` | integer | Used to detect links and special files |
-| `flags` | integer | Used for encryption and filename interpretation |
+| Field                | Type                                    | Rules                                                   |
+| -------------------- | --------------------------------------- | ------------------------------------------------------- |
+| `index`              | integer                                 | Physical central-directory order, starting at zero      |
+| `originalName`       | string/bytes evidence                   | Never used directly for filesystem access               |
+| `path`               | `InternalPath` or invalid-path evidence | Valid only after path checks pass                       |
+| `kind`               | `file                                   | directory                                               | symlink | special` | Only file and directory are accepted |
+| `compressionMethod`  | integer                                 | Only STORE `0` and DEFLATE `8` accepted                 |
+| `compressedSize`     | integer                                 | Safe non-negative integer                               |
+| `expandedSize`       | integer                                 | Safe non-negative integer and at most 100,000,000 bytes |
+| `crc32`              | unsigned integer                        | Verified while streaming file content                   |
+| `encrypted`          | boolean                                 | Must be false                                           |
+| `externalAttributes` | integer                                 | Used to detect links and special files                  |
+| `flags`              | integer                                 | Used for encryption and filename interpretation         |
 
 Aggregate archive rules:
 
@@ -77,16 +77,16 @@ Aggregate archive rules:
 
 A bounded projection of a source after archive preflight.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `source` | `SelectedEpub` | Immutable source snapshot |
-| `entries` | ordered `ArchiveEntryDescriptor[]` | Complete safe central-directory projection |
-| `entryIndex` | path-to-entry map | Exact lookup only after duplicate checks |
-| `mimetype` | optional `MimetypeProjection` | Position, method, extras, and exact bounded content |
-| `container` | optional `ContainerProjection` | Parsed rootfile declarations and XML evidence |
-| `packages` | `PackageProjection[]` | Zero or more bounded OPF projections |
-| `contentDocuments` | `ContentProjection[]` | Bounded references and compatibility characteristics |
-| `encryption` | optional `EncryptionProjection` | Presence and affected paths only; no decryption |
+| Field              | Type                               | Description                                          |
+| ------------------ | ---------------------------------- | ---------------------------------------------------- |
+| `source`           | `SelectedEpub`                     | Immutable source snapshot                            |
+| `entries`          | ordered `ArchiveEntryDescriptor[]` | Complete safe central-directory projection           |
+| `entryIndex`       | path-to-entry map                  | Exact lookup only after duplicate checks             |
+| `mimetype`         | optional `MimetypeProjection`      | Position, method, extras, and exact bounded content  |
+| `container`        | optional `ContainerProjection`     | Parsed rootfile declarations and XML evidence        |
+| `packages`         | `PackageProjection[]`              | Zero or more bounded OPF projections                 |
+| `contentDocuments` | `ContentProjection[]`              | Bounded references and compatibility characteristics |
+| `encryption`       | optional `EncryptionProjection`    | Presence and affected paths only; no decryption      |
 
 `LoadedEpub` must not retain full image, font, stylesheet, or chapter buffers. Bounded changed XML may be held only during repair.
 
@@ -94,35 +94,35 @@ A bounded projection of a source after archive preflight.
 
 One concrete, user-visible observation.
 
-| Field | Type | Rules |
-|-------|------|-------|
-| `code` | `FindingCode` | Stable value from [contracts/findings.md](./contracts/findings.md) |
-| `severity` | `Severity` | Fixed by rule and context |
-| `category` | finding category | `input`, `archive`, `mimetype`, `container`, `package`, `content`, `compatibility`, or `delivery` |
-| `title` | string | Concise US English UI title |
-| `description` | string | Actionable explanation without book excerpts or full local paths |
-| `location` | optional `FindingLocation` | Internal path, line/column, manifest ID, spine IDREF, or archive entry index |
-| `repairability` | `none | automatic` | Never encoded as severity |
-| `recommendedRepair` | optional `RepairKind` | Present only when a permitted deterministic operation exists |
-| `appliedRepair` | optional applied-repair reference | Set on compared report occurrences when a confirmed repair addressed the finding |
-| `revalidation` | `not_compared | resolved | remaining | introduced` | Set to `not_compared` before a comparison and enriched afterward |
-| `evidence` | bounded key/value facts | Numeric or structural evidence; no long content excerpts |
-| `stateImpact` | `HealthState` | Minimum state caused by this finding |
+| Field               | Type                              | Rules                                                                                             |
+| ------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `code`              | `FindingCode`                     | Stable value from [contracts/findings.md](./contracts/findings.md)                                |
+| `severity`          | `Severity`                        | Fixed by rule and context                                                                         |
+| `category`          | finding category                  | `input`, `archive`, `mimetype`, `container`, `package`, `content`, `compatibility`, or `delivery` |
+| `title`             | string                            | Concise US English UI title                                                                       |
+| `description`       | string                            | Actionable explanation without book excerpts or full local paths                                  |
+| `location`          | optional `FindingLocation`        | Internal path, line/column, manifest ID, spine IDREF, or archive entry index                      |
+| `repairability`     | `none                             | automatic`                                                                                        | Never encoded as severity |
+| `recommendedRepair` | optional `RepairKind`             | Present only when a permitted deterministic operation exists                                      |
+| `appliedRepair`     | optional applied-repair reference | Set on compared report occurrences when a confirmed repair addressed the finding                  |
+| `revalidation`      | `not_compared                     | resolved                                                                                          | remaining                 | introduced` | Set to `not_compared` before a comparison and enriched afterward |
+| `evidence`          | bounded key/value facts           | Numeric or structural evidence; no long content excerpts                                          |
+| `stateImpact`       | `HealthState`                     | Minimum state caused by this finding                                                              |
 
 Stable identity for before/after comparison is `(code, normalized location, target identifier)`. Descriptive text is not part of identity.
 
 ## HealthReport
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `sourceId` | selected EPUB ID | Links to the operation item without exposing path |
-| `sourceFingerprint` | bounded fingerprint | Size, modification evidence, and cryptographic digest used for immutability tests |
-| `epubVersion` | `2 | 3 | unknown` | Derived from the selected package, if unambiguous |
-| `health` | `HealthState` | Derived by precedence from all findings |
-| `findings` | ordered `Finding[]` | Deterministic category, location, and code order |
-| `inspectedAt` | timestamp | Local operation evidence, not persisted remotely |
-| `durationMs` | integer | Non-negative; safe to display |
-| `ruleResults` | `RuleResult[]` | Every v1 rule is `completed`, `not_applicable`, or `not_run_after_terminal_finding` with a reason |
+| Field               | Type                | Description                                                                                       |
+| ------------------- | ------------------- | ------------------------------------------------------------------------------------------------- |
+| `sourceId`          | selected EPUB ID    | Links to the operation item without exposing path                                                 |
+| `sourceFingerprint` | bounded fingerprint | Size, modification evidence, and cryptographic digest used for immutability tests                 |
+| `epubVersion`       | `2                  | 3                                                                                                 | unknown` | Derived from the selected package, if unambiguous |
+| `health`            | `HealthState`       | Derived by precedence from all findings                                                           |
+| `findings`          | ordered `Finding[]` | Deterministic category, location, and code order                                                  |
+| `inspectedAt`       | timestamp           | Local operation evidence, not persisted remotely                                                  |
+| `durationMs`        | integer             | Non-negative; safe to display                                                                     |
+| `ruleResults`       | `RuleResult[]`      | Every v1 rule is `completed`, `not_applicable`, or `not_run_after_terminal_finding` with a reason |
 
 Validation:
 
@@ -133,14 +133,14 @@ Validation:
 
 ## RepairPlan
 
-| Field | Type | Rules |
-|-------|------|-------|
-| `source` | `SelectedEpub` snapshot | Must still match before execution |
-| `originalReport` | `HealthReport` | Must be complete and `repairable` for execution |
-| `operations` | non-empty `RepairOperation[]` | Ordered, deterministic, and from the allowed set only |
-| `unresolvedFindings` | `UnresolvedFinding[]` | Finding plus reason it remains unchanged |
-| `predictedOutputPath` | uncreated local path | Collision-safe prediction shown for review; separate from source and subject to a later race-safe suffix update |
-| `createdAt` | timestamp | Plan evidence |
+| Field                 | Type                          | Rules                                                                                                           |
+| --------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `source`              | `SelectedEpub` snapshot       | Must still match before execution                                                                               |
+| `originalReport`      | `HealthReport`                | Must be complete and `repairable` for execution                                                                 |
+| `operations`          | non-empty `RepairOperation[]` | Ordered, deterministic, and from the allowed set only                                                           |
+| `unresolvedFindings`  | `UnresolvedFinding[]`         | Finding plus reason it remains unchanged                                                                        |
+| `predictedOutputPath` | uncreated local path          | Collision-safe prediction shown for review; separate from source and subject to a later race-safe suffix update |
+| `createdAt`           | timestamp                     | Plan evidence                                                                                                   |
 
 ### RepairOperation
 
@@ -158,40 +158,40 @@ Every operation includes finding identities addressed, exact internal paths read
 
 ## AppliedRepair
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `operation` | planned operation identity | Must exist in the confirmed plan |
-| `resolvedFindingIds` | finding identities | Findings intended to be resolved |
-| `changedEntries` | internal paths | Exact bounded list |
-| `preservedEntryCount` | integer | Number of resources streamed unchanged |
-| `outcome` | `applied | already_satisfied | failed` | `already_satisfied` requires proof that the planned finding no longer exists before mutation |
+| Field                 | Type                       | Description                            |
+| --------------------- | -------------------------- | -------------------------------------- |
+| `operation`           | planned operation identity | Must exist in the confirmed plan       |
+| `resolvedFindingIds`  | finding identities         | Findings intended to be resolved       |
+| `changedEntries`      | internal paths             | Exact bounded list                     |
+| `preservedEntryCount` | integer                    | Number of resources streamed unchanged |
+| `outcome`             | `applied                   | already_satisfied                      | failed` | `already_satisfied` requires proof that the planned finding no longer exists before mutation |
 
 ## RevalidationComparison
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `before` | original `HealthReport` | Complete report used to create the plan |
-| `after` | repaired `HealthReport` | Complete report read from the closed temporary output |
-| `repairs` | `AppliedRepair[]` | Execution evidence |
-| `resolved` | finding identities | Present before, absent after |
-| `remaining` | finding identities | Present before and after |
-| `introduced` | findings | Absent before, present after |
-| `successful` | boolean | True only when final health is Healthy, no introduced Error/Critical exists, and every confirmed operation is applied or proven already satisfied |
-| `finalHealth` | `HealthState` | Equal to `after.health`; successful output eligibility still requires allowed delivery state |
+| Field         | Type                    | Description                                                                                                                                       |
+| ------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `before`      | original `HealthReport` | Complete report used to create the plan                                                                                                           |
+| `after`       | repaired `HealthReport` | Complete report read from the closed temporary output                                                                                             |
+| `repairs`     | `AppliedRepair[]`       | Execution evidence                                                                                                                                |
+| `resolved`    | finding identities      | Present before, absent after                                                                                                                      |
+| `remaining`   | finding identities      | Present before and after                                                                                                                          |
+| `introduced`  | findings                | Absent before, present after                                                                                                                      |
+| `successful`  | boolean                 | True only when final health is Healthy, no introduced Error/Critical exists, and every confirmed operation is applied or proven already satisfied |
+| `finalHealth` | `HealthState`           | Equal to `after.health`; successful output eligibility still requires allowed delivery state                                                      |
 
 ## PreparedEpub
 
 Created only after successful comparison with final `healthy` state and atomic promotion.
 
-| Field | Type | Rules |
-|-------|------|-------|
-| `outputPath` | final local path | Exists, is closed, and differs from source |
-| `displayName` | basename | Follows collision-safe naming contract |
-| `sizeBytes` | integer | Within archive source/output limit |
-| `report` | `HealthReport` | Complete post-repair report |
-| `comparison` | `RevalidationComparison` | `successful === true` |
-| `sourceFingerprint` | fingerprint | Links to original without changing it |
-| `outputSnapshot` | filesystem identity, size, digest, modification evidence | Binds later delivery to the revalidated output |
+| Field               | Type                                                     | Rules                                          |
+| ------------------- | -------------------------------------------------------- | ---------------------------------------------- |
+| `outputPath`        | final local path                                         | Exists, is closed, and differs from source     |
+| `displayName`       | basename                                                 | Follows collision-safe naming contract         |
+| `sizeBytes`         | integer                                                  | Within archive source/output limit             |
+| `report`            | `HealthReport`                                           | Complete post-repair report                    |
+| `comparison`        | `RevalidationComparison`                                 | `successful === true`                          |
+| `sourceFingerprint` | fingerprint                                              | Links to original without changing it          |
+| `outputSnapshot`    | filesystem identity, size, digest, modification evidence | Binds later delivery to the revalidated output |
 
 ## PreparationResult
 
@@ -207,15 +207,15 @@ Revalidation failures retain the complete before/after evidence required by the 
 
 ### BatchOperation
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | opaque ID | Operation-local |
-| `intent` | `inspect | prepare | send` | One command intent |
-| `items` | selected EPUB snapshot | Stable ordered snapshot |
-| `phase` | `ProcessingPhase` | Aggregate UI phase |
-| `activeIndex` | optional integer | At most one active file |
-| `cancellationRequested` | boolean | Stops pending scheduling and signals active adapters |
-| `results` | `BatchItemResult[]` | Completed results are immutable within the operation |
+| Field                   | Type                   | Description                                          |
+| ----------------------- | ---------------------- | ---------------------------------------------------- |
+| `id`                    | opaque ID              | Operation-local                                      |
+| `intent`                | `inspect               | prepare                                              | send` | One command intent |
+| `items`                 | selected EPUB snapshot | Stable ordered snapshot                              |
+| `phase`                 | `ProcessingPhase`      | Aggregate UI phase                                   |
+| `activeIndex`           | optional integer       | At most one active file                              |
+| `cancellationRequested` | boolean                | Stops pending scheduling and signals active adapters |
+| `results`               | `BatchItemResult[]`    | Completed results are immutable within the operation |
 
 ### BatchItemResult
 
@@ -234,15 +234,15 @@ Batch retry is available only for `failed`, matching the feature requirement. A 
 
 ## DeliveryConfiguration
 
-| Field | Type | Validation |
-|-------|------|------------|
-| `senderAddress` | email address | No CR/LF; syntactically valid |
-| `smtpHost` | hostname | Non-empty, no control characters, not logged |
-| `smtpPort` | integer | `1...65535`; defaults follow selected security mode |
-| `securityMode` | `implicit_tls | starttls` | No plaintext mode |
-| `username` | string | Non-empty, not logged |
-| `appPassword` | secret string | Obtained from password preference, never copied into domain reports |
-| `kindleAddress` | email address | Valid personal Kindle address; no CR/LF |
+| Field           | Type          | Validation                                                          |
+| --------------- | ------------- | ------------------------------------------------------------------- |
+| `senderAddress` | email address | No CR/LF; syntactically valid                                       |
+| `smtpHost`      | hostname      | Non-empty, no control characters, not logged                        |
+| `smtpPort`      | integer       | `1...65535`; defaults follow selected security mode                 |
+| `securityMode`  | `implicit_tls | starttls`                                                           | No plaintext mode |
+| `username`      | string        | Non-empty, not logged                                               |
+| `appPassword`   | secret string | Obtained from password preference, never copied into domain reports |
+| `kindleAddress` | email address | Valid personal Kindle address; no CR/LF                             |
 
 The model exists only for the active send operation and is not written to project files or duplicated into general storage.
 
@@ -262,16 +262,16 @@ Fields include selected source ID, basename, start/end times, bytes streamed, sa
 
 A discriminated union rather than generic exceptions or display strings.
 
-| Category | Examples |
-|----------|----------|
-| `input` | unsupported extension, missing/unreadable/non-regular source, source changed |
-| `archive` | operational archive open/read/close failure after structural evidence has been represented as findings |
-| `xml` | operational parser/stream failure after malformed or unsafe XML evidence has been represented as findings |
-| `repair` | `REPAIR_PLAN_STALE`, `REPAIR_OUTPUT_UNWRITABLE`, `REPAIR_WRITE_FAILED`, `REPAIR_TIMEOUT`, `REPAIR_TEMP_CLEANUP_FAILED`, `REVALIDATION_TIMEOUT`, `REVALIDATION_NEW_ERROR`, or `REVALIDATION_NEW_CRITICAL` |
-| `delivery_config` | missing or invalid SMTP fields |
-| `delivery_transport` | DNS, connection, TLS, auth, envelope, message, stream, timeout |
-| `cancelled` | phase-aware cooperative cancellation |
-| `internal` | bounded fallback with no raw error or sensitive context |
+| Category             | Examples                                                                                                                                                                                                 |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `input`              | unsupported extension, missing/unreadable/non-regular source, source changed                                                                                                                             |
+| `archive`            | operational archive open/read/close failure after structural evidence has been represented as findings                                                                                                   |
+| `xml`                | operational parser/stream failure after malformed or unsafe XML evidence has been represented as findings                                                                                                |
+| `repair`             | `REPAIR_PLAN_STALE`, `REPAIR_OUTPUT_UNWRITABLE`, `REPAIR_WRITE_FAILED`, `REPAIR_TIMEOUT`, `REPAIR_TEMP_CLEANUP_FAILED`, `REVALIDATION_TIMEOUT`, `REVALIDATION_NEW_ERROR`, or `REVALIDATION_NEW_CRITICAL` |
+| `delivery_config`    | missing or invalid SMTP fields                                                                                                                                                                           |
+| `delivery_transport` | DNS, connection, TLS, auth, envelope, message, stream, timeout                                                                                                                                           |
+| `cancelled`          | phase-aware cooperative cancellation                                                                                                                                                                     |
+| `internal`           | bounded fallback with no raw error or sensitive context                                                                                                                                                  |
 
 Every failure has a stable code, safe user message, retryability, phase, and optional bounded facts. Raw adapter errors remain inside the adapter boundary and are never logged or returned.
 

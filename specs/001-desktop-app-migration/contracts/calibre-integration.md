@@ -7,11 +7,11 @@
 
 PageForge may invoke only these Calibre tools by default:
 
-| Tool | Used for |
-|------|----------|
+| Tool            | Used for                                              |
+| --------------- | ----------------------------------------------------- |
 | `ebook-convert` | format conversion and aggressive repair orchestration |
-| `ebook-meta` | metadata inspect/update |
-| `ebook-polish` | polish steps when required by existing workflows |
+| `ebook-meta`    | metadata inspect/update                               |
+| `ebook-polish`  | polish steps when required by existing workflows      |
 
 PageForge MUST NOT reimplement full conversion pipelines in-process.
 
@@ -37,6 +37,7 @@ If an explicit override path is set but missing/non-executable, fail with a depe
 - `missingTools` lists human-facing tool names
 
 UI guidance:
+
 - If tools missing, block Calibre-backed actions
 - Show recovery guidance (install Calibre / locate tools)
 - Setup/update actions are optional helpers, not silent side effects
@@ -52,25 +53,27 @@ Invocation requirements:
 - Never execute shell string concatenation with unsanitized user input; use argument arrays
 
 Progress:
+
 - Stream or poll process lifetime into operation logs when useful
 - Cancellation SHOULD terminate the child process tree when supported
 
 ## Operation matrix
 
-| Domain operation | Requires convert | Requires meta | Requires polish | Notes |
-|------------------|------------------|---------------|-----------------|-------|
-| readiness audit (EPUB structure) | no | no | no | PageForge-owned ZIP/XML checks |
-| readiness prepare (may convert MOBI, may polish/repair) | maybe | no | maybe | depends on path |
-| convert MOBI/PDF/EPUB | yes | no | no | |
-| safe structural repair | no | no | no | PageForge-owned |
-| aggressive repair | yes | no | maybe | Calibre roundtrip |
-| metadata inspect/update | no | yes | no | |
-| SMTP send | no | no | no | |
-| handoff open | no | no | no | |
+| Domain operation                                        | Requires convert | Requires meta | Requires polish | Notes                          |
+| ------------------------------------------------------- | ---------------- | ------------- | --------------- | ------------------------------ |
+| readiness audit (EPUB structure)                        | no               | no            | no              | PageForge-owned ZIP/XML checks |
+| readiness prepare (may convert MOBI, may polish/repair) | maybe            | no            | maybe           | depends on path                |
+| convert MOBI/PDF/EPUB                                   | yes              | no            | no              |                                |
+| safe structural repair                                  | no               | no            | no              | PageForge-owned                |
+| aggressive repair                                       | yes              | no            | maybe           | Calibre roundtrip              |
+| metadata inspect/update                                 | no               | yes           | no              |                                |
+| SMTP send                                               | no               | no            | no              |                                |
+| handoff open                                            | no               | no            | no              |                                |
 
 ## Failure messages
 
 Messages MUST be actionable, for example:
+
 - tool not found + install/locate guidance
 - conversion failed + include compact stderr summary
 - output path exists and overwrite disabled

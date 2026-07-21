@@ -82,22 +82,14 @@ export function healthReportMarkdown(report: HealthReport): string {
     for (const category of categories) {
       sections.push(
         `### ${titleCase(category)}`,
-        ...severityFindings
-          .filter((finding) => finding.category === category)
-          .map(findingMarkdown),
+        ...severityFindings.filter((finding) => finding.category === category).map(findingMarkdown),
       );
     }
   }
   return sections.join("\n\n");
 }
 
-export function HealthReportDetail({
-  source,
-  report,
-  onPrepare,
-  onReveal,
-  onCopyPath,
-}: HealthReportDetailProps) {
+export function HealthReportDetail({ source, report, onPrepare, onReveal, onCopyPath }: HealthReportDetailProps) {
   return (
     <Detail
       navigationTitle={source.displayName}
@@ -108,10 +100,7 @@ export function HealthReportDetail({
           <Detail.Metadata.Label title="EPUB Version" text={report.epubVersion} />
           <Detail.Metadata.Label title="Findings" text={String(report.findings.length)} />
           <Detail.Metadata.Label title="Duration" text={`${report.durationMs} ms`} />
-          <Detail.Metadata.Label
-            title="Inspected"
-            text={new Date(report.inspectedAtMs).toLocaleString("en-US")}
-          />
+          <Detail.Metadata.Label title="Inspected" text={new Date(report.inspectedAtMs).toLocaleString("en-US")} />
           <Detail.Metadata.Separator />
           <Detail.Metadata.Label title="File" text={source.displayName} />
           <Detail.Metadata.Label title="Size" text={`${source.sizeBytes} bytes`} />

@@ -27,6 +27,7 @@
 4. Confirm the primary launchable product is the desktop app, not the old TUI.
 
 Expected:
+
 - No contributor needs the legacy TUI to perform baseline workflows.
 
 ## Slice A — Readiness audit (P1)
@@ -37,11 +38,13 @@ Expected:
 4. Run audit/diagnose.
 
 Expected:
+
 - Status is one of `ready` / `needs_fixes` / `blocked`
 - Issues use allowed severities
 - No output file is written for audit-only
 
 Negative check:
+
 - With Calibre quit/uninstalled, structural audit may still run; any Calibre-backed action shows recovery guidance.
 
 ## Slice B — Prepare Kindle-ready (P2)
@@ -50,15 +53,18 @@ Negative check:
 2. Confirm output path.
 
 Expected:
+
 - Creates `*-kindle-ready.epub`
 - Original source remains intact
 - Report refreshes after prepare
 
 MOBI path:
+
 1. Drop MOBI
 2. Prepare/Fix
 
 Expected:
+
 - MOBI treated as legacy input
 - Kindle-ready EPUB produced when conversion/preparation succeeds
 
@@ -71,6 +77,7 @@ Expected:
 5. Only if needed, run aggressive repair with explicit confirmation
 
 Expected:
+
 - Successful operations produce outputs and clear success states
 - Safe repair default output is `*-repaired.epub`
 - Aggressive repair is not the default action
@@ -85,6 +92,7 @@ Expected:
 5. Trigger Send to Kindle handoff action
 
 Expected:
+
 - Secret not present in config file
 - Incomplete profile blocks send with guidance
 - Successful send returns visible success result
@@ -98,6 +106,7 @@ Expected:
 4. Run batch convert and/or repair as available
 
 Expected:
+
 - Progress remains visible
 - UI stays navigable
 - Summary includes completed/skipped/failed style information
@@ -110,6 +119,7 @@ Expected:
 3. Re-inspect
 
 Expected:
+
 - Fields display when available
 - Update persists
 - Missing metadata tool yields clear dependency error
@@ -121,6 +131,7 @@ Expected:
 3. Confirm app update and Calibre update guidance are separate
 
 Expected:
+
 - Missing tools are named
 - Recent log messages appear
 - Update concerns are not conflated

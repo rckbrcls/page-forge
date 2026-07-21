@@ -1,8 +1,4 @@
-import type {
-  ArchiveEntryDescriptor,
-  ArchiveProjection,
-  PreflightOutcome,
-} from "../domain/models/archive";
+import type { ArchiveEntryDescriptor, ArchiveProjection, PreflightOutcome } from "../domain/models/archive";
 import type { DeliveryConfiguration, DeliveryResult } from "../domain/models/delivery";
 import type {
   ContainerProjection,
@@ -106,17 +102,12 @@ export interface FinalOutput {
 
 export interface FilesystemPort {
   readonly snapshotSource: (path: string) => Promise<Result<SelectedEpub, ProcessingFailure>>;
-  readonly openVerifiedSource: (
-    snapshot: SelectedEpub,
-  ) => Promise<Result<VerifiedReadDescriptor, ProcessingFailure>>;
+  readonly openVerifiedSource: (snapshot: SelectedEpub) => Promise<Result<VerifiedReadDescriptor, ProcessingFailure>>;
   readonly fingerprint: (
     descriptor: VerifiedReadDescriptor,
     signal: AbortSignal,
   ) => Promise<Result<SourceFingerprint, ProcessingFailure>>;
-  readonly predictOutput: (
-    sourcePath: string,
-    suffix: number,
-  ) => Promise<Result<PredictedOutput, ProcessingFailure>>;
+  readonly predictOutput: (sourcePath: string, suffix: number) => Promise<Result<PredictedOutput, ProcessingFailure>>;
   readonly createSameDirectoryTemporary: (
     prediction: PredictedOutput,
   ) => Promise<Result<TemporaryOutput, ProcessingFailure>>;
@@ -124,15 +115,11 @@ export interface FilesystemPort {
     temporary: TemporaryOutput,
     candidate: PredictedOutput,
   ) => Promise<Result<FinalOutput, ProcessingFailure>>;
-  readonly cleanupTemporary: (
-    temporary: TemporaryOutput,
-  ) => Promise<Result<void, ProcessingFailure>>;
+  readonly cleanupTemporary: (temporary: TemporaryOutput) => Promise<Result<void, ProcessingFailure>>;
 }
 
 export interface SelectionPort {
-  readonly selectedFinderPaths: () => Promise<
-    Result<readonly string[], ProcessingFailure>
-  >;
+  readonly selectedFinderPaths: () => Promise<Result<readonly string[], ProcessingFailure>>;
   readonly pickEpubPaths: () => Promise<Result<readonly string[], ProcessingFailure>>;
   readonly snapshotSelection: (
     paths: readonly string[],

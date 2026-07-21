@@ -27,6 +27,7 @@ Technical approach:
 **Language/Version**: Swift 6, SwiftUI (macOS 14+ target baseline)
 
 **Primary Dependencies**:
+
 - SwiftUI / AppKit interop where needed for open panels and keychain-adjacent UX
 - Foundation `Process` for Calibre CLI orchestration
 - Security framework / Keychain Services for SMTP secrets
@@ -34,12 +35,14 @@ Technical approach:
 - Optional: Homebrew detection only for setup/update guidance, not runtime core
 
 **Storage**:
+
 - Local ebook files chosen by the user
 - App config JSON/plist in Application Support
 - Secrets in macOS Keychain
 - No cloud database
 
 **Testing**:
+
 - Swift Testing / XCTest for domain and integration seams
 - Fixture EPUBs/MOBIs under `PageForgeTests/Fixtures`
 - Legacy Python tests remain frozen under `legacy/` for reference only
@@ -49,6 +52,7 @@ Technical approach:
 **Project Type**: native desktop utility app
 
 **Performance Goals**:
+
 - Drop/file selection feedback under 100ms perceived
 - Readiness audit UI remains interactive; typical local EPUB audit feels
   near-instant to a few seconds depending on file size
@@ -56,6 +60,7 @@ Technical approach:
 - Low idle memory footprint suitable for a utility app
 
 **Constraints**:
+
 - Mission-only Kindle-ready workflow
 - Local-first
 - No DRM removal
@@ -67,40 +72,41 @@ Technical approach:
 - Old TUI/CLI archived to legacy and not dual-maintained
 
 **Scale/Scope**:
+
 - Single-user local utility
 - Seven primary surfaces: Readiness, Convert, Batch, Send, Metadata, Settings, Logs
 - Full baseline parity with current README capabilities across phased delivery
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 ### Pre-design gate
 
-| Gate | Status | Notes |
-|------|--------|-------|
-| Mission fit | PASS | Migrates existing ebook preparation mission; no library/cloud expansion |
-| Fast/light/beautiful | PASS | Native SwiftUI utility; no Electron/web shell |
-| Readiness-first | PASS | Default route/home is Readiness |
-| Calibre boundary | PASS | Process orchestration only; no conversion engine rewrite |
-| Safe local-first | PASS | Local files, Keychain secrets, explicit aggressive repair, no DRM/Amazon automation |
-| Status vocabulary | PASS | Preserve `ready`/`needs_fixes`/`blocked` and issue severities |
-| Output contracts | PASS | Preserve repaired vs kindle-ready naming |
-| Architecture | PASS | Domain services separate from SwiftUI views |
-| Complexity | PASS with justified exception | See Complexity Tracking for legacy archival vs transitional CLI guidance |
+| Gate                 | Status                        | Notes                                                                               |
+| -------------------- | ----------------------------- | ----------------------------------------------------------------------------------- |
+| Mission fit          | PASS                          | Migrates existing ebook preparation mission; no library/cloud expansion             |
+| Fast/light/beautiful | PASS                          | Native SwiftUI utility; no Electron/web shell                                       |
+| Readiness-first      | PASS                          | Default route/home is Readiness                                                     |
+| Calibre boundary     | PASS                          | Process orchestration only; no conversion engine rewrite                            |
+| Safe local-first     | PASS                          | Local files, Keychain secrets, explicit aggressive repair, no DRM/Amazon automation |
+| Status vocabulary    | PASS                          | Preserve `ready`/`needs_fixes`/`blocked` and issue severities                       |
+| Output contracts     | PASS                          | Preserve repaired vs kindle-ready naming                                            |
+| Architecture         | PASS                          | Domain services separate from SwiftUI views                                         |
+| Complexity           | PASS with justified exception | See Complexity Tracking for legacy archival vs transitional CLI guidance            |
 
 ### Post-design gate
 
-| Gate | Status | Notes |
-|------|--------|-------|
-| Mission fit | PASS | Contracts and data model stay inside baseline workflows |
-| Fast/light/beautiful | PASS | Async job model + restrained surface map |
-| Readiness-first | PASS | Navigation contract defaults to Readiness |
-| Calibre boundary | PASS | Integration contract isolates Calibre process I/O |
-| Safe local-first | PASS | Delivery/security contracts require Keychain and handoff-only Amazon path |
-| Status/output contracts | PASS | Explicit domain enums and filename builders |
-| Architecture | PASS | Modular monolith boundaries defined |
-| Complexity | PASS | Legacy archive is deliberate one-time migration cost |
+| Gate                    | Status | Notes                                                                     |
+| ----------------------- | ------ | ------------------------------------------------------------------------- |
+| Mission fit             | PASS   | Contracts and data model stay inside baseline workflows                   |
+| Fast/light/beautiful    | PASS   | Async job model + restrained surface map                                  |
+| Readiness-first         | PASS   | Navigation contract defaults to Readiness                                 |
+| Calibre boundary        | PASS   | Integration contract isolates Calibre process I/O                         |
+| Safe local-first        | PASS   | Delivery/security contracts require Keychain and handoff-only Amazon path |
+| Status/output contracts | PASS   | Explicit domain enums and filename builders                               |
+| Architecture            | PASS   | Modular monolith boundaries defined                                       |
+| Complexity              | PASS   | Legacy archive is deliberate one-time migration cost                      |
 
 ## Project Structure
 
@@ -189,11 +195,11 @@ Domain behavior is reimplemented in Swift services, guided by legacy modules:
 
 ## Complexity Tracking
 
-| Violation / Tension | Why Needed | Simpler Alternative Rejected Because |
-|---------------------|------------|--------------------------------------|
-| Explicit archival of Python CLI/TUI instead of preserving it as a maintained secondary surface | User-approved full desktop refactor; legacy code is inspiration only | Keeping dual Python+Swift product surfaces doubles maintenance and delays a clean desktop architecture |
-| Full baseline parity in one migration program (phased delivery inside one feature) | README defines the real product; readiness-only rewrite would regress current value | Shipping only drop+audit first is fine as an implementation slice, but planning must cover full baseline so later slices stay coherent |
-| Reimplement domain logic in Swift rather than wrapping Python | Packaging, codesign, PATH, and UX reliability are worse with a Python sidecar on macOS | Sidecar is faster to prototype, but fails the light/native product bar and creates fragile distribution |
+| Violation / Tension                                                                            | Why Needed                                                                             | Simpler Alternative Rejected Because                                                                                                   |
+| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Explicit archival of Python CLI/TUI instead of preserving it as a maintained secondary surface | User-approved full desktop refactor; legacy code is inspiration only                   | Keeping dual Python+Swift product surfaces doubles maintenance and delays a clean desktop architecture                                 |
+| Full baseline parity in one migration program (phased delivery inside one feature)             | README defines the real product; readiness-only rewrite would regress current value    | Shipping only drop+audit first is fine as an implementation slice, but planning must cover full baseline so later slices stay coherent |
+| Reimplement domain logic in Swift rather than wrapping Python                                  | Packaging, codesign, PATH, and UX reliability are worse with a Python sidecar on macOS | Sidecar is faster to prototype, but fails the light/native product bar and creates fragile distribution                                |
 
 ## Phase 0 Research Summary
 

@@ -16,15 +16,7 @@ export interface DeliveryConfiguration {
 }
 
 export type DeliveryFailureCategory =
-  | "authentication"
-  | "tls"
-  | "dns"
-  | "connection"
-  | "timeout"
-  | "envelope"
-  | "message"
-  | "stream"
-  | "unknown";
+  "authentication" | "tls" | "dns" | "connection" | "timeout" | "envelope" | "message" | "stream" | "unknown";
 
 interface DeliveryResultBase<S extends string, Retry extends boolean> {
   readonly status: S;

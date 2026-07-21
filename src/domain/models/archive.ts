@@ -10,13 +10,7 @@ export type ArchiveEntryKind = "file" | "directory" | "symlink" | "special";
 export interface InvalidInternalPathEvidence {
   readonly originalName: string;
   readonly reason:
-    | "absolute"
-    | "traversal"
-    | "empty"
-    | "nul"
-    | "backslash"
-    | "invalid_unicode"
-    | "invalid_directory_marker";
+    "absolute" | "traversal" | "empty" | "nul" | "backslash" | "invalid_unicode" | "invalid_directory_marker";
 }
 
 export interface ArchiveEntryDescriptor {

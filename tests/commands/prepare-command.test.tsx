@@ -7,11 +7,7 @@ import type { Sha256Digest } from "../../src/domain/models/epub-document";
 import { createFindingIdentity, type Finding } from "../../src/domain/models/finding";
 import type { HealthReport, HealthState } from "../../src/domain/models/health-report";
 import type { BatchOperation, BatchOperationId } from "../../src/domain/models/operation";
-import type {
-  PreparedEpub,
-  RepairOperationId,
-  RepairPlan,
-} from "../../src/domain/models/repair";
+import type { PreparedEpub, RepairOperationId, RepairPlan } from "../../src/domain/models/repair";
 import { selectedEpub } from "../fixtures/input/fixture-definitions";
 
 vi.mock("@raycast/api", () => ({
@@ -97,25 +93,13 @@ function finding(
   };
 }
 
-const repairableSource = selectedEpub(
-  "/fixtures/repairable.epub",
-  "repairable.epub",
-  "prepare-repairable",
-);
+const repairableSource = selectedEpub("/fixtures/repairable.epub", "repairable.epub", "prepare-repairable");
 const healthySource = selectedEpub("/fixtures/healthy.epub", "healthy.epub", "prepare-healthy");
 const reviewSource = selectedEpub("/fixtures/review.epub", "review.epub", "prepare-review");
-const unsupportedSource = selectedEpub(
-  "/fixtures/unsupported.epub",
-  "unsupported.epub",
-  "prepare-unsupported",
-);
+const unsupportedSource = selectedEpub("/fixtures/unsupported.epub", "unsupported.epub", "prepare-unsupported");
 const unsafeSource = selectedEpub("/fixtures/unsafe.epub", "unsafe.epub", "prepare-unsafe");
 
-function report(
-  source: typeof repairableSource,
-  health: HealthState,
-  findings: readonly Finding[] = [],
-): HealthReport {
+function report(source: typeof repairableSource, health: HealthState, findings: readonly Finding[] = []): HealthReport {
   return {
     sourceId: source.id,
     sourceFingerprint: {
@@ -240,9 +224,7 @@ describe("PrepareCommandView", () => {
     [unsupportedSource, "unsupported", "Unsupported"],
     [unsafeSource, "unsafe", "Unsafe"],
   ] as const)("renders %s as %s without a repair action", (source, health, expectedText) => {
-    const stateReport = report(source, health, [
-      finding("METADATA_TITLE_MISSING", "none", health),
-    ]);
+    const stateReport = report(source, health, [finding("METADATA_TITLE_MISSING", "none", health)]);
     const operation: BatchOperation = {
       id: operationId,
       intent: "prepare",

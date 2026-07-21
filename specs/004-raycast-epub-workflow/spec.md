@@ -6,17 +6,17 @@
 
 **Status**: Draft
 
-**Input**: User description: "Rebuild Page Forge as a public, self-contained Raycast extension that inspects, safely repairs, revalidates, and explicitly sends EPUB files to Kindle."
+**Input**: User description: "Build Book Sender as a public, self-contained Raycast extension with one command that checks EPUB or PDF books, safely repairs EPUBs when possible, and explicitly sends them to Kindle."
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Inspect EPUB Health (Priority: P1)
 
 As a Kindle user, I want to inspect one or more EPUB files selected in Finder or a file picker so that I can understand their structural health and Kindle compatibility without changing them.
 
-**Why this priority**: Inspection is the foundation for every other action and delivers value without requiring repair or delivery configuration.
+**Why this priority**: Inspection is the foundation for every book-processing action after the command's delivery setup gate has been satisfied.
 
-**Independent Test**: Select a valid EPUB and several malformed EPUB fixtures, run `Page Forge: Inspect EPUB`, and verify that each original remains byte-for-byte unchanged while receiving an individual health state and structured findings.
+**Independent Test**: Select a valid EPUB and several malformed EPUB fixtures, run `Send Book to Kindle`, and verify that inspection occurs before confirmation while each original remains byte-for-byte unchanged.
 
 **Acceptance Scenarios**:
 
@@ -38,7 +38,7 @@ As a Kindle user, I want to review a deterministic repair plan and create a repa
 
 **Acceptance Scenarios**:
 
-1. **Given** an EPUB classified as `Repairable`, **When** the user runs `Page Forge: Prepare EPUB for Kindle`, **Then** the extension presents a repair plan before creating any output.
+1. **Given** an EPUB classified as `Repairable`, **When** the user runs `Send Book to Kindle`, **Then** the extension automatically applies only deterministic permitted repairs, revalidates the copy, and presents it for delivery confirmation.
 2. **Given** a repair plan, **When** the user reviews it, **Then** the plan identifies every repair operation, the findings it addresses, unresolved findings and reasons, and the predicted output name.
 3. **Given** a confirmed plan containing only permitted repairs, **When** preparation succeeds, **Then** a new `-kindle-ready.epub` copy is created without changing the original or unrelated book content.
 4. **Given** the default output path already exists, **When** preparation starts, **Then** an unused alternative path is selected without overwriting or removing any existing file.
@@ -68,18 +68,18 @@ As a user handling an untrusted ebook, I want dangerous archives and ambiguous r
 
 ### User Story 4 - Send Explicitly to Kindle (Priority: P2)
 
-As a Kindle user, I want to send a healthy or prepared EPUB using my own email configuration, or continue through Amazon's official manual flow, so that delivery remains explicit and under my control.
+As a Kindle user, I want to configure email delivery before selecting a book and then send a healthy or prepared book explicitly, so that setup problems remain separate from book validation results.
 
-**Why this priority**: Delivery completes the workflow, but inspection and preparation remain useful without it.
+**Why this priority**: Delivery completes the workflow, and validating setup first prevents configuration failures from being misreported as book failures.
 
-**Independent Test**: Use `Page Forge: Send EPUB to Kindle` with valid and invalid delivery configurations, a healthy file, and a repairable file; verify explicit confirmation, single-file attachment behavior, redacted errors, and the manual fallback.
+**Independent Test**: Open `Send Book to Kindle` with valid, missing, and invalid delivery configurations; verify that missing or invalid setup is resolved before file selection, then verify explicit confirmation, automatic safe repair, single-file attachment behavior, and redacted delivery errors.
 
 **Acceptance Scenarios**:
 
 1. **Given** a healthy or successfully prepared EPUB and valid email settings, **When** the user explicitly confirms sending, **Then** only that chosen file is attached and progress concludes with a clear success or failure result.
 2. **Given** a repairable EPUB, **When** the user starts the send command, **Then** Page Forge offers preparation and requires review and confirmation before any later send action.
 3. **Given** a `Needs Review`, `Unsupported`, or `Unsafe` EPUB, **When** sending is attempted, **Then** automatic delivery is blocked and the reason is shown.
-4. **Given** missing or invalid email settings, **When** the user attempts automatic delivery, **Then** no message is sent and the user can reveal the EPUB or open the official Send to Kindle page.
+4. **Given** missing or invalid email settings, **When** the user opens the command, **Then** a dedicated delivery setup screen appears before file selection, inspection, or preparation, and no book is reported as failed.
 5. **Given** a network failure, rejected attachment, invalid credentials, or cancellation, **When** delivery ends, **Then** the user receives a sanitized result that contains no password or other secret.
 6. **Given** inspection or preparation alone, **When** it completes, **Then** no book is transmitted unless the user separately initiates and confirms delivery.
 
@@ -115,7 +115,7 @@ As a Raycast user, I want Page Forge to install as one small public extension wi
 **Acceptance Scenarios**:
 
 1. **Given** Raycast on a supported macOS system, **When** Page Forge is installed, **Then** inspection and preparation work without additional user-installed software or downloaded executables.
-2. **Given** the installed extension, **When** its commands are listed, **Then** only `Page Forge: Inspect EPUB`, `Page Forge: Prepare EPUB for Kindle`, and `Page Forge: Send EPUB to Kindle` are provided by the first version.
+2. **Given** the installed extension, **When** its commands are listed, **Then** only `Send Book to Kindle` is provided; inspection and repair remain internal stages of that command.
 3. **Given** the final repository, **When** its production, test, configuration, asset, and documentation surfaces are reviewed, **Then** no independently built legacy application, old distribution artifact, Calibre integration, format conversion, or conflicting product documentation remains.
 4. **Given** a prospective user or reviewer, **When** they read the project documentation, **Then** they can identify installation steps, commands, privacy behavior, limitations, supported files, repair policy, and email delivery setup.
 
@@ -137,7 +137,7 @@ As a Raycast user, I want Page Forge to install as one small public extension wi
 - Delivery encounters missing settings, malformed addresses, unsupported security settings, authentication failure, network interruption, timeout, or server-side attachment rejection.
 - A batch mixes healthy, repairable, ambiguous, unsupported, unsafe, unreadable, failed, cancelled, and successfully prepared items.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -177,7 +177,7 @@ As a Raycast user, I want Page Forge to install as one small public extension wi
 - **FR-034**: Delivery settings and the selected file MUST be validated before transmission; invalid or incomplete settings MUST prevent sending and produce an actionable result.
 - **FR-035**: Every delivery MUST require an explicit user action after file and destination review, attach only the selected EPUB, show progress, and end with `submitted`, `failed`, `cancelled`, or `delivery_unknown`; the unknown result applies when SMTP acceptance cannot be determined and MUST NOT trigger automatic retry.
 - **FR-036**: Credentials MUST never appear in logs, reports, diagnostic details, or error messages and MUST never be stored remotely.
-- **FR-037**: When automatic delivery is unavailable, users MUST be able to reveal the EPUB and open Amazon's official Send to Kindle page without blocking inspection or preparation.
+- **FR-037**: The send command MUST require complete valid delivery settings before file selection, inspection, or preparation; missing or invalid settings MUST produce a dedicated setup screen and MUST NOT produce per-book failures.
 - **FR-038**: Inspection and repair MUST occur entirely on the local device; no book content, metadata, filename, full source path, finding, or report MAY be sent to a backend, analytics service, third-party API, AI model, or telemetry system.
 - **FR-039**: The only permitted book transmission MUST be an explicit delivery action to the user's configured Kindle address.
 - **FR-040**: Batch results MUST show each file's state, report, output path when applicable, and operation result; users MUST be able to retry only failed items.
@@ -205,7 +205,7 @@ As a Raycast user, I want Page Forge to install as one small public extension wi
 - **NFR-011 - Publication readiness**: The extension MUST pass all required package validation, build, lint, type checking, tests, metadata review, license review, and documentation checks before Store submission.
 - **NFR-012 - Accessibility**: All three commands and their primary actions, reports, confirmations, progress, cancellation, and recovery paths MUST be fully usable by keyboard and expose meaningful labels through Raycast's supported accessibility behavior.
 
-### Constitution Constraints *(mandatory)*
+### Constitution Constraints _(mandatory)_
 
 - **CC-001**: The feature MUST directly support the EPUB-to-Kindle pipeline and accept EPUB only.
 - **CC-002**: The feature MUST keep processing local, preserve originals, and require explicit delivery intent.
@@ -228,7 +228,7 @@ As a Raycast user, I want Page Forge to install as one small public extension wi
 - **Delivery Configuration**: User-provided sender, server, security, credential, and Kindle destination settings used only for explicit email delivery.
 - **Delivery Result**: The chosen file, sanitized progress outcome, and submitted, failed, cancelled, or delivery-unknown status, without credentials or book content.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
@@ -266,8 +266,8 @@ As a Raycast user, I want Page Forge to install as one small public extension wi
 
 - A supported Raycast installation on macOS.
 - Local read access to selected EPUBs and write access to their destination directories for preparation.
-- User-supplied email delivery settings, network access, and an Amazon-approved sender only when automatic delivery is explicitly requested.
-- Continued availability of Amazon's official Send to Kindle page for the manual fallback.
+- User-supplied email delivery settings and an Amazon-approved sender before book intake, plus network access when delivery is confirmed.
+- Continued availability of Amazon's official Send to Kindle page as a secondary action after configured book preparation.
 
 ## Out of Scope
 

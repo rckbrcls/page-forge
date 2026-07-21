@@ -26,11 +26,7 @@ export function rebuildContainerForSingleOpf(packagePath: InternalPath): Uint8Ar
   return output;
 }
 
-export function correctManifestMediaType(
-  input: Uint8Array,
-  manifestId: string,
-  mediaType: string,
-): Uint8Array {
+export function correctManifestMediaType(input: Uint8Array, manifestId: string, mediaType: string): Uint8Array {
   const text = decodeUtf8(input);
   const tags = startTags(text).filter(({ localName }) => localName === "item");
   const matches = tags.filter((tag) => attribute(tag, "id")?.decodedValue === manifestId);
@@ -57,20 +53,13 @@ export function correctUniqueReference(
   const originalMatches = references.filter(({ decodedValue }) => decodedValue === originalReference);
   if (originalMatches.length > 1) throw new Error("The planned XML reference is not unique.");
   if (originalMatches.length === 0) {
-    const replacementMatches = references.filter(
-      ({ decodedValue }) => decodedValue === replacementReference,
-    );
+    const replacementMatches = references.filter(({ decodedValue }) => decodedValue === replacementReference);
     if (replacementMatches.length === 1) return Buffer.from(input);
     throw new Error("The planned XML reference was not found.");
   }
 
   const target = originalMatches[0];
-  return replaceRange(
-    text,
-    target.valueStart,
-    target.valueEnd,
-    escapeXmlAttribute(replacementReference, target.quote),
-  );
+  return replaceRange(text, target.valueStart, target.valueEnd, escapeXmlAttribute(replacementReference, target.quote));
 }
 
 export function normalizeEquivalentInternalPath(
@@ -86,9 +75,7 @@ export function normalizeXmlEncoding(input: Uint8Array): Uint8Array {
   assertBounded(input);
   const { text } = decodeXml(input);
   const declaration = /^(\s*<\?xml\s[^?]*\bencoding\s*=\s*["'])([^"']+)(["'][^?]*\?>)/iu;
-  const normalized = declaration.test(text)
-    ? text.replace(declaration, "$1UTF-8$3")
-    : text;
+  const normalized = declaration.test(text) ? text.replace(declaration, "$1UTF-8$3") : text;
   const output = Buffer.from(normalized, "utf8");
   assertBounded(output);
   return output;

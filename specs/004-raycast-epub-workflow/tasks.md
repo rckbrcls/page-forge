@@ -22,7 +22,7 @@ description: "Implementation tasks for the self-contained Raycast EPUB workflow"
 
 **Purpose**: Establish the single-package Raycast extension and validation toolchain without implementing product behavior.
 
-- [x] T001 Create the root Raycast package manifest with exactly three macOS view commands, optional send-command SMTP preferences, Node `>=22.22.2 <23`, scripts, and the approved runtime/dev dependencies in `package.json`
+- [x] T001 Create the root Raycast package manifest for Book Sender with exactly one macOS view command, optional SMTP preferences, Node `>=22.22.2 <23`, scripts, and the approved runtime/dev dependencies in `package.json`
 - [x] T002 After explicit execution approval, install the dependencies declared by T001 and generate the deterministic npm dependency graph in `package-lock.json`
 - [x] T003 [P] Configure strict TypeScript 6.0 and Raycast ambient types in `tsconfig.json` and `raycast-env.d.ts`
 - [x] T004 [P] Configure Raycast ESLint and repository-wide Prettier checks in `eslint.config.js`, `prettier.config.js`, and `.prettierignore`
@@ -61,7 +61,7 @@ description: "Implementation tasks for the self-contained Raycast EPUB workflow"
 
 **Goal**: Inspect Finder-selected or manually selected EPUBs locally, preserve originals, and present complete structured health reports.
 
-**Independent Test**: Select valid EPUB 2/3 and malformed fixtures, run `Page Forge: Inspect EPUB`, and verify individual structured reports, picker fallback, no network use, and byte-identical originals.
+**Independent Test**: Select valid EPUB 2/3 and malformed fixtures, run `Send Book to Kindle`, and verify internal inspection, picker fallback, no network before confirmation, and byte-identical originals.
 
 ### Tests for User Story 1
 
@@ -224,18 +224,18 @@ description: "Implementation tasks for the self-contained Raycast EPUB workflow"
 
 **Goal**: Leave one documented, self-contained, Store-ready Raycast extension and remove every conflicting desktop, Calibre, conversion, and legacy product surface.
 
-**Independent Test**: Install the package with only Raycast available, verify exactly three commands and core fixtures, and run static repository checks proving no legacy product or forbidden dependency remains.
+**Independent Test**: Install the package with only Raycast available, verify exactly one command and core fixtures, and run static repository checks proving no legacy product or forbidden dependency remains.
 
 ### Tests for User Story 6
 
-- [ ] T103 [P] [US6] Add package-manifest contract tests for one macOS extension, exactly three view commands, optional send preferences, approved dependency types, and no npm publication path in `tests/repository/package-manifest.test.ts`
+- [x] T103 [P] [US6] Add a package-manifest contract test for one macOS extension, exactly one view command, optional send preferences, approved dependency types, and no npm publication path in `tests/commands/manifest.test.ts`
 - [ ] T104 [P] [US6] Add repository-boundary tests forbidding Swift/Xcode/Python/Calibre/Sparkle/conversion/native-binary/helper-service production surfaces while preserving current Spec Kit artifacts in `tests/repository/product-boundary.test.ts`
 
 ### Implementation for User Story 6
 
 - [ ] T105 [P] [US6] Add an owned publication-compatible 512x512 PNG extension icon in `assets/extension-icon.png`
 - [ ] T106 [P] [US6] Add the publication-compatible project license in `LICENSE`
-- [ ] T107 [P] [US6] Rewrite installation, three commands, EPUB scope, privacy, limits, repair policy, SMTP app-password setup, approved sender, truthful submission, and manual fallback documentation in `README.md`
+- [ ] T107 [P] [US6] Rewrite installation, one-command EPUB/PDF scope, privacy, limits, repair policy, required SMTP app-password setup, approved sender, truthful submission, and post-setup manual handoff documentation in `README.md`
 - [ ] T108 [P] [US6] Publish the stable v1 finding definitions and fixture expectations from the contract in `docs/finding-catalog.md`
 - [ ] T109 [P] [US6] Document automatic-repair boundaries, original immutability, local processing, temporary-copy handling, credentials, and zero telemetry in `docs/repair-policy.md` and `docs/privacy.md`
 - [ ] T110 [P] [US6] Document Store metadata, icon/license checks, dependency review, validation gates, and operational desktop deprecation follow-up in `docs/publication.md`
