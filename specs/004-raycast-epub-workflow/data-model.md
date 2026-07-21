@@ -1,6 +1,6 @@
 # Data Model: Self-Contained Raycast EPUB Workflow
 
-**Date**: 2026-07-20  
+**Date**: 2026-07-20
 **Source**: [spec.md](./spec.md), [research.md](./research.md), and [contracts/](./contracts/)
 
 The models below are logical contracts. Concrete TypeScript declarations may split them into files, but must preserve the discriminated states and dependency boundaries.

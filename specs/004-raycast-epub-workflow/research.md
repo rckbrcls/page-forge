@@ -1,6 +1,6 @@
 # Research: Self-Contained Raycast EPUB Workflow
 
-**Date**: 2026-07-20  
+**Date**: 2026-07-20
 **Scope**: Resolve the runtime, dependency, security, interaction, delivery, testing, and migration choices required by [spec.md](./spec.md).
 
 ## 1. Raycast Runtime and Package Baseline
