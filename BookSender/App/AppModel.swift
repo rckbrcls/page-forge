@@ -28,7 +28,8 @@ final class AppModel {
     private let intakeService: BookIntakeService
     private let setupService: DeliverySetupService
     private let credentialStore: KeychainCredentialStore
-    private var observationTask: Task<Void, Never>?
+    @ObservationIgnored
+    nonisolated(unsafe) private var observationTask: Task<Void, Never>?
 
     init() {
         let workspaceStore = WorkspaceStore()
@@ -44,7 +45,7 @@ final class AppModel {
         observationTask = Task { [weak self] in
             guard let self else { return }
             for await event in pipeline.events {
-                await self.project(event)
+                self.project(event)
             }
         }
         Task { await loadSetup() }

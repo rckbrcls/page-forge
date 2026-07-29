@@ -3,7 +3,7 @@ import ZIPFoundation
 
 actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
     private let source: StagedFileReference
-    private var entriesByPath: [String: Archive.Entry] = [:]
+    private var entriesByPath: [String: Entry] = [:]
 
     init(source: StagedFileReference) {
         self.source = source
@@ -11,9 +11,15 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
 
     func preflight(_ file: StagedFileReference, limits: SafetyLimits) async throws -> [ArchiveEntryDescriptor] {
         try Task.checkCancellation()
-        guard file.identifier == source.identifier,
-              let archive = Archive(url: source.url, accessMode: .read)
-        else { throw failure("archive.open") }
+        guard file.identifier == source.identifier else {
+            throw failure("archive.open")
+        }
+        let archive: Archive
+        do {
+            archive = try Archive(url: source.url, accessMode: .read)
+        } catch {
+            throw failure("archive.open")
+        }
 
         var descriptors: [ArchiveEntryDescriptor] = []
         var normalizedPaths = Set<String>()
@@ -51,7 +57,9 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
                     path: normalized,
                     compressedSize: Int64(entry.compressedSize),
                     uncompressedSize: Int64(entry.uncompressedSize),
-                    compressionMethod: 0,
+                    compressionMethod: entry.isCompressed
+                        ? CompressionMethod.deflate.rawValue
+                        : CompressionMethod.none.rawValue,
                     isDirectory: entry.type == .directory
                 )
             )
@@ -61,10 +69,17 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
 
     func data(for path: String, maximumBytes: Int) async throws -> Data {
         try Task.checkCancellation()
-        guard let archive = Archive(url: source.url, accessMode: .read),
-              let entry = entriesByPath[path],
-              entry.uncompressedSize <= UInt32(maximumBytes)
-        else { throw failure("archive.entry-unavailable") }
+        guard let entry = entriesByPath[path],
+              entry.uncompressedSize <= UInt64(maximumBytes)
+        else {
+            throw failure("archive.entry-unavailable")
+        }
+        let archive: Archive
+        do {
+            archive = try Archive(url: source.url, accessMode: .read)
+        } catch {
+            throw failure("archive.open")
+        }
 
         var result = Data()
         _ = try archive.extract(entry, bufferSize: 64 * 1_024) { chunk in

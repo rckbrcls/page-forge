@@ -9,17 +9,18 @@ struct EPUBArchiveWriter: EPUBArchiveWriting {
     ) async throws -> StagedFileReference {
         try Task.checkCancellation()
         let partialURL = workspace.rootURL.appending(component: "prepared.partial.epub")
-        guard !FileManager.default.fileExists(atPath: partialURL.path),
-              let input = Archive(url: source.url, accessMode: .read),
-              let output = Archive(url: partialURL, accessMode: .create)
-        else { throw failure("repair.output-create") }
+        guard !FileManager.default.fileExists(atPath: partialURL.path) else {
+            throw failure("repair.output-create")
+        }
 
         do {
+            let input = try Archive(url: source.url, accessMode: .read)
+            let output = try Archive(url: partialURL, accessMode: .create)
             let mimetype = Data("application/epub+zip".utf8)
             try output.addEntry(
                 with: "mimetype",
                 type: .file,
-                uncompressedSize: UInt32(mimetype.count),
+                uncompressedSize: Int64(mimetype.count),
                 compressionMethod: .none,
                 provider: { position, size in
                     mimetype.subdata(in: Int(position)..<Int(position) + size)
@@ -34,7 +35,7 @@ struct EPUBArchiveWriter: EPUBArchiveWriting {
                 try output.addEntry(
                     with: entry.path,
                     type: .file,
-                    uncompressedSize: UInt32(bytes.count),
+                    uncompressedSize: Int64(bytes.count),
                     compressionMethod: .deflate,
                     provider: { position, size in
                         bytes.subdata(in: Int(position)..<Int(position) + size)
