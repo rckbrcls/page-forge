@@ -45,8 +45,11 @@ actor BookIntakeService {
         case "pdf": format = .pdf
         default: throw failure("intake.unsupported")
         }
+        let resourceIdentifier = values.fileResourceIdentifier
+            .map { String(describing: $0) }
+            ?? url.standardizedFileURL.path
         let identity = SourceIdentity(
-            resourceIdentifier: String(describing: values.fileResourceIdentifier ?? url.standardizedFileURL.path),
+            resourceIdentifier: resourceIdentifier,
             byteCount: byteCount,
             modificationDate: values.contentModificationDate ?? .distantPast,
             fingerprint: "\(byteCount):\(values.contentModificationDate?.timeIntervalSince1970 ?? 0)"
