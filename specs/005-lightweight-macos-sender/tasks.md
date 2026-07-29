@@ -221,15 +221,15 @@ then remove obsolete implementations and verify their absence.
 - [ ] T083 [P] Review exact package versions, transitive products, licenses, source-only status, and absence of helpers/telemetry in BookSender/Resources/THIRD_PARTY_NOTICES.md
 - [ ] T084 Run the authorized static, build, Swift Testing, XCTest, and XCUITest gates from quickstart.md and record distinct evidence in specs/005-lightweight-macos-sender/validation/native-gates.md
 - [ ] T085 Run the authorized manual setup, mixed-batch, shortcut, cancellation, recovery, accessibility, and original-digest scenarios and record results in specs/005-lightweight-macos-sender/validation/manual-acceptance.md
-- [ ] T086 Update product scope, installation, SMTP security, batch behavior, privacy, and two-screen usage documentation in README.md and docs/desktop-migration.md
-- [ ] T087 Replace PageForge/Sparkle/Python appcast release inputs with a signed and notarized Book Sender GitHub release workflow in .github/workflows/release.yml
+- [X] T086 Update product scope, installation, SMTP security, batch behavior, privacy, and two-screen usage documentation in README.md, docs/desktop-migration.md, and docs/deployment.md
+- [X] T087 Add the approved Book Sender ad-hoc GitHub Release workflow, exact Sparkle dependency, EdDSA appcast, GitHub Pages artifact, and reviewable installer
 - [X] T088 Make BookSender.xcodeproj the sole application project and remove all old target, bundle, scheme, signing, icon, and package references from BookSender.xcodeproj/project.pbxproj
 - [X] T089 Delete obsolete Raycast and Node production/tests/configuration only after T084-T088 pass: src/, tests/, package.json, package-lock.json, pnpm-lock.yaml, tsconfig.json, vitest.config.ts, eslint.config.js, .prettierrc, raycast-env.d.ts, and Raycast assets
 - [X] T090 Delete obsolete PageForge native sources and tests only after behavior and fixtures are represented in BookSender: PageForge/, PageForgeTests/, and PageForge.xcodeproj/
-- [X] T091 Delete historical and forbidden runtime/update surfaces after cutover: legacy/, scripts/install.sh, scripts/update_appcast.py, Sparkle inputs, Calibre/conversion/MOBI/AZW code, and subprocess EPUB code
+- [X] T091 Delete historical runtime/update surfaces after cutover: legacy/, old PageForge installer/appcast inputs, Calibre/conversion/MOBI/AZW code, and subprocess EPUB code
 - [X] T092 Remove generated local artifacts without touching unrelated worktree changes: node_modules/, dist/, .raycast/, coverage/, xcuserdata/, .DS_Store files, duplicate generated images, and obsolete release assets
 - [ ] T093 Run final forbidden-reference, single-product, package-content, entitlement, original-preservation, and two-screen absence scans and record results in specs/005-lightweight-macos-sender/validation/final-absence-scan.md
-- [ ] T094 Separately verify archive signing, sandbox entitlements, notarization, stapling, clean-account installation, public artifact checksum, and downloaded-app behavior in specs/005-lightweight-macos-sender/validation/distribution.md
+- [ ] T094 Separately verify archive signing, sandbox entitlements, Sparkle EdDSA, clean-account installation, public artifact identity, and downloaded-app behavior in specs/005-lightweight-macos-sender/validation/distribution.md
 - [X] T095 Raise every app, unit-test, UI-test, and project configuration deployment target to macOS 26.0 in BookSender.xcodeproj/project.pbxproj
 - [X] T096 Implement one adaptive behind-window material across the content and titlebar areas while preserving native window controls in BookSender/App/BookSenderApp.swift
 - [X] T097 Apply Liquid Glass only to the drop target and primary actions, and remove opaque Form and List backgrounds in BookSender/Features
@@ -274,7 +274,8 @@ Setup -> Foundation -> US1 (MVP) -> US2 -> US4 -> Cutover
 
 No automatic EPUB rule is accepted without its focused fixture. No SMTP
 transition is accepted without deterministic protocol evidence. Static success
-does not imply compilation, tests, runtime, signing, notarization, or release.
+does not imply compilation, tests, runtime, ad-hoc signing, update installation,
+or release.
 
 ## Parallel Execution Examples
 

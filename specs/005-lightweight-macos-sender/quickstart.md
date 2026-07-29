@@ -9,8 +9,10 @@ From the repository root:
 
 ```bash
 git diff --check
-rg -n "Raycast|@raycast|Calibre|EPUBCheck|child_process|Process\\(|/usr/bin/(zip|unzip)|Sparkle|update_appcast|\\.py\\b" \
-  BookSender BookSenderTests BookSenderUITests BookSender.xcodeproj .github README.md docs
+rg -n "Raycast|@raycast|Calibre|EPUBCheck|child_process|Process\\(|/usr/bin/(zip|unzip)" \
+  BookSender BookSenderTests BookSenderUITests BookSender.xcodeproj README.md docs
+rg -n "Sparkle|SUFeedURL|SUPublicEDKey|SUEnableInstallerLauncherService" \
+  BookSender BookSender.xcodeproj .github appcast.xml scripts README.md docs
 find . -type d -name xcuserdata -o -name node_modules -o -name dist -o -name .raycast -o -name coverage
 ```
 
@@ -87,13 +89,14 @@ Treat these as separate checks:
 
 1. archive the Release configuration;
 2. inspect sandbox entitlements and linked dependencies;
-3. validate code signing;
-4. notarize and staple;
+3. validate the main app and nested ad-hoc code signatures;
+4. validate the Sparkle EdDSA signature and appcast item;
 5. inspect the packaged archive contents;
 6. install and launch on a clean supported account;
 7. publish through the chosen GitHub release workflow;
-8. download the public artifact and verify checksum, signature, notarization,
-   app identity, two-screen behavior, and absence of legacy runtime files.
+8. download the public artifact and verify size, signature, app identity,
+   two-screen behavior, update configuration, and absence of legacy runtime
+   files.
 
-No local build alone proves signing, notarization, installation, or public
-release correctness.
+No local build alone proves signing, update installation, clean-account
+behavior, or public release correctness.

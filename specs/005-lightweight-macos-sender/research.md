@@ -163,7 +163,9 @@ Sources: [Swift Testing](https://developer.apple.com/documentation/testing),
 **Decision**: Build the clean `BookSender` targets alongside the current source,
 port rules and fixtures, switch project/release references atomically, and then
 delete Raycast/Node, Calibre/conversion, subprocess EPUB, obsolete PageForge,
-legacy, generated, Sparkle, Python, and appcast surfaces.
+legacy, and generated surfaces. Replace the legacy update channel with a
+Book Sender-specific Sparkle, appcast, installer, GitHub Release, and Pages
+channel.
 
 **Rationale**: The TypeScript engine currently contains the broadest audit,
 repair, malicious-fixture, and SMTP behavioral baseline, while the old Swift tree
@@ -180,4 +182,6 @@ screens; preserving two products violates the constitution.
 At implementation time, every package version must be exact in
 `Package.resolved`, source-only for this product, license-reviewed, and
 compatible with the selected Swift 6/Xcode toolchain. No package may add a
-helper, executable download, telemetry, remote processing, or another product.
+processing helper, executable download, telemetry, remote processing, or another
+product. Sparkle may embed only the installer services required to update the
+application itself.

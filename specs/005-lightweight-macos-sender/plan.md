@@ -62,8 +62,8 @@ Settings window limited to delivery edits and shortcut preferences; adaptive
 behind-window material; Liquid Glass only for important functional controls;
 legibility with Reduce Transparency and Increase Contrast; local processing;
 explicit SMTP confirmation; immutable originals; sequential batch; no Raycast,
-Calibre, installed EPUBCheck, helper process, executable download, conversion,
-DRM removal, backend, analytics, or hidden transmission
+Calibre, installed EPUBCheck, ebook-processing helper, executable download,
+conversion, DRM removal, backend, analytics, or hidden transmission
 
 **Scale/Scope**: One temporary ordered batch of up to 20 supported books within
 individual safety and provider limits; one active preparation/archive operation
@@ -78,9 +78,9 @@ or SMTP attempt at a time; per-book failure isolation
 - **Mission and surface**: The plan contains only `Delivery Setup` and
   `Send Book` as primary screens. The native Settings window is auxiliary and
   contains only delivery editing and shortcut preferences.
-- **Native boundary**: The final product is one Swift/SwiftUI macOS app. All
-  selected packages are source dependencies inside the process and add no
-  helper or executable download.
+- **Native boundary**: The final product is one Swift/SwiftUI macOS app. Ebook
+  processing remains inside the app process; Sparkle's embedded services are
+  limited to application updates and add no downloadable executable.
 - **Minimal interaction**: Views render derived states and actionable inline
   detail. They do not expose the audit engine as navigation.
 - **Adaptive materials**: The macOS 26 window uses one system behind-window
@@ -101,7 +101,7 @@ or SMTP attempt at a time; per-book failure isolation
   domain to adapters. Every automatic rule requires a focused fixture.
 - **Migration and distribution**: Obsolete products are deleted only after the
   native replacement passes independent static, compilation, test, runtime,
-  signing, notarization, and release gates.
+  ad-hoc signing, update, and release gates.
 
 ### Post-design gate
 
@@ -261,12 +261,13 @@ adapters only report typed observations and failures.
    - Generated or local-only artifacts: `node_modules/`, `dist/`, `.raycast/`,
      `coverage/`, Xcode user data, `.DS_Store`, duplicate generated images, and
      obsolete PageForge/Raycast release assets.
-   - Calibre, conversion, MOBI/AZW metadata, subprocess-based EPUB, Sparkle,
-     Python appcast, and obsolete update/install paths.
+   - Calibre, conversion, MOBI/AZW metadata, subprocess-based EPUB, and obsolete
+     update/install paths. The approved Book Sender Sparkle/appcast path replaces
+     the removed PageForge channel.
 10. **Final absence scan and release verification**: confirm one app product,
     no stale project references or forbidden runtimes, then separately verify
-    signed archive, notarization, package contents, public release artifact, and
-    installation on a clean supported macOS account.
+    the ad-hoc signed archive, Sparkle signature, package contents, public
+    release artifact, and installation on a clean supported macOS account.
 
 Existing unrelated worktree changes, including current `.pi` and
 `.pi-subagents` deletions, are outside this migration and must not be restored,
@@ -282,8 +283,8 @@ Verification remains divided into independent claims:
 4. Runtime behavior for setup, intake, batch, cancellation, SMTP, shortcut, and
    the two-screen boundary.
 5. Performance, accessibility, memory, and hostile-input checks.
-6. Code signing, sandbox entitlement, notarization, archive-content, installation,
-   and release verification.
+6. Ad-hoc code signing, sandbox entitlement, Sparkle EdDSA, archive-content,
+   installation, and release verification.
 
 Passing an earlier gate never implies a later gate. The exact future commands and
 manual acceptance scenarios are documented in [quickstart.md](./quickstart.md);

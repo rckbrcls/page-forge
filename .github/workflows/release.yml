@@ -1,0 +1,312 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "CFBundleShortVersionString (for example: 0.2.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: book-sender-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-26
+    env:
+      PROJECT: BookSender.xcodeproj
+      SCHEME: BookSender
+      APP_BUNDLE_NAME: BookSender.app
+      APP_DISPLAY_NAME: BookSender
+      BUNDLE_IDENTIFIER: com.rckbrcls.BookSender
+      REPO: rckbrcls/page-forge
+      APPCAST_PATH: appcast.xml
+      SPARKLE_TOOLS_VERSION: 2.9.2
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Validate release input
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must use X.Y.Z format."
+            exit 1
+          fi
+
+          if git rev-parse "refs/tags/v${RELEASE_VERSION}" >/dev/null 2>&1; then
+            echo "Tag v${RELEASE_VERSION} already exists."
+            exit 1
+          fi
+
+          if gh release view "v${RELEASE_VERSION}" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Release v${RELEASE_VERSION} already exists."
+            exit 1
+          fi
+
+          echo "SHORT_VERSION=$RELEASE_VERSION" >> "$GITHUB_ENV"
+          echo "BUILD_VERSION=$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build universal Release
+        run: |
+          set -euo pipefail
+
+          DERIVED_DATA="$RUNNER_TEMP/DerivedData"
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -derivedDataPath "$DERIVED_DATA" \
+            "ARCHS=arm64 x86_64" \
+            "ONLY_ACTIVE_ARCH=NO" \
+            "MARKETING_VERSION=$SHORT_VERSION" \
+            "CURRENT_PROJECT_VERSION=$BUILD_VERSION" \
+            "CODE_SIGNING_ALLOWED=NO" \
+            "CODE_SIGNING_REQUIRED=NO" \
+            "CODE_SIGN_IDENTITY=" \
+            "CODE_SIGN_STYLE=Manual"
+
+          APP_PATH="$DERIVED_DATA/Build/Products/Release/$APP_BUNDLE_NAME"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "App not found at $APP_PATH"
+            exit 1
+          fi
+
+          APP_EXECUTABLE="$APP_PATH/Contents/MacOS/$APP_DISPLAY_NAME"
+          ARCHITECTURES=$(lipo -archs "$APP_EXECUTABLE")
+          if [[ "$ARCHITECTURES" != *"arm64"* || "$ARCHITECTURES" != *"x86_64"* ]]; then
+            echo "Expected arm64 and x86_64, found: $ARCHITECTURES"
+            exit 1
+          fi
+
+          echo "APP_PATH=$APP_PATH" >> "$GITHUB_ENV"
+
+      - name: Verify update configuration
+        run: |
+          set -euo pipefail
+
+          INFO_PLIST="$APP_PATH/Contents/Info.plist"
+          test "$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$INFO_PLIST")" = "$BUNDLE_IDENTIFIER"
+          test "$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_PLIST")" = "$SHORT_VERSION"
+          test "$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$INFO_PLIST")" = "$BUILD_VERSION"
+          test "$(/usr/libexec/PlistBuddy -c "Print :SUFeedURL" "$INFO_PLIST")" = "https://rckbrcls.com/api/book-sender/appcast.xml"
+          /usr/libexec/PlistBuddy -c "Print :SUPublicEDKey" "$INFO_PLIST" >/dev/null
+          test "$(/usr/libexec/PlistBuddy -c "Print :SUEnableInstallerLauncherService" "$INFO_PLIST")" = "true"
+
+      - name: Sign app bundle ad hoc
+        run: |
+          set -euo pipefail
+
+          SPARKLE_FRAMEWORK="$APP_PATH/Contents/Frameworks/Sparkle.framework"
+          if [ ! -d "$SPARKLE_FRAMEWORK" ]; then
+            echo "Sparkle.framework is missing from the app bundle."
+            exit 1
+          fi
+
+          sign_runtime_component() {
+            local component="$1"
+            if [ -e "$component" ]; then
+              codesign --force --sign - --options runtime --timestamp=none "$component"
+            fi
+          }
+
+          sign_runtime_component "$SPARKLE_FRAMEWORK/Versions/B/XPCServices/Installer.xpc"
+
+          DOWNLOADER_XPC="$SPARKLE_FRAMEWORK/Versions/B/XPCServices/Downloader.xpc"
+          if [ -e "$DOWNLOADER_XPC" ]; then
+            codesign \
+              --force \
+              --sign - \
+              --options runtime \
+              --timestamp=none \
+              --preserve-metadata=entitlements \
+              "$DOWNLOADER_XPC"
+          fi
+
+          sign_runtime_component "$SPARKLE_FRAMEWORK/Versions/B/Autoupdate"
+          sign_runtime_component "$SPARKLE_FRAMEWORK/Versions/B/Updater.app"
+          codesign --force --sign - --timestamp=none "$SPARKLE_FRAMEWORK"
+
+          EXPANDED_ENTITLEMENTS="$RUNNER_TEMP/BookSender.entitlements"
+          sed \
+            's/$(PRODUCT_BUNDLE_IDENTIFIER)/'"$BUNDLE_IDENTIFIER"'/g' \
+            BookSender/BookSender.entitlements > "$EXPANDED_ENTITLEMENTS"
+
+          codesign \
+            --force \
+            --sign - \
+            --timestamp=none \
+            --entitlements "$EXPANDED_ENTITLEMENTS" \
+            "$APP_PATH"
+
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
+          SIGNED_ENTITLEMENTS="$RUNNER_TEMP/signed-entitlements.plist"
+          codesign -d --entitlements "$SIGNED_ENTITLEMENTS" "$APP_PATH"
+          /usr/libexec/PlistBuddy -c "Print :com.apple.security.app-sandbox" "$SIGNED_ENTITLEMENTS"
+          /usr/libexec/PlistBuddy -c "Print :com.apple.security.network.client" "$SIGNED_ENTITLEMENTS"
+          /usr/libexec/PlistBuddy -c "Print :com.apple.security.temporary-exception.mach-lookup.global-name:0" "$SIGNED_ENTITLEMENTS"
+          /usr/libexec/PlistBuddy -c "Print :com.apple.security.temporary-exception.mach-lookup.global-name:1" "$SIGNED_ENTITLEMENTS"
+
+      - name: Package ZIP
+        run: |
+          set -euo pipefail
+
+          ZIP_NAME="${APP_DISPLAY_NAME}-macos-universal-v${SHORT_VERSION}.zip"
+          ZIP_PATH="$RUNNER_TEMP/$ZIP_NAME"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_PATH"
+
+          ZIP_LENGTH=$(stat -f%z "$ZIP_PATH")
+          echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
+          echo "ZIP_PATH=$ZIP_PATH" >> "$GITHUB_ENV"
+          echo "ZIP_LENGTH=$ZIP_LENGTH" >> "$GITHUB_ENV"
+
+      - name: Download Sparkle tools
+        run: |
+          set -euo pipefail
+
+          SPARKLE_TAR="Sparkle-${SPARKLE_TOOLS_VERSION}.tar.xz"
+          SPARKLE_URL="https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_TOOLS_VERSION}/${SPARKLE_TAR}"
+          curl -fsSL "$SPARKLE_URL" -o "$RUNNER_TEMP/$SPARKLE_TAR"
+          mkdir -p "$RUNNER_TEMP/sparkle"
+          tar -xJf "$RUNNER_TEMP/$SPARKLE_TAR" -C "$RUNNER_TEMP/sparkle" --strip-components=1
+          test -x "$RUNNER_TEMP/sparkle/bin/sign_update"
+          echo "SPARKLE_BIN=$RUNNER_TEMP/sparkle/bin" >> "$GITHUB_ENV"
+
+      - name: Sign update with EdDSA
+        env:
+          SPARKLE_EDDSA_PRIVATE_KEY: ${{ secrets.SPARKLE_EDDSA_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SPARKLE_EDDSA_PRIVATE_KEY:-}" ]; then
+            echo "Missing SPARKLE_EDDSA_PRIVATE_KEY secret."
+            exit 1
+          fi
+
+          KEY_FILE="$RUNNER_TEMP/sparkle_ed25519.key"
+          printf "%s" "$SPARKLE_EDDSA_PRIVATE_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+
+          SIGN_OUTPUT=$("$SPARKLE_BIN/sign_update" --ed-key-file "$KEY_FILE" "$ZIP_PATH")
+          SIGNATURE=$(printf "%s" "$SIGN_OUTPUT" | sed -n 's/.*sparkle:edSignature="\([^"]*\)".*/\1/p')
+          if [ -z "$SIGNATURE" ]; then
+            echo "Failed to extract the Sparkle EdDSA signature."
+            exit 1
+          fi
+
+          echo "ED_SIGNATURE=$SIGNATURE" >> "$GITHUB_ENV"
+
+      - name: Update appcast
+        run: |
+          set -euo pipefail
+
+          PUB_DATE=$(date -u "+%a, %d %b %Y %H:%M:%S +0000")
+          python3 scripts/update_appcast.py \
+            --appcast "$APPCAST_PATH" \
+            --title "Book Sender" \
+            --link "https://github.com/${REPO}" \
+            --description "Book Sender updates" \
+            --language "en" \
+            --version "$BUILD_VERSION" \
+            --short-version "$SHORT_VERSION" \
+            --minimum-system-version "26.0" \
+            --pub-date "$PUB_DATE" \
+            --enclosure-url "https://github.com/${REPO}/releases/download/v${SHORT_VERSION}/${ZIP_NAME}" \
+            --enclosure-length "$ZIP_LENGTH" \
+            --ed-signature "$ED_SIGNATURE" \
+            --release-notes "Book Sender ${SHORT_VERSION}. SMTP delivery remains experimental in this release."
+
+      - name: Generate release notes
+        run: |
+          set -euo pipefail
+
+          NOTES_FILE="$RUNNER_TEMP/release-notes.md"
+          {
+            echo "## Book Sender ${SHORT_VERSION}"
+            echo
+            echo "Book Sender is a lightweight native macOS app for preparing EPUB and PDF books for Kindle delivery."
+            echo
+            echo "### Install"
+            echo
+            echo '\`curl -fsSL https://rckbrcls.com/api/book-sender/install | bash\`'
+            echo
+            echo "### Update"
+            echo
+            echo "Automatic updates are delivered through Sparkle."
+            echo
+            echo "### Current limitation"
+            echo
+            echo "SMTP delivery remains experimental and is not yet available in this release."
+            echo
+            echo "### Distribution"
+            echo
+            echo "This build uses ad-hoc code signing and is not notarized by Apple."
+          } > "$NOTES_FILE"
+
+          echo "NOTES_FILE=$NOTES_FILE" >> "$GITHUB_ENV"
+
+      - name: Commit appcast
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "$APPCAST_PATH"
+          git commit -m "Update Book Sender appcast for v${SHORT_VERSION}"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          gh release create "v${SHORT_VERSION}" \
+            "$ZIP_PATH" \
+            --target "$GITHUB_SHA" \
+            --title "Book Sender ${SHORT_VERSION}" \
+            --notes-file "$NOTES_FILE" \
+            --repo "$REPO"
+
+      - name: Prepare Pages artifact
+        run: |
+          set -euo pipefail
+
+          mkdir -p public/book-sender
+          cp "$APPCAST_PATH" public/book-sender/appcast.xml
+          cp scripts/install.sh public/book-sender/install
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy-pages:
+    runs-on: ubuntu-latest
+    needs: release
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

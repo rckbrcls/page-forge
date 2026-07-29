@@ -56,13 +56,37 @@ BookSenderTests/
 BookSenderUITests/
 ```
 
-Previous Raycast, Node, PageForge, Calibre, Python, Sparkle, appcast, and
-historical implementation trees have been removed. They are not supported
-fallbacks.
+Previous Raycast, Node, PageForge, Calibre, conversion, and historical
+implementation trees have been removed. They are not supported fallbacks.
+
+## Install on Mac
+
+Book Sender is distributed through GitHub Releases:
+
+```bash
+curl -fsSL https://rckbrcls.com/api/book-sender/install | bash
+```
+
+The installer selects the universal Book Sender archive, validates the app
+identity and ad-hoc code signature, and installs `BookSender.app` into
+`/Applications` or `~/Applications`. Review
+[`scripts/install.sh`](scripts/install.sh) before running it.
+
+The app uses Sparkle for daily update checks and exposes
+**Check for Updates…** in the application menu. Releases and appcast archives
+are protected with Sparkle EdDSA signatures.
+
+Current releases use ad-hoc code signing and are not notarized by Apple. The
+installer removes the downloaded quarantine attribute; users installing
+manually may need Finder's **Open** action. SMTP delivery remains experimental
+and unavailable in version `0.2.0`.
+
+See [`docs/deployment.md`](docs/deployment.md) for the release workflow and
+validation boundaries.
 
 ## Development and Verification
 
 Static checks, compilation, automated tests, runtime inspection, authenticated
-SMTP delivery, signing, notarization, and production release are separate
-validation claims. Build and test commands require explicit authorization under
-the repository workflow.
+SMTP delivery, ad-hoc signing, update installation, and production release are
+separate validation claims. Build and test commands require explicit
+authorization under the repository workflow.

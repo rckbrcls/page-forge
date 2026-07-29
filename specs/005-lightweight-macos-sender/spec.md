@@ -140,6 +140,8 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **FR-041**: Progress MUST remain honest and MUST NOT display invented percentages when the current pipeline stage has no measurable completion fraction.
 - **FR-042**: Background preparation MUST complete before an EPUB enters the stable eligible snapshot presented for delivery confirmation.
 - **FR-043**: The primary window MUST use a system behind-window material across its content and titlebar areas, while custom Liquid Glass remains limited to important functional controls.
+- **FR-044**: The macOS app MUST support manual and daily Sparkle update checks through the HTTPS Book Sender appcast, and every published update archive MUST carry the configured EdDSA signature.
+- **FR-045**: The public installer MUST select only the Book Sender universal ZIP, validate the app bundle name, bundle identifier, requested version, and code signature, and install only `BookSender.app`.
 
 ### Non-Functional Requirements
 
@@ -161,8 +163,9 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **CC-004**: The feature MUST process a stable batch sequentially, isolate outcomes per book, preserve completed work, and cooperatively cancel pending and active work.
 - **CC-005**: Originals and existing files MUST remain immutable, credentials MUST use protected local storage, and SMTP transmission MUST require explicit confirmation.
 - **CC-006**: Expected pipeline states and failures MUST be typed, domain rules MUST remain outside the interface, and every automatic cleanup or restoration rule MUST have focused fixture-backed tests.
-- **CC-007**: The feature MUST NOT introduce Raycast, an external ebook engine, helper process, conversion, DRM removal, library, history, cloud, account, AI, third primary screen, or parallel product.
+- **CC-007**: The feature MUST NOT introduce Raycast, an external ebook engine, processing helper, conversion, DRM removal, library, history, cloud, account, AI, third primary screen, or parallel product. Sparkle's embedded installer service is permitted only for application updates.
 - **CC-008**: The app MUST target macOS 26.0 or later, use an adaptive system material for the complete window background, and reserve Liquid Glass for the functional control layer.
+- **CC-009**: Distribution MUST use the approved GitHub Release, GitHub Pages, Sparkle EdDSA, ad-hoc signing, and reviewable installer channel, and MUST disclose that Developer ID and notarization are not present.
 
 ### Key Entities
 

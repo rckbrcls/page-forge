@@ -52,18 +52,22 @@ behavioral reference, not permission to copy obsolete implementation wholesale.
 - Collision-safe temporary-file and prepared-output ideas:
   `PageForge/Integrations/FileSystem/PreparedOutputExporter.swift`.
 
-These are design references only. Calibre, conversion, subprocess ZIP, Sparkle,
-extra settings/workflow screens, and legacy SMTP behavior are forbidden in the
-new product.
+These are design references only. Calibre, conversion, subprocess ZIP, extra
+settings/workflow screens, legacy SMTP behavior, and the old PageForge update
+channel are forbidden in the new product. The Book Sender channel uses a fresh
+Sparkle/appcast configuration.
 
-## Release inputs pending replacement
+## Legacy release inputs replaced
 
-- `.github/workflows/`
-- `scripts/install.sh`
-- `scripts/update_appcast.py`
-- `appcast.xml`
+- Previous `.github/workflows/release.yml`
+- Previous `scripts/install.sh`
+- Previous `scripts/update_appcast.py`
+- Previous `appcast.xml`
 - `PageForge.xcodeproj` signing, scheme, Sparkle package, and bundle settings
 - Raycast `package.json`, assets, and Node configuration
+
+The active replacements target `BookSender.xcodeproj`, `BookSender.app`, the
+Book Sender appcast, and the `/api/book-sender/*` public endpoints.
 
 ## Native cutover invariant
 

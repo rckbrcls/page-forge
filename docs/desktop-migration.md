@@ -54,12 +54,13 @@ Safety Check
 
 The repository contains one native application product in `BookSender.xcodeproj`.
 Production source exists only in `BookSender/**/*.swift`. Removed Raycast, Node,
-PageForge, Calibre, conversion, Python, Sparkle, appcast, and historical product
-trees must not be recreated as fallback implementations.
+PageForge, Calibre, conversion, and historical product trees must not be
+recreated as fallback implementations. Sparkle, the appcast, and release scripts
+exist only as the approved application-update and distribution path.
 
 ## Validation Boundary
 
 Static checks do not prove compilation, automated tests, runtime behavior,
-authenticated SMTP delivery, signing, notarization, or production release. Each
-gate must be executed and reported independently when the repository workflow
-allows it.
+authenticated SMTP delivery, ad-hoc signing, update installation, or production
+release. Each gate must be executed and reported independently when the
+repository workflow allows it.

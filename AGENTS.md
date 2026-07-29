@@ -30,8 +30,10 @@
 - The final repository contains one Swift and SwiftUI macOS application plus its
   tests, fixtures, documentation, and distribution assets.
 - Raycast, Electron, Tauri, Python, Java, Docker, Calibre, installed EPUBCheck,
-  helper processes, local services, executable downloads, and parallel legacy
-  products are obsolete or forbidden runtime dependencies.
+  processing helpers, local services, executable downloads, and parallel legacy
+  products are obsolete or forbidden runtime dependencies. Sparkle's embedded
+  update services and repository release scripts are the only distribution
+  exception.
 - Required dependency direction:
   `SwiftUI Screens -> Application Pipeline -> Ebook Audit and Repair Domain -> Archive, XML, Filesystem, SMTP, and Credential Adapters`.
 - Planned source areas:
@@ -100,10 +102,11 @@
 - Application state: `@MainActor @Observable` presentation model; one actor-owned
   sequential pipeline that emits minimal typed events through `AsyncStream`.
 - Source dependencies: exact compatible versions of KeyboardShortcuts,
-  ZIPFoundation, swift-nio, and swift-nio-ssl only. Keep them source-only and
-  inside the app process; review versions and licenses during implementation.
+  ZIPFoundation, swift-nio, swift-nio-ssl, and Sparkle only. Keep ebook
+  processing inside the app process; Sparkle may use its embedded installer
+  service only for signed application updates. Review versions and licenses.
 - Sandbox entitlements: user-selected read-only files and outgoing network client
-  only.
+  plus Sparkle's required installer-service mach-lookup exception.
 - Archive/XML: bounded ZIPFoundation entry streaming and Foundation `XMLParser`
   with external entities disabled; never use `Process`, `/usr/bin/zip`, or
   `/usr/bin/unzip`.
@@ -114,9 +117,10 @@
   XCTest/XCUITest for UI, accessibility, and performance.
 - Secrets: Data Protection Keychain; never ordinary preferences, project files,
   logs, reports, presentation models, or remote storage.
-- Forbidden: helper processes, executable downloads, Calibre, installed EPUBCheck,
-  Raycast, Python, Java, Docker, local services, and user-installed processing
-  tools.
+- Forbidden: processing helpers, executable downloads, Calibre, installed
+  EPUBCheck, Raycast, Python or Java runtime requirements, Docker, local
+  services, and user-installed processing tools. The Python appcast script runs
+  only in GitHub Actions and is never bundled as an app runtime dependency.
 
 ## Repository Layout
 
@@ -124,10 +128,12 @@
 - `BookSender/`: all production Swift source and app resources.
 - `BookSenderTests/`: domain, application, adapter, privacy, and performance tests.
 - `BookSenderUITests/`: two-screen, keyboard, accessibility, and journey tests.
+- `.github/workflows/release.yml`, `appcast.xml`, and `scripts/`: the approved
+  Sparkle, GitHub Release, GitHub Pages, and installer distribution surfaces.
 - `specs/005-lightweight-macos-sender/`: active product specification and
   validation records.
-- Do not recreate the removed Raycast, Node, PageForge, Calibre, Python, Sparkle,
-  appcast, or historical product trees.
+- Do not recreate the removed Raycast, Node, PageForge, Calibre, conversion, or
+  historical product trees.
 
 ## Verification
 
