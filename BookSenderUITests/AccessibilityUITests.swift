@@ -28,8 +28,10 @@ final class AccessibilityUITests: XCTestCase {
             app.buttons["sendBook.confirm"].waitForExistence(timeout: 2)
         )
         app.typeKey(.escape, modifierFlags: [])
-        XCTAssertTrue(app.buttons["sendBook.confirm"].exists)
-        app.buttons["Cancel"].click()
+        XCTAssertTrue(
+            app.buttons["sendBook.send"].waitForExistence(timeout: 2)
+        )
+        XCTAssertFalse(app.buttons["sendBook.confirm"].exists)
 
         XCTAssertTrue(app.staticTexts["Ready"].exists)
         XCTAssertTrue(app.buttons["sendBook.send"].isEnabled)

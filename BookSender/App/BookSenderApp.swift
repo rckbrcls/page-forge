@@ -5,6 +5,8 @@ import SwiftUI
 
 @main
 struct BookSenderApp: App {
+    @NSApplicationDelegateAdaptor(BookSenderApplicationDelegate.self)
+    private var applicationDelegate
     @State private var model: AppModel
     private let shortcutService: ShortcutService
     private let updaterController: SPUStandardUpdaterController
@@ -55,6 +57,15 @@ struct BookSenderApp: App {
         Settings {
             BookSenderSettingsView(model: model, shortcutService: shortcutService)
         }
+    }
+}
+
+@MainActor
+private final class BookSenderApplicationDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldTerminateAfterLastWindowClosed(
+        _ sender: NSApplication
+    ) -> Bool {
+        false
     }
 }
 

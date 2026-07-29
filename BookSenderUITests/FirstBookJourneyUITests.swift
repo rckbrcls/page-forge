@@ -45,11 +45,17 @@ final class FirstBookJourneyUITests: XCTestCase {
         )
 
         replaceText(in: senderAddress, with: "reader@example.com")
-        replaceText(in: smtpHost, with: "smtp.example.com")
-        replaceText(in: smtpPort, with: "465")
-        replaceText(in: username, with: "reader")
-        replaceText(in: appPassword, with: "ui-test-secret")
-        replaceText(in: kindleAddress, with: "reader@kindle.com")
+        app.typeKey(.tab, modifierFlags: [])
+        app.typeText("smtp.example.com")
+        app.typeKey(.tab, modifierFlags: [])
+        app.typeText("465")
+        app.typeKey(.tab, modifierFlags: [])
+        app.typeKey(.tab, modifierFlags: [])
+        app.typeText("reader")
+        app.typeKey(.tab, modifierFlags: [])
+        app.typeText("ui-test-secret")
+        app.typeKey(.tab, modifierFlags: [])
+        app.typeText("reader@kindle.com")
 
         app.buttons["deliverySetup.save"].click()
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
@@ -73,7 +79,7 @@ final class FirstBookJourneyUITests: XCTestCase {
         in element: XCUIElement,
         with value: String
     ) {
-        element.doubleClick()
+        element.click()
         element.typeKey("a", modifierFlags: .command)
         element.typeText(value)
     }

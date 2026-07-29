@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct SendBookView: View {
-    @Environment(\.openSettings) private var openSettings
     @Bindable var model: AppModel
     @State private var isShowingImporter = false
 
@@ -11,10 +10,14 @@ struct SendBookView: View {
                 Text("Send Book")
                     .font(.largeTitle.weight(.bold))
                 Spacer()
-                Button("Edit Setup") {
-                    model.settingsTab = .delivery
-                    openSettings()
+                SettingsLink {
+                    Text("Edit Setup")
                 }
+                .simultaneousGesture(
+                    TapGesture().onEnded {
+                        model.settingsTab = .delivery
+                    }
+                )
                 .accessibilityIdentifier("sendBook.editSetup")
             }
 
