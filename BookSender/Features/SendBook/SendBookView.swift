@@ -78,6 +78,7 @@ struct SendBookView: View {
             }
             .buttonStyle(.glassProminent)
             .buttonBorderShape(.capsule)
+            .padding(.top, 8)
             .disabled(model.setup == nil || model.eligibleCount == 0 || model.isSending)
             .keyboardShortcut(.defaultAction)
             .accessibilityIdentifier("sendBook.send")
