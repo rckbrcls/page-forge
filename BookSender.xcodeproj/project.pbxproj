@@ -41,6 +41,14 @@
 			);
 			target = BS0006010000000000000001 /* BookSender */;
 		};
+		BS0018010000000000000002 /* Exceptions for "BookSenderTests" folder in "BookSenderTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Fixtures/Books/README.md,
+				Fixtures/Malicious/README.md,
+			);
+			target = BS0006010000000000000002 /* BookSenderTests */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -54,7 +62,16 @@
 			path = BookSender;
 			sourceTree = "<group>";
 		};
-		BS0007010000000000000002 /* BookSenderTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BookSenderTests; sourceTree = "<group>"; };
+		BS0007010000000000000002 /* BookSenderTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				BS0018010000000000000002 /* Exceptions for "BookSenderTests" folder in "BookSenderTests" target */,
+			);
+			explicitFileTypes = {};
+			explicitFolders = ();
+			path = BookSenderTests;
+			sourceTree = "<group>";
+		};
 		BS0007010000000000000003 /* BookSenderUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BookSenderUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
