@@ -70,12 +70,14 @@ jobs:
 
           TEST_DERIVED_DATA="$RUNNER_TEMP/TestDerivedData"
           # Data Protection Keychain integration requires a developer-signed host.
+          # The native Settings scene is not exposed by the hosted runner.
           xcodebuild test \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
             -destination "platform=macOS" \
             -derivedDataPath "$TEST_DERIVED_DATA" \
             -skip-testing:BookSenderTests/KeychainCredentialStoreTests \
+            -skip-testing:BookSenderUITests/SettingsUITests \
             "CODE_SIGNING_ALLOWED=YES" \
             "CODE_SIGNING_REQUIRED=YES" \
             "CODE_SIGN_IDENTITY=-" \
