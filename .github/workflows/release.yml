@@ -159,7 +159,7 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
           SIGNED_ENTITLEMENTS="$RUNNER_TEMP/signed-entitlements.plist"
-          codesign -d --entitlements "$SIGNED_ENTITLEMENTS" "$APP_PATH"
+          codesign -d --entitlements :- "$APP_PATH" > "$SIGNED_ENTITLEMENTS"
           /usr/libexec/PlistBuddy -c "Print :com.apple.security.app-sandbox" "$SIGNED_ENTITLEMENTS"
           /usr/libexec/PlistBuddy -c "Print :com.apple.security.network.client" "$SIGNED_ENTITLEMENTS"
           /usr/libexec/PlistBuddy -c "Print :com.apple.security.temporary-exception.mach-lookup.global-name:0" "$SIGNED_ENTITLEMENTS"
