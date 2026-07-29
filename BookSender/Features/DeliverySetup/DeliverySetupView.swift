@@ -50,6 +50,7 @@ struct DeliverySetupView: View {
                 }
                 .buttonStyle(.glassProminent)
                 .buttonBorderShape(.capsule)
+                .padding(.top, 8)
                 .keyboardShortcut(.defaultAction)
                 .disabled(model.isSavingSetup)
                 .accessibilityIdentifier("deliverySetup.save")
