@@ -1,42 +1,47 @@
 import SwiftUI
 
 struct SendBookView: View {
+    @Environment(\.openSettings) private var openSettings
     @Bindable var model: AppModel
     @State private var isShowingImporter = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             HStack {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text("Send Book")
-                        .font(.system(size: 30, weight: .semibold))
-                    Text("Books are checked and prepared locally before you confirm delivery.")
-                        .foregroundStyle(.secondary)
-                }
+                Text("Send Book")
+                    .font(.largeTitle.weight(.bold))
                 Spacer()
-                Button("Edit Setup", action: model.editSetup)
-                    .buttonStyle(.plain)
+                if model.isPreviewingSendBook {
+                    Button("Back to Setup", action: model.returnToDeliverySetup)
+                        .accessibilityIdentifier("sendBook.backToSetup")
+                } else {
+                    Button("Edit Setup") {
+                        model.settingsTab = .delivery
+                        openSettings()
+                    }
                     .accessibilityIdentifier("sendBook.editSetup")
+                }
             }
 
-            BookDropTarget(isBusy: model.isImporting, add: model.addBooks)
+            BookDropTarget(
+                isBusy: model.isImporting,
+                choose: { isShowingImporter = true },
+                add: model.addBooks
+            )
 
-            HStack {
-                Button("Choose in Finder…") {
-                    isShowingImporter = true
-                }
-                .accessibilityIdentifier("sendBook.choose")
-                if model.isImporting {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Adding books…")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                if !model.items.isEmpty {
-                    Button("Clear", action: model.clear)
-                        .buttonStyle(.plain)
+            if model.isImporting || !model.items.isEmpty {
+                HStack {
+                    if model.isImporting {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Adding books…")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if !model.items.isEmpty {
+                        Button("Clear", action: model.clear)
+                    }
                 }
             }
 
@@ -49,9 +54,10 @@ struct SendBookView: View {
                                 ItemDetailDisclosure(item: item)
                             }
                         }
+                        .listRowBackground(Color.clear)
                     }
                 }
-                .listStyle(.inset)
+                .scrollContentBackground(.hidden)
                 .frame(minHeight: 180)
                 .accessibilityIdentifier("sendBook.batch")
             }
@@ -67,17 +73,17 @@ struct SendBookView: View {
                 model.requestSendConfirmation()
             } label: {
                 Text(model.isSending ? "Sending…" : "Send")
-                    .frame(maxWidth: .infinity)
+                    .font(.system(size: 16, weight: .semibold))
+                    .frame(maxWidth: .infinity, minHeight: 44)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(model.eligibleCount == 0 || model.isSending)
+            .buttonStyle(.glassProminent)
+            .buttonBorderShape(.capsule)
+            .disabled(model.setup == nil || model.eligibleCount == 0 || model.isSending)
             .keyboardShortcut(.defaultAction)
             .accessibilityIdentifier("sendBook.send")
         }
         .padding(36)
         .frame(minWidth: 620, minHeight: 620)
-        .background(Color(nsColor: .windowBackgroundColor))
         .modifier(BookFileImporter(isPresented: $isShowingImporter, add: model.addBooks))
         .sheet(isPresented: $model.isShowingConfirmation) {
             BatchConfirmationView(

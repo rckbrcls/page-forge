@@ -75,7 +75,7 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 
 1. **Given** an unsupported, unreadable, or unsafe file within a batch, **When** intake or preparation completes, **Then** the sending screen explains why that item cannot be sent without discarding or blocking other eligible items.
 2. **Given** an EPUB with only deterministic repairable faults, **When** background preparation completes, **Then** a separate cleaned or restored and revalidated working copy becomes ready while the original remains unchanged and technical details stay collapsed by default.
-3. **Given** saved delivery settings no longer work, **When** delivery fails, **Then** the sending screen presents a sanitized failure and a direct action to reopen the existing setup screen.
+3. **Given** saved delivery settings no longer work, **When** delivery fails, **Then** the sending screen presents a sanitized failure and a direct action to open the Settings window's `Delivery` tab.
 4. **Given** batch delivery is cancelled, **When** cancellation takes effect, **Then** pending books are not scheduled, the active attempt is interrupted when safe, completed outcomes are preserved, and every original remains unchanged.
 5. **Given** one delivery is interrupted after transmission may have begun, **When** the outcome cannot be confirmed, **Then** that item states that delivery is unknown, is not retried automatically, and later pending items remain cancelled unless the user explicitly starts them.
 
@@ -103,7 +103,7 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **FR-004**: `Delivery Setup` MUST include sender address, SMTP host, SMTP port, security mode, username, app password, and Kindle address.
 - **FR-005**: Setup validation MUST identify missing or invalid values at the relevant field before the configuration can be used for delivery.
 - **FR-006**: The app password and equivalent secrets MUST be stored in protected local credential storage and MUST never appear in plain text after entry, logs, reports, or user-visible errors.
-- **FR-007**: Saved non-secret setup values MUST be available for later sessions and editable by reopening the same `Delivery Setup` screen.
+- **FR-007**: Saved non-secret setup values MUST be available for later sessions and editable from the auxiliary Settings window's `Delivery` tab using the same validation and credential-preservation rules as initial `Delivery Setup`.
 - **FR-008**: After setup is complete, normal launch MUST open `Send Book` as the primary screen.
 - **FR-009**: `Send Book` MUST accept one or more local EPUB and PDF books through either drag and drop or a Finder file chooser.
 - **FR-010**: Every intake path MUST apply the same eligibility, safety, and file-state checks.
@@ -120,7 +120,7 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **FR-021**: Every selected book MUST end as submitted, failed, cancelled, delivery unknown, or excluded and MUST provide a concise next action appropriate to that outcome.
 - **FR-022**: The application MUST NOT retry a failed or delivery-unknown transmission automatically.
 - **FR-023**: After batch completion, the user MUST be able to retry only failed items, remove individual items, clear the batch, or add more books from the same sending screen.
-- **FR-024**: `Delivery Setup` MUST offer a configurable system-wide keyboard shortcut that reveals and activates the application's existing primary window while the application is active.
+- **FR-024**: The auxiliary Settings window's `Shortcut` tab MUST offer a configurable system-wide keyboard shortcut that reveals and activates the application's existing primary window while the application is active.
 - **FR-025**: Shortcut invocation MUST open `Send Book` when setup is complete and `Delivery Setup` when setup is incomplete.
 - **FR-026**: Shortcut invocation MUST NOT create duplicate primary windows, duplicate an active operation, clear a current selection, or initiate delivery.
 - **FR-027**: Users MUST be able to change or disable the shortcut, and shortcut registration conflicts MUST be explained without preventing normal application use.
@@ -139,6 +139,7 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **FR-040**: Detailed findings and applied actions MAY appear only through inline progressive disclosure when they explain a blocked item, a failure, an applied restoration, or a decision required from the user.
 - **FR-041**: Progress MUST remain honest and MUST NOT display invented percentages when the current pipeline stage has no measurable completion fraction.
 - **FR-042**: Background preparation MUST complete before an EPUB enters the stable eligible snapshot presented for delivery confirmation.
+- **FR-043**: The primary window MUST use a system behind-window material across its content and titlebar areas, while custom Liquid Glass remains limited to important functional controls.
 
 ### Non-Functional Requirements
 
@@ -150,16 +151,18 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **NFR-006 - Batch capacity**: A batch of 20 supported books within individual safety limits MUST complete with 20 independent results and without failure caused solely by batch size.
 - **NFR-007 - Untrusted input safety**: EPUB inspection and preparation MUST apply explicit limits for archive paths, entry count, expanded size, compression ratio, XML size and depth, duplicate entries, links, external entities, remote references, time, and memory before a file can be sent.
 - **NFR-008 - Accessibility**: All primary journeys MUST be completable without a pointing device and remain understandable with the supported macOS screen reader.
+- **NFR-009 - Adaptive appearance**: The complete interface MUST remain legible and operable in light and dark appearances, active and inactive window states, and with Reduce Transparency or Increase Contrast enabled.
 
 ### Constitution Constraints _(mandatory)_
 
-- **CC-001**: The feature MUST remain within `Delivery Setup` and `Send Book`; dialogs, progress, and inline disclosures MUST NOT become additional primary screens.
+- **CC-001**: The feature MUST retain only `Delivery Setup` and `Send Book` as primary screens. One auxiliary native Settings window MAY contain only `Delivery` and `Shortcut` tabs and MUST NOT contain intake, preparation, confirmation, delivery, queue, or history workflows.
 - **CC-002**: EPUB safety checking, structural audit, deterministic cleanup or restoration, separate-copy writing, and revalidation MUST remain an automatic local background pipeline.
 - **CC-003**: The default interface MUST expose concise derived states and reveal detailed evidence inline only when it supports an action, failure, applied restoration, or user decision.
 - **CC-004**: The feature MUST process a stable batch sequentially, isolate outcomes per book, preserve completed work, and cooperatively cancel pending and active work.
 - **CC-005**: Originals and existing files MUST remain immutable, credentials MUST use protected local storage, and SMTP transmission MUST require explicit confirmation.
 - **CC-006**: Expected pipeline states and failures MUST be typed, domain rules MUST remain outside the interface, and every automatic cleanup or restoration rule MUST have focused fixture-backed tests.
 - **CC-007**: The feature MUST NOT introduce Raycast, an external ebook engine, helper process, conversion, DRM removal, library, history, cloud, account, AI, third primary screen, or parallel product.
+- **CC-008**: The app MUST target macOS 26.0 or later, use an adaptive system material for the complete window background, and reserve Liquid Glass for the functional control layer.
 
 ### Key Entities
 
@@ -188,10 +191,11 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **SC-011**: Repository and documentation review finds zero remaining instructions that require Raycast to install, configure, open, or use the final product.
 - **SC-012**: A mixed batch of 20 supported, unsupported, repairable, unsafe, failed, and submitted books produces exactly 20 independent final results, and no single-item failure prevents a later eligible item from being attempted.
 - **SC-013**: In default-state interface review, 100% of healthy and successfully prepared books show only a concise state and no expanded technical report, while 100% of blocked or failed items provide an actionable inline explanation.
+- **SC-014**: Visual acceptance on macOS 26 confirms that the desktop remains visible through the complete window, all content remains readable across supported appearance and accessibility settings, and standard window controls and dragging remain functional.
 
 ## Assumptions
 
-- The target user owns the selected books, has a supported macOS device, and has a Kindle personal-document address.
+- The target user owns the selected books, has a Mac running macOS 26 or later, and has a Kindle personal-document address.
 - `Delivery Setup` is configuration, not a remote account registration flow; the product has no user account or backend.
 - The first release accepts a temporary batch of EPUB and PDF books but does not maintain a persistent queue or delivery history.
 - The user obtains any provider-specific app password and approves the sender address through their email and Amazon settings outside the application.
@@ -204,7 +208,7 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 
 ## Dependencies
 
-- A supported macOS version and permission to read the selected local file.
+- macOS 26 or later and permission to read the selected local file.
 - User-provided SMTP settings, working provider credentials, network access, and an Amazon-approved sender address.
 - Continued support by the user's email provider and Amazon for personal-document email delivery.
 - The native application implementation plan and its validated local processing dependencies.

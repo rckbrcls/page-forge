@@ -107,10 +107,10 @@ screen or exposed credential.
 - [X] T044 [P] [US1] Implement streaming sanitized MIME attachment generation in BookSender/Adapters/SMTP/MIMEMessageEncoder.swift
 - [ ] T045 [US1] Implement the SwiftNIO/NIOSSL SMTP state machine for implicit TLS, STARTTLS, TLS-only AUTH, DATA, timeouts, and sanitized failures in BookSender/Adapters/SMTP/NIOSMTPClient.swift
 - [ ] T046 [US1] Implement one independent confirmed SMTP attempt per prepared book in BookSender/Application/Delivery/BookDeliveryService.swift
-- [X] T047 [P] [US1] Implement the minimal accessible SMTP form and configurable shortcut field placeholder in BookSender/Features/DeliverySetup/DeliverySetupView.swift
+- [X] T047 [P] [US1] Implement the minimal accessible reusable SMTP form in BookSender/Features/DeliverySetup/DeliverySetupView.swift
 - [X] T048 [P] [US1] Implement the minimal drop/picker area, one-item readiness row, explicit confirmation, and terminal result presentation in BookSender/Features/SendBook/SendBookView.swift
 - [ ] T049 [US1] Implement @MainActor @Observable setup routing, pipeline event projection, and sanitized UI state in BookSender/App/AppModel.swift
-- [X] T050 [US1] Compose the single WindowGroup root with only DeliverySetupView and SendBookView in BookSender/App/BookSenderApp.swift
+- [X] T050 [US1] Compose the single WindowGroup root with only DeliverySetupView and SendBookView as primary screens plus the constrained native Settings scene in BookSender/App/BookSenderApp.swift
 
 **Checkpoint**: User Story 1 is an independently functional end-to-end MVP for
 one book.
@@ -170,7 +170,7 @@ incomplete setup; verify the same window and state return within one second.
 - [X] T065 [P] [US3] Define shortcut preference and registration state models in BookSender/Domain/Models/ShortcutModels.swift
 - [ ] T066 [US3] Implement KeyboardShortcuts registration, conflict projection, change, and disable behavior in BookSender/Application/Shortcut/ShortcutService.swift
 - [X] T067 [US3] Implement weak-window capture, NSApp activation, existing-window reuse, and state-preserving reveal in BookSender/App/WindowCoordinator.swift
-- [ ] T068 [US3] Integrate the recorder, conflict explanation, and disable action into the existing setup screen in BookSender/Features/DeliverySetup/ShortcutPreferenceSection.swift
+- [ ] T068 [US3] Integrate the recorder, conflict explanation, and disable action into the auxiliary Settings Shortcut tab in BookSender/Features/Settings/ShortcutSettingsView.swift
 - [X] T069 [US3] Remove new-window commands and route shortcut callbacks through WindowCoordinator in BookSender/App/BookSenderApp.swift
 
 **Checkpoint**: User Story 3 adds lightweight invocation without expanding beyond
@@ -230,6 +230,12 @@ then remove obsolete implementations and verify their absence.
 - [X] T092 Remove generated local artifacts without touching unrelated worktree changes: node_modules/, dist/, .raycast/, coverage/, xcuserdata/, .DS_Store files, duplicate generated images, and obsolete release assets
 - [ ] T093 Run final forbidden-reference, single-product, package-content, entitlement, original-preservation, and two-screen absence scans and record results in specs/005-lightweight-macos-sender/validation/final-absence-scan.md
 - [ ] T094 Separately verify archive signing, sandbox entitlements, notarization, stapling, clean-account installation, public artifact checksum, and downloaded-app behavior in specs/005-lightweight-macos-sender/validation/distribution.md
+- [X] T095 Raise every app, unit-test, UI-test, and project configuration deployment target to macOS 26.0 in BookSender.xcodeproj/project.pbxproj
+- [X] T096 Implement one adaptive behind-window material across the content and titlebar areas while preserving native window controls in BookSender/App/BookSenderApp.swift
+- [X] T097 Apply Liquid Glass only to the drop target and primary actions, and remove opaque Form and List backgrounds in BookSender/Features
+- [X] T098 Amend the constitution to 5.0.0 and align the active specification, research, plan, quickstart, checklist, and runtime guidance with macOS 26 and adaptive-material requirements
+- [X] T099 Run the permitted plist, diff, deployment-target, opaque-background, and Liquid Glass placement static checks
+- [ ] T100 Run authorized build, tests, and visual acceptance across wallpapers, appearances, window activation states, Reduce Transparency, Increase Contrast, keyboard, and VoiceOver
 
 **Final checkpoint**: The repository contains exactly one Book Sender macOS
 application plus its tests, fixtures, documentation, and distribution assets.
@@ -300,8 +306,8 @@ batch interfaces stabilize.
 
 ### User Story 3
 
-T063-T065 can proceed in parallel. Window activation T067 and the existing setup
-section T068 can proceed together after ShortcutService's interface is fixed.
+T063-T065 can proceed in parallel. Window activation T067 and the Settings
+shortcut tab T068 can proceed together after ShortcutService's interface is fixed.
 
 ### User Story 4
 

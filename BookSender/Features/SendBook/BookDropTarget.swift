@@ -3,31 +3,43 @@ import UniformTypeIdentifiers
 
 struct BookDropTarget: View {
     let isBusy: Bool
+    let choose: () -> Void
     let add: ([URL]) -> Void
 
     @State private var isTargeted = false
 
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "arrow.down.doc")
-                .font(.system(size: 30, weight: .medium))
-                .foregroundStyle(isTargeted ? Color.accentColor : .secondary)
-            Text(isTargeted ? "Drop to Add" : "Drop EPUB or PDF Books")
-                .font(.headline)
-            Text("You can add one book or a batch.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
+        Button(action: choose) {
+            VStack(spacing: 12) {
+                Image(systemName: "arrow.down.doc")
+                    .font(.title)
+                    .foregroundStyle(isTargeted ? Color.accentColor : .secondary)
+                Text(isTargeted ? "Drop to Add" : "Drop EPUB or PDF Books")
+                    .font(.headline)
+                Text("You can add one book or a batch.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 24)
+            .frame(maxWidth: .infinity, minHeight: 180)
+            .contentShape(Rectangle())
         }
-        .frame(maxWidth: .infinity, minHeight: 180)
-        .background(isTargeted ? Color.accentColor.opacity(0.08) : Color(nsColor: .controlBackgroundColor))
+        .buttonStyle(.plain)
+        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
         .overlay {
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 16)
                 .strokeBorder(
-                    isTargeted ? Color.accentColor : Color(nsColor: .separatorColor),
-                    style: StrokeStyle(lineWidth: isTargeted ? 2 : 1, dash: [7])
+                    isTargeted
+                        ? Color.accentColor
+                        : Color(nsColor: .secondaryLabelColor).opacity(0.75),
+                    style: StrokeStyle(
+                        lineWidth: isTargeted ? 3 : 2,
+                        lineCap: .round,
+                        dash: [8, 5]
+                    )
                 )
+                .allowsHitTesting(false)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 12))
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
             Task {
                 var urls: [URL] = []
@@ -43,8 +55,7 @@ struct BookDropTarget: View {
             return true
         }
         .disabled(isBusy)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Drop EPUB or PDF books")
+        .accessibilityLabel("Choose or drop EPUB or PDF books")
         .accessibilityIdentifier("sendBook.dropTarget")
     }
 }

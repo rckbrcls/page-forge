@@ -9,10 +9,16 @@
 Replace the repository's Raycast, Node.js, Calibre-oriented, and obsolete
 `PageForge` surfaces with one sandboxed native macOS application named
 `Book Sender`. The application has exactly two primary SwiftUI screens:
-`Delivery Setup` and `Send Book`. It accepts temporary batches of EPUB and PDF
-files, prepares them locally and sequentially through a typed safety, audit,
-deterministic repair, working-copy, and revalidation pipeline, then sends each
-eligible book through an independent explicitly confirmed SMTP attempt.
+`Delivery Setup` and `Send Book`, plus one auxiliary native Settings window
+limited to `Delivery` and `Shortcut` tabs. It accepts temporary batches of EPUB
+and PDF files, prepares them locally and sequentially through a typed safety,
+audit, deterministic repair, working-copy, and revalidation pipeline, then
+sends each eligible book through an independent explicitly confirmed SMTP
+attempt.
+
+The macOS 26 shell uses one adaptive behind-window material across the complete
+window, including the titlebar area. Liquid Glass remains limited to the drop
+target and primary actions so the content layer stays legible and visually calm.
 
 Migration uses a staged replacement: create the clean `BookSender` target beside
 the existing code, port behavior and fixtures into the new dependency direction,
@@ -24,10 +30,11 @@ No legacy deletion occurs during planning.
 
 **Language/Version**: Swift 6, Swift language mode 6, complete concurrency checking
 
-**Primary Dependencies**: SwiftUI, AppKit, Observation, Foundation,
-Security.framework, UniformTypeIdentifiers, ZIPFoundation `0.9.x` pinned to an
-exact compatible release, KeyboardShortcuts `3.0.1`, swift-nio and swift-nio-ssl
-pinned to exact mutually compatible releases
+**Primary Dependencies**: SwiftUI, AppKit including `NSVisualEffectView`,
+Observation, Foundation, Security.framework, UniformTypeIdentifiers,
+ZIPFoundation `0.9.x` pinned to an exact compatible release,
+KeyboardShortcuts `3.0.1`, swift-nio and swift-nio-ssl pinned to exact mutually
+compatible releases
 
 **Storage**: Data Protection Keychain for the SMTP app password; `UserDefaults`
 for non-secret setup and shortcut preferences; security-scoped user-selected
@@ -39,8 +46,8 @@ credential, and SMTP contracts; XCTest/XCUITest for UI, accessibility, and
 performance; deterministic EPUB, malicious archive/XML, repair, batch, and SMTP
 fixtures
 
-**Target Platform**: macOS 14.0 and later, Apple silicon and Intel where supported
-by the selected Xcode toolchain
+**Target Platform**: macOS 26.0 and later, Apple silicon and Intel where supported
+by the selected stable Xcode 26 toolchain
 
 **Project Type**: One native sandboxed macOS application, one unit-test target,
 and one UI-test target
@@ -50,10 +57,13 @@ at least 95% of reference launches; accepted shortcut visible and focused within
 one second; UI remains responsive throughout a sequential batch of 20 books;
 archive/XML work remains within explicit per-item resource limits
 
-**Constraints**: Exactly two primary screens; one primary window; local
-processing; explicit SMTP confirmation; immutable originals; sequential batch;
-no Raycast, Calibre, installed EPUBCheck, helper process, executable download,
-conversion, DRM removal, backend, analytics, or hidden transmission
+**Constraints**: Exactly two primary screens; one primary window; one auxiliary
+Settings window limited to delivery edits and shortcut preferences; adaptive
+behind-window material; Liquid Glass only for important functional controls;
+legibility with Reduce Transparency and Increase Contrast; local processing;
+explicit SMTP confirmation; immutable originals; sequential batch; no Raycast,
+Calibre, installed EPUBCheck, helper process, executable download, conversion,
+DRM removal, backend, analytics, or hidden transmission
 
 **Scale/Scope**: One temporary ordered batch of up to 20 supported books within
 individual safety and provider limits; one active preparation/archive operation
@@ -66,13 +76,16 @@ or SMTP attempt at a time; per-book failure isolation
 **Status: PASS**
 
 - **Mission and surface**: The plan contains only `Delivery Setup` and
-  `Send Book`; confirmations, the file importer, and inline details are not
-  additional primary screens.
+  `Send Book` as primary screens. The native Settings window is auxiliary and
+  contains only delivery editing and shortcut preferences.
 - **Native boundary**: The final product is one Swift/SwiftUI macOS app. All
   selected packages are source dependencies inside the process and add no
   helper or executable download.
 - **Minimal interaction**: Views render derived states and actionable inline
   detail. They do not expose the audit engine as navigation.
+- **Adaptive materials**: The macOS 26 window uses one system behind-window
+  material, preserves standard window controls, and reserves Liquid Glass for
+  the drop target and primary actions.
 - **Background pipeline**: EPUB processing follows safety check, audit,
   deterministic repair, separate-copy write, and revalidation. PDF bytes are
   unchanged.
@@ -96,8 +109,9 @@ or SMTP attempt at a time; per-book failure isolation
 
 The data model and contracts preserve the two-screen boundary, typed evidence,
 stable sequential batches, immutable originals, strict untrusted-input limits,
-explicit transmission, protected credentials, and independent migration gates.
-No constitutional exception or complexity waiver is required.
+explicit transmission, protected credentials, adaptive appearance, and
+independent migration gates. No constitutional exception or complexity waiver
+is required.
 
 ## Project Structure
 
@@ -134,7 +148,8 @@ BookSender/
 │   └── WindowCoordinator.swift
 ├── Features/
 │   ├── DeliverySetup/
-│   └── SendBook/
+│   ├── SendBook/
+│   └── Settings/
 ├── Application/
 │   ├── Intake/
 │   └── Pipeline/

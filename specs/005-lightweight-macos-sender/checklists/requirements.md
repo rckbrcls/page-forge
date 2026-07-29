@@ -31,6 +31,7 @@
 
 ## Notes
 
-- Validation iteration 3 passed all specification quality items after aligning the
-  feature with Constitution 4.0.0: two primary screens, advanced background ebook
-  preparation, minimal default feedback, and explicit batch delivery.
+- Validation iteration 4 passed all specification quality items after aligning
+  the feature with Constitution 5.0.0: two primary screens, advanced background
+  ebook preparation, minimal default feedback, explicit batch delivery, macOS 26,
+  and adaptive full-window material with restrained Liquid Glass controls.

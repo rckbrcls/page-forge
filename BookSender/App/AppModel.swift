@@ -9,7 +9,14 @@ final class AppModel {
         case sendBook
     }
 
+    enum SettingsTab: Hashable {
+        case delivery
+        case shortcut
+    }
+
     var route: Route = .deliverySetup
+    var settingsTab: SettingsTab = .delivery
+    var isPreviewingSendBook = false
     var setupDraft = DeliverySetupDraft()
     var setup: DeliverySetup?
     var setupErrors: [DeliveryField: DeliveryValidationError] = [:]
@@ -57,8 +64,9 @@ final class AppModel {
 
     func loadSetup() async {
         setup = await setupService.load()
-        route = setup == nil ? .deliverySetup : .sendBook
         if let setup {
+            isPreviewingSendBook = false
+            route = .sendBook
             setupDraft.senderAddress = setup.senderAddress.value
             setupDraft.smtpHost = setup.smtpHost.value
             setupDraft.smtpPort = String(setup.smtpPort)
@@ -66,6 +74,8 @@ final class AppModel {
             setupDraft.username = setup.username
             setupDraft.kindleAddress = setup.kindleAddress.value
             setupDraft.appPassword = ""
+        } else if !isPreviewingSendBook {
+            route = .deliverySetup
         }
     }
 
@@ -75,13 +85,17 @@ final class AppModel {
         setupMessage = nil
         let draft = setupDraft
         let existing = setup
+        let isInitialSetup = existing == nil
         Task {
             do {
                 let saved = try await setupService.save(draft, replacing: existing)
                 setup = saved
                 setupDraft.appPassword = ""
                 setupErrors = [:]
-                route = .sendBook
+                if isInitialSetup {
+                    isPreviewingSendBook = false
+                    route = .sendBook
+                }
             } catch let error as DeliveryValidationError {
                 let field = field(for: error)
                 setupErrors = field.map { [$0: error] } ?? [:]
@@ -92,12 +106,19 @@ final class AppModel {
         }
     }
 
-    func editSetup() {
-        route = .deliverySetup
+    func previewSendBook() {
+        guard setup == nil else {
+            isPreviewingSendBook = false
+            route = .sendBook
+            return
+        }
+        isPreviewingSendBook = true
+        route = .sendBook
     }
 
-    func cancelSetupEditing() {
-        if setup != nil { route = .sendBook }
+    func returnToDeliverySetup() {
+        isPreviewingSendBook = false
+        route = .deliverySetup
     }
 
     func addBooks(_ urls: [URL]) {

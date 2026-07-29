@@ -18,31 +18,59 @@ struct BookSenderApp: App {
             Group {
                 switch model.route {
                 case .deliverySetup:
-                    DeliverySetupView(model: model, shortcutService: shortcutService)
+                    DeliverySetupView(model: model, presentation: .onboarding)
                 case .sendBook:
                     SendBookView(model: model)
                 }
             }
-            .background(WindowCapture(coordinator: model.windowCoordinator))
-            .frame(minWidth: 620, minHeight: 620)
+            .frame(
+                minWidth: 620,
+                maxWidth: .infinity,
+                minHeight: 620,
+                maxHeight: .infinity
+            )
+            .background {
+                WindowGlassBackdrop(coordinator: model.windowCoordinator)
+                    .ignoresSafeArea()
+            }
         }
+        .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentMinSize)
         .commands {
             CommandGroup(replacing: .newItem) { }
         }
+
+        Settings {
+            BookSenderSettingsView(model: model, shortcutService: shortcutService)
+        }
     }
 }
 
-private struct WindowCapture: NSViewRepresentable {
+private struct WindowGlassBackdrop: NSViewRepresentable {
     let coordinator: WindowCoordinator
 
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async { coordinator.capture(view.window) }
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = .underWindowBackground
+        view.blendingMode = .behindWindow
+        view.state = .followsWindowActiveState
+        DispatchQueue.main.async { configure(view.window) }
         return view
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {
-        DispatchQueue.main.async { coordinator.capture(nsView.window) }
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        DispatchQueue.main.async { configure(nsView.window) }
+    }
+
+    @MainActor
+    private func configure(_ window: NSWindow?) {
+        guard let window else { return }
+
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
+        coordinator.capture(window)
     }
 }

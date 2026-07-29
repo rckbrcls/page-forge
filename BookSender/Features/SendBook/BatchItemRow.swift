@@ -23,7 +23,7 @@ struct BatchItemRow: View {
             Button(action: remove) {
                 Image(systemName: "xmark")
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderless)
             .accessibilityLabel("Remove \(item.displayName)")
         }
         .padding(.vertical, 7)

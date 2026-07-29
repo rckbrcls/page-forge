@@ -43,26 +43,33 @@ Keychain, pipeline/cancellation, and SMTP protocol contracts.
 
 ## 3. Manual product acceptance
 
-On a supported macOS 14+ test account:
+On a supported macOS 26+ test account:
 
 1. Launch without setup and verify only `Delivery Setup`.
 2. Validate every field, save a test credential, quit/relaunch, and confirm the
    secret is neither displayed nor stored in preferences/logs.
 3. Confirm launch now opens only `Send Book`.
-4. Add the same mixed EPUB/PDF group through Finder and drag-and-drop; verify one
+4. Use `Edit Setup` to open Settings on the `Delivery` tab, verify saved
+   non-secret values, save without replacing the existing password, then switch
+   to the `Shortcut` tab and configure or disable the global shortcut.
+5. Add the same mixed EPUB/PDF group through Finder and drag-and-drop; verify one
    shared behavior, duplicate handling, and minimal states.
-5. Prepare healthy, repairable, ambiguous, unsafe, malicious, and oversized
+6. Prepare healthy, repairable, ambiguous, unsafe, malicious, and oversized
    fixtures. Verify originals byte-for-byte before and after.
-6. Confirm a batch of 20, verify stable ordering, one active item, independent
+7. Confirm a batch of 20, verify stable ordering, one active item, independent
    outcomes, and later progress after one failure.
-7. Cancel before SMTP DATA and during DATA; verify `cancelled` versus
+8. Cancel before SMTP DATA and during DATA; verify `cancelled` versus
    `delivery unknown`, no automatic retry, and preserved completed outcomes.
-8. Test implicit TLS and STARTTLS against controlled SMTP fixtures, then a
+9. Test implicit TLS and STARTTLS against controlled SMTP fixtures, then a
    separately authorized real provider account without exposing credentials.
-9. Close the window, invoke the configured shortcut from another app, and verify
+10. Close the window, invoke the configured shortcut from another app, and verify
    the same window/state returns within the performance target.
-10. Complete all journeys with keyboard and VoiceOver and confirm there is no
-    third primary screen.
+11. Complete all journeys with keyboard and VoiceOver and confirm Settings is
+    auxiliary and there is no third primary workflow screen.
+12. Inspect light and dark wallpapers with the window active and inactive, then
+    repeat with Reduce Transparency and Increase Contrast. Confirm the desktop
+    remains visible through the complete window, content remains legible, and
+    window controls and dragging still work.
 
 ## 4. Original and temporary-file audit
 

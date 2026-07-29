@@ -25,6 +25,8 @@
 - Active product specification: `specs/005-lightweight-macos-sender/`.
 - Book Sender is a lightweight, self-contained native macOS application with
   exactly two primary screens: `Delivery Setup` and `Send Book`.
+- A native auxiliary Settings window contains only `Delivery` and `Shortcut`
+  tabs; it is not a third primary workflow screen.
 - The final repository contains one Swift and SwiftUI macOS application plus its
   tests, fixtures, documentation, and distribution assets.
 - Raycast, Electron, Tauri, Python, Java, Docker, Calibre, installed EPUBCheck,
@@ -36,6 +38,7 @@
   - `BookSender/App/`: application lifecycle and composition
   - `BookSender/Features/DeliverySetup/`: SMTP setup screen only
   - `BookSender/Features/SendBook/`: batch intake, minimal feedback, and delivery screen
+  - `BookSender/Features/Settings/`: saved delivery edits and global shortcut preferences
   - `BookSender/Application/Pipeline/`: sequential background orchestration
   - `BookSender/Domain/Audit/`: EPUB rules and health derivation
   - `BookSender/Domain/Repair/`: cleanup, restoration, planning, and comparison
@@ -91,7 +94,7 @@
 
 ## Dependencies And Platform
 
-- Product surface: macOS 14.0+, Swift 6 language mode with complete concurrency
+- Product surface: macOS 26.0+, Swift 6 language mode with complete concurrency
   checking, SwiftUI, AppKit, Observation, Foundation, Security.framework, and
   UniformTypeIdentifiers.
 - Application state: `@MainActor @Observable` presentation model; one actor-owned

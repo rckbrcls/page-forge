@@ -1,91 +1,102 @@
 import SwiftUI
 
+enum DeliverySetupPresentation {
+    case onboarding
+    case settings
+}
+
 struct DeliverySetupView: View {
     @Bindable var model: AppModel
-    let shortcutService: ShortcutService
+    let presentation: DeliverySetupPresentation
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                VStack(alignment: .leading, spacing: 6) {
+        Form {
+            if presentation == .onboarding {
+                Section {
+                    setupFields
+                } header: {
                     Text("Delivery Setup")
-                        .font(.system(size: 30, weight: .semibold))
-                    Text("Connect the email account approved to send books to your Kindle.")
-                        .foregroundStyle(.secondary)
+                        .font(.largeTitle.weight(.bold))
                 }
+            } else {
+                Section {
+                    setupFields
+                }
+            }
 
-                form
-
-                Divider()
-                ShortcutPreferenceSection(disable: shortcutService.disable)
-
-                if let setupMessage = model.setupMessage {
+            if let setupMessage = model.setupMessage {
+                Section {
                     Label(setupMessage, systemImage: "exclamationmark.circle")
                         .foregroundStyle(.red)
                         .accessibilityIdentifier("deliverySetup.error")
                 }
+            }
 
-                HStack {
-                    if model.setup != nil {
-                        Button("Cancel", action: model.cancelSetupEditing)
-                            .keyboardShortcut(.cancelAction)
-                    }
-                    Spacer()
-                    Button {
-                        model.saveSetup()
-                    } label: {
+            Section {
+                Button {
+                    model.saveSetup()
+                } label: {
+                    Group {
                         if model.isSavingSetup {
                             ProgressView()
                                 .controlSize(.small)
+                                .accessibilityLabel("Saving setup")
                         } else {
                             Text("Save Setup")
                         }
                     }
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(model.isSavingSetup)
-                    .accessibilityIdentifier("deliverySetup.save")
+                    .font(.system(size: 16, weight: .semibold))
+                    .frame(maxWidth: .infinity, minHeight: 44)
                 }
-            }
-            .frame(maxWidth: 560)
-            .padding(40)
-        }
-        .background(Color(nsColor: .windowBackgroundColor))
-    }
+                .buttonStyle(.glassProminent)
+                .buttonBorderShape(.capsule)
+                .keyboardShortcut(.defaultAction)
+                .disabled(model.isSavingSetup)
+                .accessibilityIdentifier("deliverySetup.save")
 
-    private var form: some View {
-        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 16) {
-            field("Sender Address", text: $model.setupDraft.senderAddress, field: .senderAddress)
-            field("SMTP Host", text: $model.setupDraft.smtpHost, field: .smtpHost)
-            field("SMTP Port", text: $model.setupDraft.smtpPort, field: .smtpPort)
-            GridRow {
-                Text("Security Mode")
-                    .fontWeight(.medium)
-                Picker("", selection: $model.setupDraft.securityMode) {
-                    ForEach(SecurityMode.allCases, id: \.self) { mode in
-                        Text(mode.title).tag(mode)
+                if presentation == .onboarding, model.setup == nil {
+                    HStack {
+                        Spacer()
+                        Button("Preview Send Book", action: model.previewSendBook)
+                            .accessibilityIdentifier("deliverySetup.previewSendBook")
+                        Spacer()
                     }
                 }
-                .labelsHidden()
-                .accessibilityLabel("Security Mode")
-                .accessibilityIdentifier("deliverySetup.securityMode")
             }
-            field("Username", text: $model.setupDraft.username, field: .username)
-            GridRow(alignment: .top) {
-                Text("App Password")
-                    .fontWeight(.medium)
-                VStack(alignment: .leading, spacing: 4) {
-                    SecureField(
-                        model.setup == nil ? "" : "Enter a new password to update setup",
-                        text: $model.setupDraft.appPassword
-                    )
-                    .textFieldStyle(.roundedBorder)
-                    .accessibilityIdentifier("deliverySetup.appPassword")
-                    fieldError(.appPassword)
-                }
-            }
-            field("Kindle Address", text: $model.setupDraft.kindleAddress, field: .kindleAddress)
         }
+        .scrollContentBackground(.hidden)
+        .frame(maxWidth: 560)
+        .padding(presentation == .onboarding ? 32 : 20)
+    }
+
+    @ViewBuilder
+    private var setupFields: some View {
+        field("Sender Address", text: $model.setupDraft.senderAddress, field: .senderAddress)
+        field("SMTP Host", text: $model.setupDraft.smtpHost, field: .smtpHost)
+        field("SMTP Port", text: $model.setupDraft.smtpPort, field: .smtpPort)
+
+        Picker("Security Mode", selection: $model.setupDraft.securityMode) {
+            ForEach(SecurityMode.allCases, id: \.self) { mode in
+                Text(mode.title).tag(mode)
+            }
+        }
+        .accessibilityIdentifier("deliverySetup.securityMode")
+
+        field("Username", text: $model.setupDraft.username, field: .username)
+
+        LabeledContent("App Password") {
+            VStack(alignment: .leading, spacing: 4) {
+                SecureField(
+                    model.setup == nil ? "" : "Enter a new password to update setup",
+                    text: $model.setupDraft.appPassword
+                )
+                .accessibilityIdentifier("deliverySetup.appPassword")
+                fieldError(.appPassword)
+            }
+            .frame(maxWidth: .infinity)
+        }
+
+        field("Kindle Address", text: $model.setupDraft.kindleAddress, field: .kindleAddress)
     }
 
     private func field(
@@ -93,16 +104,14 @@ struct DeliverySetupView: View {
         text: Binding<String>,
         field: DeliveryField
     ) -> some View {
-        GridRow(alignment: .top) {
-            Text(title)
-                .fontWeight(.medium)
+        LabeledContent(title) {
             VStack(alignment: .leading, spacing: 4) {
                 TextField("", text: text)
-                    .textFieldStyle(.roundedBorder)
                     .accessibilityLabel(title)
                     .accessibilityIdentifier("deliverySetup.\(field.rawValue)")
                 fieldError(field)
             }
+            .frame(maxWidth: .infinity)
         }
     }
 

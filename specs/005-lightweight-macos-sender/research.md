@@ -2,22 +2,24 @@
 
 ## Decision 1: Platform and concurrency
 
-**Decision**: Target macOS 14.0 and use Swift 6 language mode with complete
-concurrency checking. Keep visual state in a `@MainActor @Observable AppModel`;
-run the ordered batch in a `PipelineActor`; publish minimal changes through
-`AsyncStream<PipelineEvent>`.
+**Decision**: Target macOS 26.0 with the latest stable Xcode 26 SDK and use Swift
+6 language mode with complete concurrency checking. Keep visual state in a
+`@MainActor @Observable AppModel`; run the ordered batch in a `PipelineActor`;
+publish minimal changes through `AsyncStream<PipelineEvent>`.
 
-**Rationale**: macOS 14 provides native Observation while preserving a wider
-supported audience than a macOS 15 or 26 floor. Actors isolate mutable pipeline
-state, and Swift cancellation is cooperatively checked between stages and inside
-streaming callbacks.
+**Rationale**: macOS 26 provides the current Liquid Glass control APIs while the
+window background uses an adaptive behind-window AppKit material. Actors isolate
+mutable pipeline state, and Swift cancellation is cooperatively checked between
+stages and inside streaming callbacks.
 
-**Alternatives considered**: macOS 13 would require older observation machinery;
-macOS 15/26 narrows support without a product requirement; a `TaskGroup` would
-violate sequential ordering; indiscriminate detached tasks would weaken
-isolation and cancellation.
+**Alternatives considered**: macOS 14 would require compatibility branches and
+could not use the complete macOS 26 visual contract; macOS 27 and Xcode 27 remain
+beta; a `TaskGroup` would violate sequential ordering; indiscriminate detached
+tasks would weaken isolation and cancellation.
 
 Sources: [Observation](https://developer.apple.com/documentation/observation),
+[Adopting Liquid Glass](https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass),
+[NSVisualEffectView](https://developer.apple.com/documentation/appkit/nsvisualeffectview),
 [Swift concurrency](https://developer.apple.com/documentation/swift/concurrency),
 [Task cancellation](https://developer.apple.com/documentation/swift/task/cancel%28%29).
 
@@ -40,7 +42,7 @@ outside the product.
 
 Sources: [SwiftUI Window](https://developer.apple.com/documentation/swiftui/window),
 [NSApplication activation](https://developer.apple.com/documentation/appkit/nsapplication/activate%28%29),
-[AppKit macOS 14 release notes](https://developer.apple.com/documentation/macos-release-notes/appkit-release-notes-for-macos-14),
+[macOS 26 release notes](https://developer.apple.com/documentation/macos-release-notes/macos-26-release-notes),
 [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts).
 
 ## Decision 3: Credential and preference storage

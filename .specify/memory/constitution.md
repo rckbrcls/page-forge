@@ -1,47 +1,23 @@
 <!--
 Sync Impact Report
-- Version change: 3.0.0 -> 4.0.0
-- Bump rationale: the product surface, runtime, interaction model, architecture,
-  credential storage, distribution, and migration direction are redefined
-  incompatibly from a Raycast extension to a native macOS application.
+- Version change: 5.0.0 -> 5.1.0
+- Bump rationale: the two-primary-screen contract now explicitly permits one
+  constrained native Settings window for delivery edits and shortcut
+  preferences.
 - Modified principles:
-  - Single-Purpose Book Delivery -> Two-Surface Product
-  - Self-Contained Raycast Extension -> Lightweight Native macOS Application
-  - Original Files Are Immutable -> Original Files Are Immutable
-  - Safe, Deterministic Repairs Only -> Safe Cleanup and Restoration Only
-  - Untrusted-Archive Safety -> Untrusted-Book Safety
-  - Local Processing and Explicit Delivery -> Background Preparation, Explicit Delivery
-  - Transparent, Evidence-Based Health Reports -> Minimal Feedback, Retained Evidence
-  - Validate Before and After Repair -> Validate Before and After Preparation
-  - Domain-First, Typed Architecture -> Domain-First, Typed Architecture
-  - Fixture-Backed Repair Assurance -> Fixture-Backed Pipeline Assurance
-  - Native Raycast Interaction -> Sequential Batch Reliability
-  - Privacy and Credentials -> Local Privacy and Protected Credentials
-  - Simple, Reviewable Distribution -> Simple, Reviewable Distribution
-- Added sections:
-  - Product Surface and Interaction Contract
-  - Background Ebook Preparation Policy
-  - Architecture, Quality, and Distribution
-- Removed sections:
-  - Raycast command, runtime, component, preference, and Store requirements
-  - Raycast-specific source layout and interaction rules
-- Templates updated:
-  - ✅ .specify/templates/plan-template.md
-  - ✅ .specify/templates/spec-template.md
-  - ✅ .specify/templates/tasks-template.md
-  - ✅ .specify/templates/checklist-template.md
+  - Two-Surface Product
+- Added obligations:
+  - Settings contains only Delivery and Shortcut tabs.
+  - Settings remains auxiliary and cannot host sending, intake, queue, or
+    history workflows.
 - Runtime guidance updated:
   - ✅ AGENTS.md
-  - ✅ README.md
-  - ✅ docs/desktop-migration.md
-- Active specification updated:
-  - ✅ specs/005-lightweight-macos-sender/spec.md
-  - ✅ specs/005-lightweight-macos-sender/checklists/requirements.md
+- Active specification and validation guidance updated:
+  - ✅ specs/005-lightweight-macos-sender/
 - Reviewed without changes:
-  - .specify/templates/constitution-template.md
-  - .specify/templates/commands/ (directory not present)
-- Follow-up TODOs: implementation and obsolete Raycast removal remain future
-  planning and task work; no constitution placeholders are deferred.
+  - .specify/templates/ (no platform-specific or surface-material rules)
+- Follow-up TODOs: build, automated tests, and visual accessibility inspection
+  remain gated by explicit authorization.
 -->
 
 # Book Sender Constitution
@@ -62,6 +38,11 @@ System file pickers, confirmations, alerts, progress presentation, and inline
 disclosures do not count as additional primary screens. The product MUST NOT add
 a library, persistent queue, delivery history, reader, editor, account, cloud
 sync, analytics dashboard, or general ebook-management surface.
+
+A native auxiliary Settings window MAY expose exactly two tabs: `Delivery` for
+editing saved SMTP configuration and `Shortcut` for changing or disabling the
+global shortcut. Settings MUST NOT host book intake, preparation, confirmation,
+delivery, queue, history, or another primary workflow.
 
 Rationale: Book Sender earns complexity in preparation quality, not in navigation.
 
@@ -85,11 +66,21 @@ download executable code, or weaken archive, credential, or privacy guarantees.
 Rationale: the app must feel immediate and self-contained without outsourcing its
 core behavior to installed tools.
 
-### III. Minimal Interface, Minimal Feedback
+### III. Minimal Interface, Adaptive Materials
 
-The interface MUST use concise labels, strong hierarchy, opaque surfaces, subtle
-borders, restrained motion, and no decorative complexity. Advanced preparation
-MUST NOT create advanced navigation.
+The interface MUST use concise labels, strong hierarchy, an adaptive system
+behind-window material across the primary window, subtle borders, restrained
+motion, and no decorative complexity. The window material MUST extend through
+the titlebar area without replacing the standard close, minimize, or full-screen
+controls.
+
+Liquid Glass MUST remain a distinct functional layer for important interactive
+controls and MUST NOT replace the content-layer window material. Standard fields,
+lists, sheets, and secondary controls MUST retain their native adaptive behavior
+rather than receive bespoke glass decoration. The interface MUST remain legible
+and operable when Reduce Transparency or Increase Contrast is enabled.
+
+Advanced preparation MUST NOT create advanced navigation.
 
 During normal work, each book MUST expose only a concise state equivalent to
 `Checking`, `Preparing`, `Ready`, `Needs Attention`, `Sending`, and a terminal
@@ -397,4 +388,4 @@ constitutional rule or written amendment MUST be rejected. Compliance evidence
 MUST distinguish static checks, compilation, automated tests, runtime behavior,
 authenticated delivery, and production distribution.
 
-**Version**: 4.0.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-28
+**Version**: 5.1.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-29
