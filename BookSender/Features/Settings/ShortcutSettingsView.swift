@@ -2,20 +2,19 @@ import KeyboardShortcuts
 import SwiftUI
 
 struct ShortcutSettingsView: View {
-    @AppStorage(ShortcutService.isEnabledDefaultsKey) private var isEnabled = true
-    let setEnabled: (Bool) -> Void
+    @Bindable var model: AppModel
+    let setEnabled: @MainActor @Sendable (Bool) -> Void
+    let shortcutChanged: @MainActor @Sendable () -> Void
 
     var body: some View {
         Form {
             Section {
                 HStack {
-                    KeyboardShortcuts.Recorder(for: .showBookSender) { shortcut in
-                        if shortcut == nil, isEnabled {
-                            KeyboardShortcuts.reset(.showBookSender)
-                        }
+                    KeyboardShortcuts.Recorder(for: .showBookSender) { _ in
+                        shortcutChanged()
                     }
-                        .disabled(!isEnabled)
-                        .accessibilityIdentifier("settings.shortcut")
+                    .disabled(!model.shortcutPreference.isEnabled)
+                    .accessibilityIdentifier("settings.shortcut")
                     Spacer()
 
                     Toggle("", isOn: enabledBinding)
@@ -25,7 +24,14 @@ struct ShortcutSettingsView: View {
                         .accessibilityIdentifier("settings.shortcut.enabled")
                 }
             } footer: {
-                Text("Reveal the existing Book Sender window from any app.")
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Reveal the existing Book Sender window from any app.")
+                    Text(registrationMessage)
+                        .foregroundStyle(registrationColor)
+                        .accessibilityIdentifier(
+                            "settings.shortcut.registrationState"
+                        )
+                }
             }
         }
         .padding(20)
@@ -34,11 +40,25 @@ struct ShortcutSettingsView: View {
 
     private var enabledBinding: Binding<Bool> {
         Binding(
-            get: { isEnabled },
-            set: { newValue in
-                isEnabled = newValue
-                setEnabled(newValue)
+            get: { model.shortcutPreference.isEnabled },
+            set: { isEnabled in
+                setEnabled(isEnabled)
             }
         )
+    }
+
+    private var registrationMessage: String {
+        switch model.shortcutPreference.registrationState {
+        case .registered: "Shortcut registered."
+        case .disabled: "Shortcut disabled."
+        case .conflict(let message): message
+        }
+    }
+
+    private var registrationColor: Color {
+        if case .conflict = model.shortcutPreference.registrationState {
+            return .orange
+        }
+        return .secondary
     }
 }

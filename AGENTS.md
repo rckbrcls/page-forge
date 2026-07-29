@@ -22,7 +22,11 @@
 ## Project Context
 
 - Governance source: `.specify/memory/constitution.md`.
-- Active product specification: `specs/005-lightweight-macos-sender/`.
+- Base product specification: `specs/005-lightweight-macos-sender/`.
+- Active implementation specification:
+  `specs/006-replace-mock-workflows/`, which removes preview behavior and
+  completes real setup, preparation, batch, SMTP, recovery, Settings, and
+  shortcut workflows without expanding the two-screen product.
 - Book Sender is a lightweight, self-contained native macOS application with
   exactly two primary screens: `Delivery Setup` and `Send Book`.
 - A native auxiliary Settings window contains only `Delivery` and `Shortcut`

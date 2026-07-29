@@ -1,0 +1,217 @@
+import Foundation
+
+enum SMTPAction: Equatable, Sendable {
+    case write(line: String, containsSecret: Bool)
+    case upgradeTLS
+    case beginMessageData
+    case accepted
+    case failed(SanitizedFailure)
+}
+
+struct SMTPStateMachine: Sendable {
+    private enum State: Equatable, Sendable {
+        case greeting
+        case ehloBeforeTLS
+        case startTLS
+        case ehloAfterTLS
+        case authPlain(challengeResponseSent: Bool)
+        case authLoginUsername
+        case authLoginPassword
+        case authenticated
+        case mailFrom
+        case recipient
+        case data
+        case finalAcceptance
+        case completed
+    }
+
+    private let setup: DeliverySetup
+    private let credential: String
+    private var state: State
+    private var isTLSActive: Bool
+    private var capabilities = Set<String>()
+
+    init(setup: DeliverySetup, credential: String) {
+        self.setup = setup
+        self.credential = credential
+        state = .greeting
+        isTLSActive = setup.securityMode == .implicitTLS
+    }
+
+    mutating func receive(_ reply: SMTPReply) -> [SMTPAction] {
+        guard reply.code < 400 else {
+            state = .completed
+            return [.failed(providerFailure(code: reply.code))]
+        }
+
+        switch state {
+        case .greeting:
+            guard reply.code == 220 else { return fail("smtp.greeting") }
+            state = setup.securityMode == .startTLS
+                ? .ehloBeforeTLS
+                : .ehloAfterTLS
+            return [command("EHLO localhost")]
+
+        case .ehloBeforeTLS:
+            guard reply.code == 250 else { return fail("smtp.ehlo") }
+            capabilities = parseCapabilities(reply)
+            guard capabilities.contains("STARTTLS") else {
+                return fail("smtp.starttls-unavailable")
+            }
+            state = .startTLS
+            return [command("STARTTLS")]
+
+        case .startTLS:
+            guard reply.code == 220 else { return fail("smtp.starttls") }
+            state = .ehloAfterTLS
+            return [.upgradeTLS]
+
+        case .ehloAfterTLS:
+            guard reply.code == 250, isTLSActive else {
+                return fail("smtp.secure-ehlo")
+            }
+            capabilities = parseCapabilities(reply)
+            if capabilities.contains("AUTH PLAIN") || capabilities.contains("PLAIN") {
+                state = .authPlain(challengeResponseSent: false)
+                return [
+                    command(
+                        "AUTH PLAIN \(plainAuthenticationResponse())",
+                        containsSecret: true
+                    ),
+                ]
+            }
+            if capabilities.contains("AUTH LOGIN") || capabilities.contains("LOGIN") {
+                state = .authLoginUsername
+                return [command("AUTH LOGIN")]
+            }
+            return fail("smtp.auth-unavailable")
+
+        case .authPlain(let challengeResponseSent):
+            if reply.code == 334, !challengeResponseSent {
+                state = .authPlain(challengeResponseSent: true)
+                return [
+                    command(
+                        plainAuthenticationResponse(),
+                        containsSecret: true
+                    ),
+                ]
+            }
+            guard reply.code == 235 else { return fail("smtp.authentication") }
+            state = .mailFrom
+            return [command("MAIL FROM:<\(setup.senderAddress.value)>")]
+
+        case .authLoginUsername:
+            guard reply.code == 334 else { return fail("smtp.authentication") }
+            state = .authLoginPassword
+            return [
+                command(
+                    Data(setup.username.utf8).base64EncodedString(),
+                    containsSecret: true
+                ),
+            ]
+
+        case .authLoginPassword:
+            guard reply.code == 334 else { return fail("smtp.authentication") }
+            state = .authenticated
+            return [
+                command(
+                    Data(credential.utf8).base64EncodedString(),
+                    containsSecret: true
+                ),
+            ]
+
+        case .authenticated:
+            guard reply.code == 235 else { return fail("smtp.authentication") }
+            state = .mailFrom
+            return [command("MAIL FROM:<\(setup.senderAddress.value)>")]
+
+        case .mailFrom:
+            guard reply.code == 250 else { return fail("smtp.sender-rejected") }
+            state = .recipient
+            return [command("RCPT TO:<\(setup.kindleAddress.value)>")]
+
+        case .recipient:
+            guard reply.code == 250 || reply.code == 251 else {
+                return fail("smtp.recipient-rejected")
+            }
+            state = .data
+            return [command("DATA")]
+
+        case .data:
+            guard reply.code == 354 else { return fail("smtp.data-rejected") }
+            state = .finalAcceptance
+            return [.beginMessageData]
+
+        case .finalAcceptance:
+            guard reply.code == 250 else { return fail("smtp.message-rejected") }
+            state = .completed
+            return [command("QUIT"), .accepted]
+
+        case .completed:
+            return []
+        }
+    }
+
+    mutating func didUpgradeTLS() -> [SMTPAction] {
+        guard state == .ehloAfterTLS else {
+            return fail("smtp.starttls-state")
+        }
+        isTLSActive = true
+        capabilities.removeAll(keepingCapacity: true)
+        return [command("EHLO localhost")]
+    }
+
+    private func parseCapabilities(_ reply: SMTPReply) -> Set<String> {
+        var parsed = Set<String>()
+        for line in reply.lines {
+            let upper = line
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .uppercased()
+            if upper.hasPrefix("AUTH ") {
+                let mechanisms = upper.dropFirst(5).split(separator: " ")
+                for mechanism in mechanisms {
+                    parsed.insert("AUTH \(mechanism)")
+                    parsed.insert(String(mechanism))
+                }
+            } else if let first = upper.split(separator: " ").first {
+                parsed.insert(String(first))
+            }
+        }
+        return parsed
+    }
+
+    private func command(
+        _ line: String,
+        containsSecret: Bool = false
+    ) -> SMTPAction {
+        .write(line: "\(line)\r\n", containsSecret: containsSecret)
+    }
+
+    private func plainAuthenticationResponse() -> String {
+        Data("\u{0}\(setup.username)\u{0}\(credential)".utf8)
+            .base64EncodedString()
+    }
+
+    private mutating func fail(_ code: String) -> [SMTPAction] {
+        state = .completed
+        return [
+            .failed(
+                SanitizedFailure(
+                    family: .delivery,
+                    code: code,
+                    message: "The SMTP delivery could not be completed.",
+                    recoveryAction: .editSetup
+                )
+            ),
+        ]
+    }
+
+    private func providerFailure(code: Int) -> SanitizedFailure {
+        SanitizedFailure(
+            family: .delivery,
+            code: "smtp.provider-\(code)",
+            message: "The SMTP provider rejected this delivery.",
+            recoveryAction: code == 535 ? .editSetup : .retryFailed
+        )
+    }
+}

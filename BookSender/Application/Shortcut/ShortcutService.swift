@@ -12,37 +12,123 @@ extension KeyboardShortcuts.Name {
 final class ShortcutService {
     static let isEnabledDefaultsKey = "shortcut.showBookSender.isEnabled"
 
+    private weak var model: AppModel?
     private let windowCoordinator: WindowCoordinator
+    private let defaults: UserDefaults
+    private let registrar: any GlobalShortcutRegistering
 
-    init(windowCoordinator: WindowCoordinator) {
+    init(
+        model: AppModel,
+        windowCoordinator: WindowCoordinator,
+        defaults: UserDefaults = .standard,
+        registrar: any GlobalShortcutRegistering = KeyboardShortcutsRegistrar()
+    ) {
+        self.model = model
         self.windowCoordinator = windowCoordinator
+        self.defaults = defaults
+        self.registrar = registrar
     }
 
     func start() {
-        KeyboardShortcuts.onKeyUp(for: .showBookSender) { [weak windowCoordinator] in
-            windowCoordinator?.reveal()
+        registrar.onKeyUp {
+            [weak model, weak windowCoordinator] in
+            Task { @MainActor in
+                await model?.reconcileRouteForShortcut()
+                windowCoordinator?.reveal()
+            }
         }
-
         setRegistrationEnabled(storedIsEnabled)
     }
 
     func setEnabled(_ isEnabled: Bool) {
-        UserDefaults.standard.set(isEnabled, forKey: Self.isEnabledDefaultsKey)
+        defaults.set(isEnabled, forKey: Self.isEnabledDefaultsKey)
         setRegistrationEnabled(isEnabled)
     }
 
+    func shortcutChanged() {
+        publishPreference(isEnabled: storedIsEnabled)
+    }
+
     private var storedIsEnabled: Bool {
-        UserDefaults.standard.object(forKey: Self.isEnabledDefaultsKey) as? Bool ?? true
+        defaults.object(forKey: Self.isEnabledDefaultsKey) as? Bool ?? true
     }
 
     private func setRegistrationEnabled(_ isEnabled: Bool) {
         if isEnabled {
-            if KeyboardShortcuts.getShortcut(for: .showBookSender) == nil {
-                KeyboardShortcuts.reset(.showBookSender)
+            if registrar.shortcutDescription() == nil {
+                registrar.restoreDefault()
             }
-            KeyboardShortcuts.enable(.showBookSender)
+            registrar.enable()
         } else {
-            KeyboardShortcuts.disable(.showBookSender)
+            registrar.disable()
         }
+        publishPreference(isEnabled: isEnabled)
+    }
+
+    private func publishPreference(isEnabled: Bool) {
+        guard isEnabled else {
+            model?.updateShortcutPreference(
+                ShortcutPreference(
+                    isEnabled: false,
+                    keyCombinationDescription: nil,
+                    registrationState: .disabled
+                )
+            )
+            return
+        }
+        if let description = registrar.shortcutDescription() {
+            model?.updateShortcutPreference(
+                ShortcutPreference(
+                    isEnabled: true,
+                    keyCombinationDescription: description,
+                    registrationState: .registered
+                )
+            )
+        } else {
+            model?.updateShortcutPreference(
+                ShortcutPreference(
+                    isEnabled: true,
+                    keyCombinationDescription: nil,
+                    registrationState: .conflict(
+                        message: "Choose another shortcut."
+                    )
+                )
+            )
+        }
+    }
+}
+
+@MainActor
+protocol GlobalShortcutRegistering: AnyObject {
+    func onKeyUp(_ action: @escaping @MainActor () -> Void)
+    func shortcutDescription() -> String?
+    func restoreDefault()
+    func enable()
+    func disable()
+}
+
+@MainActor
+final class KeyboardShortcutsRegistrar: GlobalShortcutRegistering {
+    func onKeyUp(_ action: @escaping @MainActor () -> Void) {
+        KeyboardShortcuts.onKeyUp(for: .showBookSender) {
+            Task { @MainActor in action() }
+        }
+    }
+
+    func shortcutDescription() -> String? {
+        KeyboardShortcuts.getShortcut(for: .showBookSender)
+            .map { String(describing: $0) }
+    }
+
+    func restoreDefault() {
+        KeyboardShortcuts.reset(.showBookSender)
+    }
+
+    func enable() {
+        KeyboardShortcuts.enable(.showBookSender)
+    }
+
+    func disable() {
+        KeyboardShortcuts.disable(.showBookSender)
     }
 }

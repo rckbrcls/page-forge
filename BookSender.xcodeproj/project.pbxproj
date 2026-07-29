@@ -14,6 +14,7 @@
 		BS0001010000000000000005 /* NIOSSL in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000005 /* NIOSSL */; };
 		BS0001010000000000000006 /* NIOEmbedded in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000006 /* NIOEmbedded */; };
 		BS0001010000000000000007 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000007 /* Sparkle */; };
+		BS0001010000000000000008 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000002 /* ZIPFoundation */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,8 +33,27 @@
 		BS0003010000000000000003 /* BookSenderUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BookSenderUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		BS0018010000000000000001 /* Exceptions for "BookSender" folder in "BookSender" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = BS0006010000000000000001 /* BookSender */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		BS0007010000000000000001 /* BookSender */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BookSender; sourceTree = "<group>"; };
+		BS0007010000000000000001 /* BookSender */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				BS0018010000000000000001 /* Exceptions for "BookSender" folder in "BookSender" target */,
+			);
+			explicitFileTypes = {};
+			explicitFolders = ();
+			path = BookSender;
+			sourceTree = "<group>";
+		};
 		BS0007010000000000000002 /* BookSenderTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BookSenderTests; sourceTree = "<group>"; };
 		BS0007010000000000000003 /* BookSenderUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BookSenderUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -57,6 +77,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BS0001010000000000000006 /* NIOEmbedded in Frameworks */,
+				BS0001010000000000000008 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -140,6 +161,7 @@
 			name = BookSenderTests;
 			packageProductDependencies = (
 				BS0002010000000000000006 /* NIOEmbedded */,
+				BS0002010000000000000002 /* ZIPFoundation */,
 			);
 			productName = BookSenderTests;
 			productReference = BS0003010000000000000002 /* BookSenderTests.xctest */;

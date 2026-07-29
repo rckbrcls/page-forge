@@ -1,0 +1,111 @@
+import Foundation
+import Security
+import Testing
+@testable import BookSender
+
+struct KeychainCredentialStoreTests {
+    @Test
+    func createsReadsChecksAndDeletesDeviceOnlyCredential() async throws {
+        let store = KeychainCredentialStore()
+        let service = "com.rckbrcls.BookSenderTests.\(UUID().uuidString)"
+        let reference = try await store.save(
+            secret: "test-secret",
+            service: service,
+            account: "revision-1",
+            revision: 1
+        )
+        defer {
+            Task { try? await store.delete(reference) }
+        }
+
+        #expect(await store.exists(reference))
+        #expect(try await store.read(reference) == "test-secret")
+        let attributes = try attributes(for: reference)
+        #expect(
+            attributes[kSecAttrAccessible as String] as? String
+                == kSecAttrAccessibleWhenUnlockedThisDeviceOnly as String
+        )
+        #expect(
+            (attributes[kSecAttrSynchronizable as String] as? Bool) != true
+        )
+
+        try await store.delete(reference)
+        #expect(await store.exists(reference) == false)
+    }
+
+    @Test
+    func replacementUsesDistinctRevisionScopedIdentity() async throws {
+        let store = KeychainCredentialStore()
+        let service = "com.rckbrcls.BookSenderTests.\(UUID().uuidString)"
+        let first = try await store.save(
+            secret: "first",
+            service: service,
+            account: "revision-1",
+            revision: 1
+        )
+        let second = try await store.save(
+            secret: "second",
+            service: service,
+            account: "revision-2",
+            revision: 2
+        )
+        defer {
+            Task {
+                try? await store.delete(first)
+                try? await store.delete(second)
+            }
+        }
+
+        #expect(first != second)
+        #expect(try await store.read(first) == "first")
+        #expect(try await store.read(second) == "second")
+    }
+
+    @Test
+    func returnsSanitizedFailuresForMissingOrEmptyCredentials() async {
+        let store = KeychainCredentialStore()
+        await #expect(throws: SanitizedFailure.self) {
+            _ = try await store.save(
+                secret: "",
+                service: "test",
+                account: "empty",
+                revision: 1
+            )
+        }
+        await #expect(throws: SanitizedFailure.self) {
+            _ = try await store.read(
+                CredentialReference(
+                    service: "missing",
+                    account: "missing",
+                    revision: 1
+                )
+            )
+        }
+    }
+
+    private func attributes(
+        for reference: CredentialReference
+    ) throws -> [String: Any] {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: reference.service,
+            kSecAttrAccount as String: reference.account,
+            kSecUseDataProtectionKeychain as String: true,
+            kSecReturnAttributes as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess,
+              let attributes = result as? [String: Any]
+        else {
+            throw KeychainTestError.attributesUnavailable
+        }
+        return attributes
+    }
+}
+
+private enum KeychainTestError: Error {
+    case attributesUnavailable
+}
+

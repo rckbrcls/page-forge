@@ -20,9 +20,9 @@ enum RepairAction: Codable, Equatable, Sendable {
     }
 }
 
-enum PreparationDecision: Codable, Sendable {
-    case useOriginalSnapshot
-    case writeWorkingCopy
+enum PreparationDecision: String, Codable, Sendable {
+    case writeEPUBWorkingCopy
+    case deliverImmutablePDFSnapshot
     case blocked
 }
 
@@ -30,7 +30,25 @@ struct PreparationPlan: Identifiable, Codable, Sendable {
     let id: UUID
     let originalAuditIdentifier: UUID
     let actions: [RepairAction]
+    let expectedPostconditions: Set<FindingCode>
+    let limitsVersion: Int
     let decision: PreparationDecision
+
+    init(
+        id: UUID,
+        originalAuditIdentifier: UUID,
+        actions: [RepairAction],
+        expectedPostconditions: Set<FindingCode> = [],
+        limitsVersion: Int = 1,
+        decision: PreparationDecision
+    ) {
+        self.id = id
+        self.originalAuditIdentifier = originalAuditIdentifier
+        self.actions = actions
+        self.expectedPostconditions = expectedPostconditions
+        self.limitsVersion = limitsVersion
+        self.decision = decision
+    }
 }
 
 struct AppliedRepairAction: Identifiable, Codable, Sendable {
@@ -63,4 +81,18 @@ struct PreparedBook: Identifiable, Sendable {
     let byteCount: Int64
     let contentDigest: String
     let comparison: RevalidationComparison?
+}
+
+struct PreparationResult: Sendable {
+    let originalReport: AuditReport?
+    let plan: PreparationPlan
+    let appliedActions: [AppliedRepairAction]
+    let preparedReport: AuditReport?
+    let comparison: RevalidationComparison?
+    let preparedBook: PreparedBook?
+    let failure: SanitizedFailure?
+
+    var isReady: Bool {
+        preparedBook != nil && failure == nil
+    }
 }

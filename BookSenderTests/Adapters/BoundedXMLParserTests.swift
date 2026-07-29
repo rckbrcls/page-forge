@@ -13,14 +13,25 @@ struct BoundedXMLParserTests {
         #expect(projection.elements.contains(where: { $0.name.contains("child") }))
     }
 
-    @Test(arguments: [
-        #"<!DOCTYPE root [<!ENTITY x SYSTEM "file:///etc/passwd">]><root>&x;</root>"#,
-        #"<root href="https://example.com/book"/>"#
-    ])
-    func rejectsExternalOrRemoteContent(xml: String) async {
+    @Test
+    func rejectsExternalEntityDeclaration() async {
+        let xml =
+            #"<!DOCTYPE root [<!ENTITY x SYSTEM "file:///etc/passwd">]><root>&x;</root>"#
         await #expect(throws: SanitizedFailure.self) {
             _ = try await parser.parse(Data(xml.utf8), limits: .standard)
         }
+    }
+
+    @Test
+    func preservesRemoteReferenceWithoutFetchingIt() async throws {
+        let projection = try await parser.parse(
+            Data(#"<root href="https://example.invalid/book"/>"#.utf8),
+            limits: .standard
+        )
+        #expect(
+            projection.elements.first?.attributes["href"]
+                == "https://example.invalid/book"
+        )
     }
 
     @Test
@@ -30,6 +41,59 @@ struct BoundedXMLParserTests {
             + String(repeating: "</a>", count: limits.maximumXMLDepth + 1)
         await #expect(throws: SanitizedFailure.self) {
             _ = try await parser.parse(Data(xml.utf8), limits: limits)
+        }
+    }
+
+    @Test
+    func preservesNestedElementPathsAndText() async throws {
+        let projection = try await parser.parse(
+            Data("<root><parent><child id=\"1\">value</child></parent></root>".utf8),
+            limits: .standard
+        )
+        let child = try #require(
+            projection.elements.first(where: { $0.name.hasSuffix("child") })
+        )
+        #expect(child.path.map { $0.split(separator: ":").last.map(String.init) ?? $0 }
+            == ["root", "parent", "child"])
+        #expect(child.text == "value")
+    }
+
+    @Test
+    func enforcesElementAttributeAndTextLimits() async {
+        let elements = Data("<root><a/><b/></root>".utf8)
+        await #expect(throws: SanitizedFailure.self) {
+            _ = try await parser.parse(
+                elements,
+                limits: makeSafetyLimits(maximumXMLElements: 2)
+            )
+        }
+        let attributes = Data("<root a=\"1\" b=\"2\"/>".utf8)
+        await #expect(throws: SanitizedFailure.self) {
+            _ = try await parser.parse(
+                attributes,
+                limits: makeSafetyLimits(maximumXMLAttributesPerElement: 1)
+            )
+        }
+        let text = Data("<root>12345</root>".utf8)
+        await #expect(throws: SanitizedFailure.self) {
+            _ = try await parser.parse(
+                text,
+                limits: makeSafetyLimits(maximumXMLTextBytes: 4)
+            )
+        }
+    }
+
+    @Test
+    func honorsCancellation() async {
+        let task = Task {
+            try await parser.parse(
+                Data("<root><child/></root>".utf8),
+                limits: .standard
+            )
+        }
+        task.cancel()
+        await #expect(throws: CancellationError.self) {
+            _ = try await task.value
         }
     }
 }

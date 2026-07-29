@@ -15,6 +15,7 @@ struct FailurePresentationService: Sendable {
         case .intake: title = "File not added"
         case .archive, .xml, .audit, .repair: title = "Book needs attention"
         case .filesystem: title = "File access problem"
+        case .shortcut: title = "Shortcut unavailable"
         }
         let actionTitle: String? = switch failure.recoveryAction {
         case .editSetup: "Edit Setup"
@@ -22,6 +23,7 @@ struct FailurePresentationService: Sendable {
         case .reviewBook: "Review Details"
         case .retryFailed: "Retry Failed"
         case .confirmUnknownRetry: "Review Delivery"
+        case .chooseAnotherShortcut: "Choose Another Shortcut"
         case nil: nil
         }
         return FailurePresentation(

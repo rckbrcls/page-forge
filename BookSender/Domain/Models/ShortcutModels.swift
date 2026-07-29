@@ -8,5 +8,6 @@ enum ShortcutRegistrationState: Equatable, Sendable {
 
 struct ShortcutPreference: Equatable, Sendable {
     var isEnabled: Bool
+    var keyCombinationDescription: String?
     var registrationState: ShortcutRegistrationState
 }

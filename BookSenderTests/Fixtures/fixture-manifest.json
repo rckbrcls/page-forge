@@ -1,69 +1,430 @@
 {
-  "version": 1,
-  "note": "Native fixture binaries are generated deterministically by test support until cutover.",
+  "schemaVersion": 2,
+  "generator": "BookSenderTests.Support.FixtureFactory",
+  "digestAlgorithm": "sha256",
+  "digestScope": "UTF-8 fixture id; binary determinism is verified separately",
   "families": [
     {
       "id": "valid-epub-2",
-      "source": "tests/fixtures/valid/fixture-definitions.ts",
+      "kind": "epub",
+      "definitionDigest": "1ecb1acac1230d4b342b5163978061e781f09566d7a6c99c8a324dad238d587b",
       "expectedHealth": "healthy",
       "findingCodes": [],
-      "repairActions": []
+      "repairActions": [],
+      "expectedReady": true
     },
     {
       "id": "valid-epub-3",
-      "source": "tests/fixtures/valid/fixture-definitions.ts",
+      "kind": "epub",
+      "definitionDigest": "3b6c8a23dc78764f4b10a46594f64d4dacfdaf2251e6177f60715d2957863cc6",
       "expectedHealth": "healthy",
       "findingCodes": [],
-      "repairActions": []
+      "repairActions": [],
+      "expectedReady": true
+    },
+    {
+      "id": "valid-pdf",
+      "kind": "pdf",
+      "definitionDigest": "ecd8083f2ecae269937269e428d7a45124282080bac7d42081994aa4cf29b693",
+      "expectedHealth": "healthy",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": true
+    },
+    {
+      "id": "invalid-pdf-signature",
+      "kind": "pdf",
+      "definitionDigest": "77ddb01f526f761bb9b3ce40a9385c4128d7369ca117f1373c9ca03db73abde2",
+      "expectedHealth": "unsupported",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
     },
     {
       "id": "missing-mimetype",
-      "source": "tests/fixtures/repair/mimetype-container-fixtures.ts",
+      "kind": "epub",
+      "definitionDigest": "4d16d2eafd102dc5be3e15f6dee5f7a0b51bc2b6440c6a80bad2f2b2bc6ee5e2",
       "expectedHealth": "repairable",
       "findingCodes": ["MIMETYPE_MISSING"],
-      "repairActions": ["repair.mimetype"]
+      "repairActions": ["repair.mimetype"],
+      "expectedReady": true
+    },
+    {
+      "id": "invalid-mimetype",
+      "kind": "epub",
+      "definitionDigest": "f62b5041897007c56b3b3827e70f5f83fe0d904f2171f0b9a313bd40bf4717f5",
+      "expectedHealth": "repairable",
+      "findingCodes": ["MIMETYPE_INVALID"],
+      "repairActions": ["repair.mimetype"],
+      "expectedReady": true
+    },
+    {
+      "id": "late-mimetype",
+      "kind": "epub",
+      "definitionDigest": "6ddf93345bea6dc4c135aa8d1ef0726318a398ece22fef0ee6547c6f9b658e63",
+      "expectedHealth": "repairable",
+      "findingCodes": ["MIMETYPE_NOT_FIRST"],
+      "repairActions": ["repair.mimetype"],
+      "expectedReady": true
+    },
+    {
+      "id": "compressed-mimetype",
+      "kind": "epub",
+      "definitionDigest": "94b010a597c746df581c573fcaa2228c0672a6014b470a5400b8804ebf8970c5",
+      "expectedHealth": "repairable",
+      "findingCodes": ["MIMETYPE_COMPRESSED"],
+      "repairActions": ["repair.mimetype"],
+      "expectedReady": true
     },
     {
       "id": "missing-container-single-package",
-      "source": "tests/fixtures/repair/mimetype-container-fixtures.ts",
+      "kind": "epub",
+      "definitionDigest": "4baf7758aebc71db643c052311123ada2e5801bef158a5e49c6af354fb7f5445",
       "expectedHealth": "repairable",
       "findingCodes": ["CONTAINER_MISSING"],
-      "repairActions": ["repair.container"]
+      "repairActions": ["repair.container"],
+      "expectedReady": true
+    },
+    {
+      "id": "invalid-container",
+      "kind": "epub",
+      "definitionDigest": "2f2afc09e6fdf32d91d20b22e0ce4f7f31d8d9499177477504484f88bbe13e85",
+      "expectedHealth": "needs_review",
+      "findingCodes": ["CONTAINER_INVALID"],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "missing-package",
+      "kind": "epub",
+      "definitionDigest": "8ae07fd95978536f21d1657982711ea9ab122ffc9eb3a56e7d8f766046f052ec",
+      "expectedHealth": "unsupported",
+      "findingCodes": [
+        "PACKAGE_MISSING"
+      ],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "invalid-package",
+      "kind": "epub",
+      "definitionDigest": "be4ddc1ed98d8d4958ec8c0ea2f770b7f720d397d97ce2d3c9cc06ba7e82ce4b",
+      "expectedHealth": "needs_review",
+      "findingCodes": [
+        "PACKAGE_INVALID"
+      ],
+      "repairActions": [],
+      "expectedReady": false
     },
     {
       "id": "ambiguous-package",
-      "source": "tests/fixtures/ambiguous/fixture-definitions.ts",
-      "expectedHealth": "needsReview",
+      "kind": "epub",
+      "definitionDigest": "6dbda688d5d26a7e56272e69e2ffd9fbf02394634c363ae3e02c63be06ff21d2",
+      "expectedHealth": "needs_review",
       "findingCodes": ["PACKAGE_AMBIGUOUS"],
-      "repairActions": []
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "media-type-mismatch",
+      "kind": "epub",
+      "definitionDigest": "c405b61298353e42f4f2eb7fa49c70025bb1417591a22f762d451a4b74191f69",
+      "expectedHealth": "needs_review",
+      "findingCodes": ["MANIFEST_MEDIA_TYPE_MISMATCH"],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "missing-reference",
+      "kind": "epub",
+      "definitionDigest": "fe4a4098d7aca5da9f49f73cf0001da8739437d5ee4a15322a8c2fbb450d47dc",
+      "expectedHealth": "needs_review",
+      "findingCodes": ["REFERENCE_MISSING"],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "ambiguous-reference",
+      "kind": "epub",
+      "definitionDigest": "c21c0e2340ca273eba302038dfc3db90509363a66820fe6ae935ee22948255b5",
+      "expectedHealth": "needs_review",
+      "findingCodes": ["REFERENCE_AMBIGUOUS"],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "encrypted-content",
+      "kind": "epub",
+      "definitionDigest": "833183e24cabe9f5330eb37ab449543c4071217e490f7dd54a391923e676ab11",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["ENCRYPTED_CONTENT"],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "active-content",
+      "kind": "epub",
+      "definitionDigest": "eae7ce8a6fb79fe1944414e144dc24f24d71b325880279b458c6039178e320f2",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["ACTIVE_CONTENT"],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "remote-reference",
+      "kind": "epub",
+      "definitionDigest": "6d5a5d7c74d73917c258f1412ea51f751e329bed1f6ef1d0ad01d87c83e94301",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["REMOTE_REFERENCE"],
+      "repairActions": [],
+      "expectedReady": false
     },
     {
       "id": "path-traversal",
-      "source": "tests/fixtures/malicious/path-fixtures.ts",
+      "kind": "archive",
+      "definitionDigest": "527db3cbdb79523ae482342e492716f845674ab7c0c0eb3f2aec248b85741c7d",
       "expectedHealth": "unsafe",
       "findingCodes": ["ARCHIVE_UNSAFE_PATH"],
-      "repairActions": []
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "absolute-path",
+      "kind": "archive",
+      "definitionDigest": "edbd2348f259344bb78495834072b90e32db28653a550a5a1dc08a1f90ce4f1b",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["ARCHIVE_UNSAFE_PATH"],
+      "repairActions": [],
+      "expectedReady": false
     },
     {
       "id": "duplicate-normalized-path",
-      "source": "tests/fixtures/malicious/zip-structure-fixtures.ts",
+      "kind": "archive",
+      "definitionDigest": "d94a5bfadcc5467058bf33d00474b53e416628863d66e40d37d2067c71e9753f",
       "expectedHealth": "unsafe",
       "findingCodes": ["ARCHIVE_DUPLICATE_PATH"],
-      "repairActions": []
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "symbolic-link",
+      "kind": "archive",
+      "definitionDigest": "9d6e44a04010e5276d310c231f2d33b97eafc2c47842588d0a2c8d28fd148563",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["ARCHIVE_UNSUPPORTED_ENTRY"],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "unsupported-compression",
+      "kind": "archive",
+      "definitionDigest": "b2387cb944352336d7fca5f33cc12128aed3dea03d9ad1c6b9225f26908230fd",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["ARCHIVE_UNSUPPORTED_ENTRY"],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "encrypted-archive",
+      "kind": "archive",
+      "definitionDigest": "112681077191045fafc5cae6057e5cd4935722ff55d7bb8f90a4c7bc7a77b98e",
+      "expectedHealth": "unsafe",
+      "findingCodes": [
+        "ARCHIVE_ENCRYPTED"
+      ],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "directory-entry",
+      "kind": "archive",
+      "definitionDigest": "5bc761e832a147236f3983ace01113d706daa3ae565ae2b95d072925c7d13b46",
+      "expectedHealth": "healthy",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": true
+    },
+    {
+      "id": "expansion-ratio",
+      "kind": "archive",
+      "definitionDigest": "306d4574fbd8a35d2fae29f8690229ba87103e6a1e5f3002673bc62267b736a1",
+      "expectedHealth": "unsafe",
+      "findingCodes": [
+        "ARCHIVE_LIMIT_EXCEEDED"
+      ],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "archive-size-boundary",
+      "kind": "archive",
+      "definitionDigest": "f4339ccf440f5bc8d823d27899e9932fcd2301d803843a3c94df541fff4c7404",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["ARCHIVE_LIMIT_EXCEEDED"],
+      "repairActions": [],
+      "expectedReady": false
     },
     {
       "id": "external-entity",
-      "source": "tests/fixtures/malicious/xml-fixtures.ts",
+      "kind": "xml",
+      "definitionDigest": "810d988a0e6fc24146482c8f3bec3de459d0a36af3c119419bb23e322076369a",
       "expectedHealth": "unsafe",
       "findingCodes": ["XML_UNSAFE"],
-      "repairActions": []
+      "repairActions": [],
+      "expectedReady": false
     },
     {
       "id": "deep-xml",
-      "source": "tests/fixtures/malicious/xml-fixtures.ts",
+      "kind": "xml",
+      "definitionDigest": "e25060e9a82cd7ccec05e622a18726c565ece8005f786e0f0edbc4a05a5615c6",
       "expectedHealth": "unsafe",
       "findingCodes": ["XML_UNSAFE"],
-      "repairActions": []
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "excessive-xml",
+      "kind": "xml",
+      "definitionDigest": "4329568cc854c9018f26f66b062febafe31df73d0944643d44af0d05cc301d2a",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["XML_UNSAFE"],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "cancellation",
+      "kind": "operation",
+      "definitionDigest": "80812d7992dd498c03bbb6b797f4ac179be160f921c462b0b8a4a9bd1ca3b4be",
+      "expectedHealth": "unsupported",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "write-failure",
+      "kind": "operation",
+      "definitionDigest": "999d5187306341697170d743cbe6b35cc79910510a4f0c63a2f11b38ed5874c2",
+      "expectedHealth": "unsupported",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "revalidation-regression",
+      "kind": "operation",
+      "definitionDigest": "598deab982fbfb27648b7f5a26b4803f34496a320ff61185d61a49eaf78b07d6",
+      "expectedHealth": "unsafe",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "tls-localhost",
+      "kind": "certificate",
+      "definitionDigest": "b61a4d75dc0e56d26548c2a09a31508cc101a2e8d7e73139ae639c4fbf9fd24d",
+      "expectedHealth": "unsupported",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "tls-hostname-mismatch",
+      "kind": "certificate",
+      "definitionDigest": "ab1f796440698f14dfd77fb9df80d9e56c26ccfbae7550ca5f6d27cfd548e9cf",
+      "expectedHealth": "unsafe",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "smtp-reply-multiline",
+      "kind": "smtp-reply",
+      "definitionDigest": "226279c5148aa0bf9d0cb8c74a5e86beabaad813d11d80be77ac8b5cc0ee1b7d",
+      "expectedHealth": "unsupported",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "smtp-reply-line-limit",
+      "kind": "smtp-reply",
+      "definitionDigest": "c19b494c9c0e8fd8e6c2c490bca9b080b1c39cc1e5e56ee0d9de665f4711b4dd",
+      "expectedHealth": "unsafe",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "smtp-implicit-tls-success",
+      "kind": "smtp-transcript",
+      "definitionDigest": "d5b72fecaf2db3dc05edd2b9d4329c8dba14738e235ee17d1304f9e6a04b8ccf",
+      "expectedHealth": "healthy",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": true
+    },
+    {
+      "id": "smtp-starttls-success",
+      "kind": "smtp-transcript",
+      "definitionDigest": "66e6ccc02fc3fcf6a76864865cf32ac289010ff6420693575a48a427430cd08d",
+      "expectedHealth": "healthy",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": true
+    },
+    {
+      "id": "smtp-missing-starttls",
+      "kind": "smtp-transcript",
+      "definitionDigest": "f2741465a1b8b1a948633cc76e1036dd74752f8689f4f599b25e45ac8fa2ee6c",
+      "expectedHealth": "unsafe",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "smtp-auth-rejected",
+      "kind": "smtp-transcript",
+      "definitionDigest": "2647328da35bb7e29a8bfaf588025ae5eeaf391cf3011457b98fd341e1abc676",
+      "expectedHealth": "unsupported",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "smtp-recipient-rejected",
+      "kind": "smtp-transcript",
+      "definitionDigest": "00b6b7e7c485649138f18aa347fdc67312c8d77fe1d9e59692d320e4381cacaf",
+      "expectedHealth": "unsupported",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "smtp-loss-before-data",
+      "kind": "smtp-transcript",
+      "definitionDigest": "0801148e06c28dff8d25c09d4e5830086bcfc7b114dd20c043bc06d98b462f07",
+      "expectedHealth": "unsupported",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "smtp-loss-during-data",
+      "kind": "smtp-transcript",
+      "definitionDigest": "5d4a8509cb697a14db5cd377f0a794e592cdbbe61ac16bf7dfd16403e69177ea",
+      "expectedHealth": "unsupported",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "smtp-final-reply-missing",
+      "kind": "smtp-transcript",
+      "definitionDigest": "b39773840f1ecf36e034407fd5ad2bdc94f345b74564f1e3b4278ac5bf5eb197",
+      "expectedHealth": "unsupported",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": false
     }
   ]
 }

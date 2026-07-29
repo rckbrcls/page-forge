@@ -19,7 +19,7 @@ enum Repairability: Codable, Equatable, Sendable {
 enum BookHealth: String, Codable, Sendable {
     case healthy
     case repairable
-    case needsReview
+    case needsReview = "needs_review"
     case unsupported
     case unsafe
 }
@@ -64,7 +64,9 @@ struct AuditReport: Identifiable, Codable, Sendable {
     let inspectedAt: Date
 
     var health: BookHealth {
-        if findings.contains(where: { $0.severity == .critical || $0.repairability == .forbidden }) {
+        if findings.contains(where: {
+            $0.severity == .critical || $0.repairability == .forbidden
+        }) {
             return .unsafe
         }
         if findings.contains(where: { $0.repairability == .manualReview }) {
@@ -76,6 +78,8 @@ struct AuditReport: Identifiable, Codable, Sendable {
         }) {
             return .repairable
         }
-        return findings.contains(where: { $0.severity >= .error }) ? .unsupported : .healthy
+        return findings.contains(where: { $0.severity >= .error })
+            ? .unsupported
+            : .healthy
     }
 }

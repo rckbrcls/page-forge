@@ -15,11 +15,21 @@ actor BatchCommandService {
         await pipeline.clear()
     }
 
+    func cancel() async {
+        await pipeline.cancel()
+    }
+
     func failedItemIDs() async -> [UUID] {
         let batch = await pipeline.snapshot()
         return batch.items.compactMap { item in
             if case .failed = item.delivery { return item.id }
             return nil
         }
+    }
+
+    func retrySnapshot(
+        setup: ValidatedDeliverySetup
+    ) async -> ConfirmedBatchSummary? {
+        await pipeline.confirmation(setup: setup, kind: .retryFailed)
     }
 }

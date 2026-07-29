@@ -42,8 +42,10 @@ Safety Check
 
 ## Repository
 
-The active product direction is specified in
-[`specs/005-lightweight-macos-sender/spec.md`](specs/005-lightweight-macos-sender/spec.md)
+The active implementation specification is
+[`specs/006-replace-mock-workflows/spec.md`](specs/006-replace-mock-workflows/spec.md),
+built on the product baseline in
+[`specs/005-lightweight-macos-sender/spec.md`](specs/005-lightweight-macos-sender/spec.md),
 and governed by
 [`.specify/memory/constitution.md`](.specify/memory/constitution.md).
 
@@ -89,4 +91,6 @@ validation boundaries.
 Static checks, compilation, automated tests, runtime inspection, authenticated
 SMTP delivery, ad-hoc signing, update installation, and production release are
 separate validation claims. Build and test commands require explicit
-authorization under the repository workflow.
+authorization under the repository workflow. The release workflow now requires
+the approved unit, UI, installer, and appcast contract suites before it can
+publish an artifact.

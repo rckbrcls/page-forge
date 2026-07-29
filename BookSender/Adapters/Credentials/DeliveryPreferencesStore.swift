@@ -1,24 +1,44 @@
 import Foundation
 
 actor DeliveryPreferencesStore: DeliveryPreferencesStoring {
-    private let defaults: UserDefaults
-    private let key = "deliverySetup"
+    static let storageKey = "deliverySetup"
 
-    init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    private let defaults: UserDefaults
+
+    init(suiteName: String? = nil) {
+        self.defaults = suiteName.flatMap(UserDefaults.init(suiteName:))
+            ?? .standard
     }
 
-    func load() -> DeliverySetup? {
-        guard let data = defaults.data(forKey: key) else { return nil }
-        return try? JSONDecoder().decode(DeliverySetup.self, from: data)
+    func load() -> DeliveryPreferencesLoadResult {
+        guard let data = defaults.data(forKey: Self.storageKey) else {
+            return .absent
+        }
+        guard let setup = try? JSONDecoder().decode(DeliverySetup.self, from: data),
+              setup.revision > 0,
+              setup.credentialReference.revision == setup.revision
+        else {
+            return .invalid
+        }
+        return .value(setup)
     }
 
     func save(_ setup: DeliverySetup) throws {
+        guard setup.revision > 0,
+              setup.credentialReference.revision == setup.revision
+        else {
+            throw SanitizedFailure(
+                family: .credential,
+                code: "preferences.invalid-revision",
+                message: "Delivery settings could not be saved consistently.",
+                recoveryAction: .editSetup
+            )
+        }
         let data = try JSONEncoder().encode(setup)
-        defaults.set(data, forKey: key)
+        defaults.set(data, forKey: Self.storageKey)
     }
 
     func clear() {
-        defaults.removeObject(forKey: key)
+        defaults.removeObject(forKey: Self.storageKey)
     }
 }

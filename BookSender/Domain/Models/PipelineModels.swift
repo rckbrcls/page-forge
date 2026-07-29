@@ -25,6 +25,7 @@ enum FailureFamily: String, Codable, Sendable {
     case filesystem
     case credential
     case delivery
+    case shortcut
 }
 
 struct SanitizedFailure: Error, Codable, Equatable, Sendable {
@@ -40,10 +41,12 @@ enum RecoveryAction: String, Codable, Sendable {
     case reviewBook
     case retryFailed
     case confirmUnknownRetry
+    case chooseAnotherShortcut
 }
 
 struct DeliveryAttempt: Identifiable, Sendable {
     let id: UUID
+    let snapshotID: UUID
     let itemID: UUID
     let setupRevision: Int
     var stage: DeliveryStage
@@ -53,14 +56,19 @@ struct DeliveryAttempt: Identifiable, Sendable {
     var outcome: TerminalOutcome?
 }
 
+struct DeliveryProgress: Sendable {
+    let stage: DeliveryStage
+    let dataTransmissionStarted: Bool
+}
+
 enum PipelineEvent: Sendable {
-    case itemAdded(UUID)
-    case itemExcluded(UUID, SanitizedFailure)
+    case batchChanged
+    case intakeOutcome(UUID)
     case checking(UUID)
     case preparing(UUID)
-    case ready(UUID, PreparedBook)
+    case ready(UUID)
     case needsAttention(UUID, SanitizedFailure)
-    case sending(UUID, DeliveryStage)
+    case sending(UUID, DeliveryProgress)
     case submitted(UUID)
     case failed(UUID, SanitizedFailure)
     case cancelled(UUID)

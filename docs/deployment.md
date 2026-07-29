@@ -24,6 +24,8 @@ Pages, and the `rckbrcls.com` proxy.
 
 ```text
 GitHub Actions
+-> approved unit and UI suites
+-> installer and appcast contract suites
 -> universal Release build
 -> sandbox-compatible ad-hoc signing
 -> BookSender-macos-universal-vX.Y.Z.zip
@@ -84,4 +86,7 @@ trust.
 - Verify a real Sparkle `N -> N+1` update when the next release exists.
 
 Compilation in GitHub Actions does not prove local tests, authenticated SMTP,
-clean-account installation, or an end-to-end update.
+clean-account installation, or an end-to-end update. Publication is blocked
+unless the automated unit, UI, installer, and appcast contract suites pass;
+authenticated provider delivery and clean-account acceptance remain separate
+manual gates.

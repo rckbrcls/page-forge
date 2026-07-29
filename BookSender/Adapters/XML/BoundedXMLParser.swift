@@ -1,33 +1,54 @@
 import Foundation
 
 struct BoundedXMLParser: BoundedXMLParsing {
-    func parse(_ data: Data, limits: SafetyLimits) async throws -> XMLDocumentProjection {
+    func parse(
+        _ data: Data,
+        limits: SafetyLimits
+    ) async throws -> XMLDocumentProjection {
         try Task.checkCancellation()
-        guard data.count <= limits.maximumXMLBytes else { throw failure("xml.byte-limit") }
-        let lowercase = String(decoding: data.prefix(8_192), as: UTF8.self).lowercased()
-        guard !lowercase.contains("<!doctype"), !lowercase.contains("<!entity") else {
+        guard limits.permitsXMLBytes(data.count) else {
+            throw failure("xml.byte-limit")
+        }
+
+        let lowercase = String(decoding: data, as: UTF8.self).lowercased()
+        guard !lowercase.contains("<!doctype"),
+              !lowercase.contains("<!entity")
+        else {
             throw failure("xml.external-entity")
         }
 
-        return try await Task.detached(priority: .utility) {
-            let delegate = ProjectionDelegate(limits: limits)
-            let parser = XMLParser(data: data)
-            parser.shouldProcessNamespaces = true
-            parser.shouldReportNamespacePrefixes = true
-            parser.shouldResolveExternalEntities = false
-            parser.delegate = delegate
-            guard parser.parse(), let rootName = delegate.rootName else {
-                throw delegate.failure ?? self.failure("xml.invalid")
+        return try await withThrowingTaskGroup(
+            of: XMLDocumentProjection.self
+        ) { group in
+            group.addTask {
+                let delegate = ProjectionDelegate(limits: limits)
+                let parser = XMLParser(data: data)
+                parser.shouldProcessNamespaces = true
+                parser.shouldReportNamespacePrefixes = true
+                parser.shouldResolveExternalEntities = false
+                parser.delegate = delegate
+                guard parser.parse(), let rootName = delegate.rootName else {
+                    throw delegate.failure ?? self.failure("xml.invalid")
+                }
+                return XMLDocumentProjection(
+                    rootName: rootName,
+                    namespaces: delegate.namespaces,
+                    elements: delegate.elements
+                )
             }
-            return XMLDocumentProjection(
-                rootName: rootName,
-                namespaces: delegate.namespaces,
-                elements: delegate.elements
-            )
-        }.value
+            group.addTask {
+                try await Task.sleep(for: limits.operationTimeout)
+                throw self.failure("xml.timeout")
+            }
+            guard let projection = try await group.next() else {
+                throw self.failure("xml.invalid")
+            }
+            group.cancelAll()
+            return projection
+        }
     }
 
-    private func failure(_ code: String) -> SanitizedFailure {
+    private nonisolated func failure(_ code: String) -> SanitizedFailure {
         SanitizedFailure(
             family: .xml,
             code: code,
@@ -38,17 +59,22 @@ struct BoundedXMLParser: BoundedXMLParsing {
 }
 
 private final class ProjectionDelegate: NSObject, XMLParserDelegate, @unchecked Sendable {
+    private struct Frame {
+        let name: String
+        let path: [String]
+        let attributes: [String: String]
+        var text: String
+    }
+
     let limits: SafetyLimits
     var rootName: String?
     var namespaces: [String: String] = [:]
     var elements: [XMLElementProjection] = []
     var failure: SanitizedFailure?
 
-    private var depth = 0
+    private var stack: [Frame] = []
     private var elementCount = 0
-    private var currentName: String?
-    private var currentAttributes: [String: String] = [:]
-    private var currentText = ""
+    private var totalTextBytes = 0
 
     init(limits: SafetyLimits) {
         self.limits = limits
@@ -70,38 +96,48 @@ private final class ProjectionDelegate: NSObject, XMLParserDelegate, @unchecked 
         attributes attributeDict: [String: String] = [:]
     ) {
         guard failure == nil else { return }
-        if Task.isCancelled {
+        guard !Task.isCancelled else {
             reject(parser, code: "xml.cancelled")
             return
         }
-        depth += 1
+
         elementCount += 1
-        guard depth <= limits.maximumXMLDepth,
-              elementCount <= limits.maximumXMLElements,
-              attributeDict.count <= limits.maximumXMLAttributesPerElement
+        let name = qName ?? elementName
+        let path = stack.map(\.name) + [name]
+        guard limits.permitsXMLDepth(path.count),
+              limits.permitsXMLElementCount(elementCount),
+              limits.permitsXMLAttributeCount(attributeDict.count)
         else {
             reject(parser, code: "xml.structure-limit")
             return
         }
-        let name = qName ?? elementName
         rootName = rootName ?? name
-        currentName = name
-        currentAttributes = attributeDict
-        currentText = ""
-        if attributeDict.values.contains(where: { value in
-            let lower = value.lowercased()
-            return lower.hasPrefix("http://") || lower.hasPrefix("https://") || lower.hasPrefix("file:")
-        }) {
-            reject(parser, code: "xml.remote-reference")
-        }
+        stack.append(
+            Frame(
+                name: name,
+                path: path,
+                attributes: attributeDict,
+                text: ""
+            )
+        )
     }
 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
-        guard failure == nil else { return }
-        currentText.append(string)
-        if currentText.utf8.count > limits.maximumXMLTextBytes {
-            reject(parser, code: "xml.text-limit")
+        guard failure == nil, !stack.isEmpty else { return }
+        guard !Task.isCancelled else {
+            reject(parser, code: "xml.cancelled")
+            return
         }
+        let bytes = string.utf8.count
+        let (newTotal, overflow) = totalTextBytes.addingReportingOverflow(bytes)
+        guard !overflow,
+              limits.permitsXMLTextBytes(newTotal)
+        else {
+            reject(parser, code: "xml.text-limit")
+            return
+        }
+        totalTextBytes = newTotal
+        stack[stack.count - 1].text.append(string)
     }
 
     func parser(
@@ -110,19 +146,15 @@ private final class ProjectionDelegate: NSObject, XMLParserDelegate, @unchecked 
         namespaceURI: String?,
         qualifiedName qName: String?
     ) {
-        if let currentName {
-            elements.append(
-                XMLElementProjection(
-                    name: currentName,
-                    attributes: currentAttributes,
-                    text: currentText.trimmingCharacters(in: .whitespacesAndNewlines)
-                )
+        guard failure == nil, let frame = stack.popLast() else { return }
+        elements.append(
+            XMLElementProjection(
+                name: frame.name,
+                path: frame.path,
+                attributes: frame.attributes,
+                text: frame.text.trimmingCharacters(in: .whitespacesAndNewlines)
             )
-        }
-        currentName = nil
-        currentAttributes = [:]
-        currentText = ""
-        depth -= 1
+        )
     }
 
     func parser(
@@ -134,13 +166,26 @@ private final class ProjectionDelegate: NSObject, XMLParserDelegate, @unchecked 
         return nil
     }
 
+    func parser(
+        _ parser: XMLParser,
+        parseErrorOccurred parseError: Error
+    ) {
+        if failure == nil {
+            failure = sanitizedFailure("xml.invalid")
+        }
+    }
+
     private func reject(_ parser: XMLParser, code: String) {
-        failure = SanitizedFailure(
+        failure = sanitizedFailure(code)
+        parser.abortParsing()
+    }
+
+    private func sanitizedFailure(_ code: String) -> SanitizedFailure {
+        SanitizedFailure(
             family: .xml,
             code: code,
             message: "This EPUB contains XML that cannot be processed safely.",
             recoveryAction: .reviewBook
         )
-        parser.abortParsing()
     }
 }

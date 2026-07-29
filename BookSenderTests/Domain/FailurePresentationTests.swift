@@ -19,6 +19,7 @@ struct FailurePresentationTests {
 
 private extension FailureFamily {
     static let allCasesForTesting: [FailureFamily] = [
-        .intake, .archive, .xml, .audit, .repair, .filesystem, .credential, .delivery
+        .intake, .archive, .xml, .audit, .repair, .filesystem, .credential,
+        .delivery, .shortcut,
     ]
 }

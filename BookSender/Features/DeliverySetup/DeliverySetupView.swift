@@ -53,17 +53,8 @@ struct DeliverySetupView: View {
                 .buttonBorderShape(.capsule)
                 .padding(.top, 20)
                 .keyboardShortcut(.defaultAction)
-                .disabled(model.isSavingSetup)
+                .disabled(!model.canSaveSetup)
                 .accessibilityIdentifier("deliverySetup.save")
-
-                if presentation == .onboarding, model.setup == nil {
-                    HStack {
-                        Spacer()
-                        Button("Preview Send Book", action: model.previewSendBook)
-                            .accessibilityIdentifier("deliverySetup.previewSendBook")
-                        Spacer()
-                    }
-                }
             }
         }
         .scrollContentBackground(.hidden)

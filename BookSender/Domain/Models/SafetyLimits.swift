@@ -1,6 +1,7 @@
 import Foundation
 
 struct SafetyLimits: Equatable, Sendable {
+    let version: Int
     let maximumBatchItems: Int
     let maximumBookBytes: Int64
     let maximumArchiveEntries: Int
@@ -21,6 +22,7 @@ struct SafetyLimits: Equatable, Sendable {
     let orphanAge: Duration
 
     static let standard = SafetyLimits(
+        version: 1,
         maximumBatchItems: 100,
         maximumBookBytes: 50 * 1_024 * 1_024,
         maximumArchiveEntries: 10_000,
@@ -42,6 +44,27 @@ struct SafetyLimits: Equatable, Sendable {
     )
 
     func permitsArchiveEntryCount(_ value: Int) -> Bool { value <= maximumArchiveEntries }
+    func permitsBatchItemCount(_ value: Int) -> Bool { value <= maximumBatchItems }
+    func permitsBookBytes(_ value: Int64) -> Bool { value > 0 && value <= maximumBookBytes }
+    func permitsCompressedBytes(_ value: Int64) -> Bool { value <= maximumCompressedBytes }
+    func permitsExpandedBytes(_ value: Int64) -> Bool { value <= maximumExpandedBytes }
+    func permitsEntryBytes(_ value: Int64) -> Bool { value <= maximumEntryBytes }
+    func permitsExpansionRatio(_ value: Double) -> Bool { value <= maximumExpansionRatio }
+    func permitsXMLBytes(_ value: Int) -> Bool { value <= maximumXMLBytes }
     func permitsXMLDepth(_ value: Int) -> Bool { value <= maximumXMLDepth }
+    func permitsXMLElementCount(_ value: Int) -> Bool { value <= maximumXMLElements }
+    func permitsXMLAttributeCount(_ value: Int) -> Bool {
+        value <= maximumXMLAttributesPerElement
+    }
+    func permitsXMLTextBytes(_ value: Int) -> Bool { value <= maximumXMLTextBytes }
+    func permitsSMTPLineBytes(_ value: Int) -> Bool { value <= maximumSMTPLineBytes }
+    func permitsSMTPReplyLines(_ value: Int) -> Bool { value <= maximumSMTPReplyLines }
     func permitsAttachmentBytes(_ value: Int64) -> Bool { value <= maximumAttachmentBytes }
+    func permitsOperationElapsed(_ value: Duration) -> Bool {
+        value <= operationTimeout
+    }
+    func isOrphan(lastModified: Date, now: Date) -> Bool {
+        now.timeIntervalSince(lastModified)
+            >= TimeInterval(orphanAge.components.seconds)
+    }
 }

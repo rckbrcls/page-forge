@@ -3,9 +3,15 @@ import XCTest
 final class SettingsUITests: XCTestCase {
     func testEditSetupOpensDeliveryAndExposesShortcutTab() {
         let app = XCUIApplication()
-        app.launchArguments = ["-uiTesting", "-configuredSetup"]
+        app.launchArguments = [
+            "-uiTesting",
+            "-resetSetup",
+            "-configuredSetup",
+            "-uiTestPDFs",
+        ]
         app.launch()
 
+        XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         app.buttons["sendBook.editSetup"].click()
 
         let senderAddress = app.textFields["deliverySetup.senderAddress"]
@@ -32,8 +38,21 @@ final class SettingsUITests: XCTestCase {
             app.descendants(matching: .any)["settings.shortcut"].waitForExistence(timeout: 2)
         )
         XCTAssertTrue(app.switches["settings.shortcut.enabled"].exists)
+        XCTAssertTrue(
+            app.staticTexts["Shortcut registered."]
+                .waitForExistence(timeout: 2)
+        )
+        app.switches["settings.shortcut.enabled"].click()
+        XCTAssertTrue(
+            app.staticTexts["Shortcut disabled."]
+                .waitForExistence(timeout: 2)
+        )
         XCTAssertFalse(app.buttons["settings.shortcut.disable"].exists)
         XCTAssertFalse(app.staticTexts["Quick Access"].exists)
         XCTAssertFalse(app.staticTexts["Shortcut:"].exists)
+
+        app.typeKey("w", modifierFlags: .command)
+        XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Ready"].exists)
     }
 }

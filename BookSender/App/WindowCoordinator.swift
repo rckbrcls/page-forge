@@ -2,19 +2,36 @@ import AppKit
 
 @MainActor
 final class WindowCoordinator {
-    private weak var window: NSWindow?
+    private weak var mainWindow: NSWindow?
+    private var openMainWindow: (() -> Void)?
+    private var isReopenPending = false
+    private let activateApplication: () -> Void
 
-    func capture(_ window: NSWindow?) {
+    init(
+        activateApplication: @escaping () -> Void = {
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    ) {
+        self.activateApplication = activateApplication
+    }
+
+    func captureMainWindow(_ window: NSWindow?) {
         guard let window else { return }
-        self.window = window
+        mainWindow = window
+        isReopenPending = false
+    }
+
+    func registerOpenMainWindow(_ action: @escaping () -> Void) {
+        openMainWindow = action
     }
 
     func reveal() {
-        NSApp.activate(ignoringOtherApps: true)
-        if let window {
-            window.makeKeyAndOrderFront(nil)
-        } else {
-            NSApp.windows.first?.makeKeyAndOrderFront(nil)
+        activateApplication()
+        if let mainWindow {
+            mainWindow.makeKeyAndOrderFront(nil)
+        } else if !isReopenPending {
+            isReopenPending = true
+            openMainWindow?()
         }
     }
 }

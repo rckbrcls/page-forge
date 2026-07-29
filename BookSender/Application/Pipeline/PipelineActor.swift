@@ -1,131 +1,500 @@
 import Foundation
 
-actor PipelineActor {
-    private var batch = CurrentBatch(id: UUID(), items: [], phase: .editing)
+actor PipelineActor: BatchPipelining {
+    private var batch = CurrentBatch(
+        id: UUID(),
+        items: [],
+        phase: .editing
+    )
+    private var attempts: [UUID: DeliveryAttempt] = [:]
     private var eventContinuation: AsyncStream<PipelineEvent>.Continuation?
     private var activeTask: Task<Void, Never>?
 
+    private let intakeService: BookIntakeService
+    private let epubPreparer: any EPUBPreparing
+    private let pdfPreparer: any PDFEligibilityChecking
+    private let deliveryService: BookDeliveryService
+    private let workspaceStore: any WorkspaceStoring
+
     nonisolated let events: AsyncStream<PipelineEvent>
 
-    init() {
+    init(
+        intakeService: BookIntakeService,
+        epubPreparer: any EPUBPreparing,
+        pdfPreparer: any PDFEligibilityChecking,
+        deliveryService: BookDeliveryService,
+        workspaceStore: any WorkspaceStoring
+    ) {
+        self.intakeService = intakeService
+        self.epubPreparer = epubPreparer
+        self.pdfPreparer = pdfPreparer
+        self.deliveryService = deliveryService
+        self.workspaceStore = workspaceStore
+
         var continuation: AsyncStream<PipelineEvent>.Continuation?
         events = AsyncStream { continuation = $0 }
         eventContinuation = continuation
     }
 
-    func snapshot() -> CurrentBatch { batch }
+    func snapshot() -> CurrentBatch {
+        batch
+    }
 
-    func append(_ items: [BatchItem]) {
-        guard batch.phase == .editing || batch.phase == .completed else { return }
-        for item in items where !batch.items.contains(where: { $0.sourceIdentity == item.sourceIdentity }) {
-            batch.items.append(item)
-            eventContinuation?.yield(.itemAdded(item.id))
+    func deliveryAttempts() -> [DeliveryAttempt] {
+        attempts.values.sorted { $0.startedAt < $1.startedAt }
+    }
+
+    func add(_ urls: [URL]) {
+        guard !urls.isEmpty,
+              activeTask == nil,
+              batch.phase.permitsEditing,
+              batch.activeSnapshot == nil
+        else {
+            return
+        }
+        if batch.phase == .completed {
+            batch.activeSnapshot = nil
+            batch.completedCount = 0
+        }
+        batch.phase = .importing
+        emit(.batchChanged)
+        activeTask = Task { [weak self] in
+            await self?.runIntake(urls)
         }
     }
 
-    func replace(_ item: BatchItem) {
-        guard let index = batch.items.firstIndex(where: { $0.id == item.id }) else { return }
-        batch.items[index] = item
-        switch item.preparation {
-        case .ready:
-            if let preparedBook = item.preparedBook {
-                eventContinuation?.yield(.ready(item.id, preparedBook))
-            }
-        case .needsAttention(let failure), .excluded(let failure):
-            eventContinuation?.yield(.needsAttention(item.id, failure))
-        default:
-            break
+    func remove(_ itemID: UUID) async {
+        guard activeTask == nil,
+              batch.phase.permitsEditing,
+              batch.activeSnapshot == nil
+        else {
+            return
         }
-    }
-
-    func remove(_ itemID: UUID) {
-        guard batch.phase == .editing || batch.phase == .completed else { return }
+        guard let item = batch.items.first(where: { $0.id == itemID }) else {
+            return
+        }
         batch.items.removeAll { $0.id == itemID }
+        if let staged = item.stagedSource {
+            await workspaceStore.cleanup(
+                WorkspaceReference(
+                    batchID: batch.id,
+                    itemID: item.id,
+                    rootURL: staged.url.deletingLastPathComponent()
+                )
+            )
+        }
+        reconcileEditingPhase()
+        emit(.batchChanged)
     }
 
-    func clear() {
-        guard batch.phase != .sending && batch.phase != .cancelling else { return }
+    func clear() async {
+        guard activeTask == nil,
+              batch.phase.permitsEditing,
+              batch.activeSnapshot == nil
+        else {
+            return
+        }
+        let oldBatchID = batch.id
+        await workspaceStore.clearBatch(oldBatchID)
         batch = CurrentBatch(id: UUID(), items: [], phase: .editing)
+        attempts.removeAll()
+        emit(.batchChanged)
     }
 
-    func confirm(setup: DeliverySetup) -> ConfirmedBatchSnapshot {
-        let eligible = batch.items.filter { $0.preparation == .ready }.map(\.id)
-        let excluded = batch.items.filter { $0.preparation != .ready }.map(\.id)
+    func confirmation(
+        setup: ValidatedDeliverySetup,
+        kind: ConfirmedBatchKind = .initial
+    ) -> ConfirmedBatchSummary? {
+        guard activeTask == nil,
+              !batch.phase.hasConfirmedSend
+        else {
+            return nil
+        }
+
+        let selected: [BatchItem]
+        switch kind {
+        case .initial:
+            selected = batch.items.filter {
+                guard $0.preparation == .ready else { return false }
+                if case .notScheduled = $0.delivery { return true }
+                return false
+            }
+        case .retryFailed:
+            selected = batch.items.filter {
+                if case .failed = $0.delivery { return true }
+                return false
+            }
+        }
+
+        let eligible = selected.compactMap { item -> ConfirmedBatchItem? in
+            guard let prepared = item.preparedBook else { return nil }
+            let priorFailure: SanitizedFailure?
+            if case .failed(let failure) = item.delivery {
+                priorFailure = failure
+            } else {
+                priorFailure = nil
+            }
+            return ConfirmedBatchItem(
+                id: item.id,
+                displayName: item.displayName,
+                preparedFile: prepared.file,
+                format: prepared.format,
+                byteCount: prepared.byteCount,
+                contentDigest: prepared.contentDigest,
+                priorDefinitiveFailure: priorFailure
+            )
+        }
+        guard !eligible.isEmpty, eligible.count == selected.count else {
+            return nil
+        }
+        let selectedIDs = Set(selected.map(\.id))
         let snapshot = ConfirmedBatchSnapshot(
             id: UUID(),
-            setupRevision: setup.revision,
-            destination: setup.kindleAddress,
-            eligibleItemIDs: eligible,
-            excludedItemIDs: excluded,
-            confirmedAt: Date()
+            setup: setup,
+            eligibleItems: eligible,
+            excludedItemIDs: batch.items
+                .filter { !selectedIDs.contains($0.id) }
+                .map(\.id),
+            confirmedAt: Date(),
+            kind: kind
         )
-        batch.confirmedSnapshotIdentifier = snapshot.id
-        return snapshot
+        batch.activeSnapshot = snapshot
+        batch.completedCount = 0
+        batch.phase = .readyForConfirmation
+        emit(.batchChanged)
+        return ConfirmedBatchSummary(
+            id: snapshot.id,
+            destination: snapshot.setup.kindleAddress.value,
+            eligibleCount: snapshot.eligibleItems.count,
+            excludedCount: snapshot.excludedItemIDs.count,
+            kind: snapshot.kind
+        )
     }
 
-    func send(
-        snapshot: ConfirmedBatchSnapshot,
-        setup: DeliverySetup,
-        delivery: any SMTPDelivering,
-        credential: String
-    ) {
-        guard activeTask == nil else { return }
+    func releaseConfirmation(_ snapshotID: UUID) {
+        guard activeTask == nil,
+              batch.activeSnapshot?.id == snapshotID,
+              batch.phase == .readyForConfirmation
+        else {
+            return
+        }
+        batch.activeSnapshot = nil
+        reconcileEditingPhase()
+        emit(.batchChanged)
+    }
+
+    func send(snapshotID: UUID) {
+        guard activeTask == nil,
+              batch.phase == .readyForConfirmation,
+              let snapshot = batch.activeSnapshot,
+              snapshot.id == snapshotID
+        else {
+            return
+        }
         batch.phase = .sending
-        activeTask = Task {
-            var completed = 0
-            for itemID in snapshot.eligibleItemIDs {
-                if Task.isCancelled {
-                    markPendingCancelled(snapshot.eligibleItemIDs.dropFirst(completed))
-                    break
-                }
-                guard let index = batch.items.firstIndex(where: { $0.id == itemID }),
-                      let prepared = batch.items[index].preparedBook
-                else {
-                    completed += 1
-                    continue
-                }
-                batch.items[index].delivery = .sending(.connecting)
-                eventContinuation?.yield(.sending(itemID, .connecting))
-                let outcome = await delivery.send(book: prepared, setup: setup, credential: credential)
-                apply(outcome, to: index)
-                completed += 1
-                eventContinuation?.yield(.batchProgress(completed: completed, total: snapshot.eligibleItemIDs.count))
-            }
-            batch.phase = .completed
-            eventContinuation?.yield(.batchCompleted(batch.id))
-            activeTask = nil
+        emit(.batchChanged)
+        activeTask = Task { [weak self] in
+            await self?.runDelivery(snapshot)
         }
     }
 
-    func cancel(delivery: (any SMTPDelivering)? = nil) async {
+    func cancel() async {
+        guard let activeTask,
+              batch.phase == .importing
+                || batch.phase == .preparing
+                || batch.phase == .sending
+        else {
+            return
+        }
         batch.phase = .cancelling
-        activeTask?.cancel()
-        await delivery?.cancelActiveAttempt()
+        emit(.batchChanged)
+        activeTask.cancel()
+        await deliveryService.cancelActiveAttempt()
     }
 
-    private func apply(_ outcome: TerminalOutcome, to index: Int) {
-        let id = batch.items[index].id
+    func canEditSetup() -> Bool {
+        !batch.phase.hasConfirmedSend && batch.activeSnapshot == nil
+    }
+
+    private func runIntake(_ urls: [URL]) async {
+        let outcomes = await intakeService.intake(
+            urls,
+            batchID: batch.id,
+            existing: batch.items
+        )
+        for outcome in outcomes {
+            batch.items.append(outcome.item)
+            emit(.intakeOutcome(outcome.item.id))
+            emit(.batchChanged)
+
+            guard case .accepted(let item) = outcome else { continue }
+            if Task.isCancelled {
+                updatePreparation(item.id, to: .cancelled)
+                continue
+            }
+            await prepare(item)
+        }
+        if Task.isCancelled {
+            markPendingPreparationCancelled()
+        }
+        reconcileEditingPhase()
+        activeTask = nil
+        emit(.batchChanged)
+    }
+
+    private func prepare(_ item: BatchItem) async {
+        guard let format = item.format,
+              let source = item.stagedSource
+        else {
+            updatePreparation(
+                item.id,
+                to: .needsAttention(
+                    failure(
+                        "pipeline.missing-staged-source",
+                        family: .filesystem
+                    )
+                )
+            )
+            return
+        }
+
+        batch.phase = .preparing
+        updatePreparation(item.id, to: .preparing)
+        emit(.preparing(item.id))
+        emit(.batchChanged)
+
+        let result: PreparationResult
+        switch format {
+        case .pdf:
+            result = await pdfPreparer.prepare(
+                itemID: item.id,
+                source: source,
+                displayName: item.displayName
+            )
+        case .epub:
+            result = await epubPreparer.prepare(
+                source: source,
+                workspace: WorkspaceReference(
+                    batchID: batch.id,
+                    itemID: item.id,
+                    rootURL: source.url.deletingLastPathComponent()
+                ),
+                displayName: item.displayName
+            )
+        }
+
+        guard let index = batch.items.firstIndex(where: { $0.id == item.id })
+        else {
+            return
+        }
+        batch.items[index].findings = result.originalReport?.findings ?? []
+        batch.items[index].appliedActions = result.appliedActions
+        batch.items[index].preparedBook = result.preparedBook
+        if let preparedBook = result.preparedBook {
+            batch.items[index].health = .healthy
+            batch.items[index].preparation = .ready
+            emit(.ready(item.id))
+            _ = preparedBook
+        } else if let failure = result.failure {
+            if failure.code.hasSuffix(".cancelled") {
+                batch.items[index].preparation = .cancelled
+                emit(.cancelled(item.id))
+            } else {
+                batch.items[index].health = result.originalReport?.health
+                batch.items[index].preparation = .needsAttention(failure)
+                emit(.needsAttention(item.id, failure))
+            }
+        } else {
+            let failure = failure("pipeline.preparation-result")
+            batch.items[index].preparation = .needsAttention(failure)
+            emit(.needsAttention(item.id, failure))
+        }
+        emit(.batchChanged)
+    }
+
+    private func runDelivery(_ snapshot: ConfirmedBatchSnapshot) async {
+        var completed = 0
+        for (offset, confirmedItem) in snapshot.eligibleItems.enumerated() {
+            if Task.isCancelled {
+                markPendingDeliveryCancelled(
+                    snapshot.eligibleItems.dropFirst(offset)
+                )
+                break
+            }
+            guard let index = batch.items.firstIndex(where: {
+                $0.id == confirmedItem.id
+            }) else {
+                completed += 1
+                continue
+            }
+
+            let attemptID = UUID()
+            attempts[attemptID] = DeliveryAttempt(
+                id: attemptID,
+                snapshotID: snapshot.id,
+                itemID: confirmedItem.id,
+                setupRevision: snapshot.setup.revision,
+                stage: .connecting,
+                dataTransmissionStarted: false,
+                startedAt: Date(),
+                completedAt: nil,
+                outcome: nil
+            )
+            batch.items[index].delivery = .sending(.connecting)
+            emit(
+                .sending(
+                    confirmedItem.id,
+                    DeliveryProgress(
+                        stage: .connecting,
+                        dataTransmissionStarted: false
+                    )
+                )
+            )
+            emit(.batchChanged)
+
+            let outcome = await deliveryService.deliver(
+                confirmedItem,
+                in: snapshot
+            ) { [weak self] progress in
+                await self?.apply(
+                    progress,
+                    itemID: confirmedItem.id,
+                    attemptID: attemptID
+                )
+            }
+            apply(outcome, itemID: confirmedItem.id, attemptID: attemptID)
+            completed += 1
+            batch.completedCount = completed
+            emit(
+                .batchProgress(
+                    completed: completed,
+                    total: snapshot.eligibleItems.count
+                )
+            )
+            emit(.batchChanged)
+        }
+
+        if batch.phase == .cancelling {
+            markPendingDeliveryCancelled(
+                snapshot.eligibleItems.dropFirst(completed)
+            )
+        }
+        batch.activeSnapshot = nil
+        batch.phase = .completed
+        activeTask = nil
+        emit(.batchCompleted(batch.id))
+        emit(.batchChanged)
+    }
+
+    private func apply(
+        _ progress: DeliveryProgress,
+        itemID: UUID,
+        attemptID: UUID
+    ) {
+        guard let index = batch.items.firstIndex(where: { $0.id == itemID }),
+              var attempt = attempts[attemptID],
+              attempt.outcome == nil
+        else {
+            return
+        }
+        attempt.stage = progress.stage
+        attempt.dataTransmissionStarted =
+            attempt.dataTransmissionStarted || progress.dataTransmissionStarted
+        attempts[attemptID] = attempt
+        batch.items[index].delivery = .sending(progress.stage)
+        emit(.sending(itemID, progress))
+        emit(.batchChanged)
+    }
+
+    private func apply(
+        _ outcome: TerminalOutcome,
+        itemID: UUID,
+        attemptID: UUID
+    ) {
+        guard let index = batch.items.firstIndex(where: { $0.id == itemID }),
+              var attempt = attempts[attemptID]
+        else {
+            return
+        }
+        attempt.completedAt = Date()
+        attempt.outcome = outcome
+        attempts[attemptID] = attempt
         switch outcome {
         case .submitted:
             batch.items[index].delivery = .submitted
-            eventContinuation?.yield(.submitted(id))
+            emit(.submitted(itemID))
         case .failed(let failure):
             batch.items[index].delivery = .failed(failure)
-            eventContinuation?.yield(.failed(id, failure))
+            emit(.failed(itemID, failure))
         case .cancelled:
             batch.items[index].delivery = .cancelled
-            eventContinuation?.yield(.cancelled(id))
+            emit(.cancelled(itemID))
         case .deliveryUnknown:
             batch.items[index].delivery = .deliveryUnknown
-            eventContinuation?.yield(.deliveryUnknown(id))
+            emit(.deliveryUnknown(itemID))
         }
     }
 
-    private func markPendingCancelled(_ ids: ArraySlice<UUID>) {
-        for id in ids {
-            guard let index = batch.items.firstIndex(where: { $0.id == id }) else { continue }
-            batch.items[index].delivery = .cancelled
-            eventContinuation?.yield(.cancelled(id))
+    private func markPendingPreparationCancelled() {
+        for index in batch.items.indices {
+            switch batch.items[index].preparation {
+            case .waiting, .checking, .preparing:
+                batch.items[index].preparation = .cancelled
+                emit(.cancelled(batch.items[index].id))
+            case .ready, .needsAttention, .excluded, .cancelled:
+                break
+            }
         }
+    }
+
+    private func markPendingDeliveryCancelled(
+        _ items: ArraySlice<ConfirmedBatchItem>
+    ) {
+        for item in items {
+            guard let index = batch.items.firstIndex(where: {
+                $0.id == item.id
+            }) else {
+                continue
+            }
+            if case .notScheduled = batch.items[index].delivery {
+                batch.items[index].delivery = .cancelled
+                emit(.cancelled(item.id))
+            }
+        }
+    }
+
+    private func updatePreparation(
+        _ itemID: UUID,
+        to state: PreparationState
+    ) {
+        guard let index = batch.items.firstIndex(where: { $0.id == itemID })
+        else {
+            return
+        }
+        batch.items[index].preparation = state
+    }
+
+    private func reconcileEditingPhase() {
+        if batch.items.contains(where: { $0.preparation == .ready }) {
+            batch.phase = .readyForConfirmation
+        } else {
+            batch.phase = .editing
+        }
+    }
+
+    private func emit(_ event: PipelineEvent) {
+        eventContinuation?.yield(event)
+    }
+
+    private func failure(
+        _ code: String,
+        family: FailureFamily = .repair
+    ) -> SanitizedFailure {
+        SanitizedFailure(
+            family: family,
+            code: code,
+            message: "This book could not be processed safely.",
+            recoveryAction: .reviewBook
+        )
     }
 }

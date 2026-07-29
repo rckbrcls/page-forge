@@ -1,0 +1,79 @@
+import Foundation
+import Testing
+@testable import BookSender
+
+@MainActor
+struct SettingsDeliveryTests {
+    @Test
+    func blankPasswordEditPreservesCredentialAndIdleBatch() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let graph = TestDependencyGraph.make(stores: stores)
+        let model = AppModel(dependencies: graph.dependencies)
+        model.setupDraft = validDraft()
+        model.saveSetup()
+        try await eventually { model.setup != nil }
+        let originalReference = try #require(model.setup?.credentialReference)
+        let pdf = try FixtureFactory.makePDF(valid: true, in: stores.rootURL)
+        model.addBooks([pdf])
+        try await eventually { model.items.first?.preparation == .ready }
+        let batchID = model.batch.id
+
+        model.setupDraft.smtpPort = "587"
+        model.setupDraft.securityMode = .startTLS
+        model.setupDraft.appPassword = ""
+        model.saveSetup()
+        try await eventually { model.setup?.revision == 2 }
+
+        #expect(model.setup?.credentialReference.account == originalReference.account)
+        #expect(model.batch.id == batchID)
+        #expect(model.items.count == 1)
+    }
+
+    @Test
+    func activeConfirmationDisablesDeliverySave() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let graph = TestDependencyGraph.make(stores: stores)
+        let model = AppModel(dependencies: graph.dependencies)
+        model.setupDraft = validDraft()
+        model.saveSetup()
+        try await eventually { model.setup != nil }
+        let pdf = try FixtureFactory.makePDF(valid: true, in: stores.rootURL)
+        model.addBooks([pdf])
+        try await eventually { model.items.first?.preparation == .ready }
+        model.requestSendConfirmation()
+        try await eventually { model.isShowingConfirmation }
+
+        #expect(model.canSaveSetup == false)
+        model.dismissConfirmation()
+        try await eventually { model.batch.activeConfirmation == nil }
+        #expect(model.canSaveSetup)
+    }
+
+    private func eventually(
+        _ condition: @escaping @MainActor () -> Bool
+    ) async throws {
+        for _ in 0..<2_000 {
+            if condition() { return }
+            await Task.yield()
+        }
+        throw SettingsDeliveryTestError.timeout
+    }
+
+    private func validDraft() -> DeliverySetupDraft {
+        DeliverySetupDraft(
+            senderAddress: "sender@example.com",
+            smtpHost: "smtp.example.com",
+            smtpPort: "465",
+            securityMode: .implicitTLS,
+            username: "sender",
+            appPassword: "secret",
+            kindleAddress: "reader@kindle.com"
+        )
+    }
+}
+
+private enum SettingsDeliveryTestError: Error {
+    case timeout
+}

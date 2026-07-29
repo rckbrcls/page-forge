@@ -10,9 +10,14 @@ struct BookSenderApp: App {
     private let updaterController: SPUStandardUpdaterController
 
     init() {
-        let model = AppModel()
+        let dependencies = AppDependencies.forCurrentInvocation()
+        let model = AppModel(dependencies: dependencies)
         _model = State(initialValue: model)
-        shortcutService = ShortcutService(windowCoordinator: model.windowCoordinator)
+        shortcutService = ShortcutService(
+            model: model,
+            windowCoordinator: model.windowCoordinator,
+            defaults: dependencies.shortcutDefaults
+        )
         shortcutService.start()
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,
@@ -23,15 +28,8 @@ struct BookSenderApp: App {
     }
 
     var body: some Scene {
-        WindowGroup("Book Sender", id: "main") {
-            Group {
-                switch model.route {
-                case .deliverySetup:
-                    DeliverySetupView(model: model, presentation: .onboarding)
-                case .sendBook:
-                    SendBookView(model: model)
-                }
-            }
+        Window("Book Sender", id: "main") {
+            MainWindowContent(model: model)
             .frame(
                 minWidth: 620,
                 maxWidth: .infinity,
@@ -119,6 +117,27 @@ private struct WindowGlassBackdrop: NSViewRepresentable {
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.titlebarSeparatorStyle = .none
-        coordinator.capture(window)
+        coordinator.captureMainWindow(window)
+    }
+}
+
+private struct MainWindowContent: View {
+    @Environment(\.openWindow) private var openWindow
+    @Bindable var model: AppModel
+
+    var body: some View {
+        Group {
+            switch model.route {
+            case .deliverySetup:
+                DeliverySetupView(model: model, presentation: .onboarding)
+            case .sendBook:
+                SendBookView(model: model)
+            }
+        }
+        .onAppear {
+            model.windowCoordinator.registerOpenMainWindow {
+                openWindow(id: "main")
+            }
+        }
     }
 }

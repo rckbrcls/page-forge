@@ -64,6 +64,26 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
+      - name: Run approved unit and UI test suite
+        run: |
+          set -euo pipefail
+
+          TEST_DERIVED_DATA="$RUNNER_TEMP/TestDerivedData"
+          xcodebuild test \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "platform=macOS" \
+            -derivedDataPath "$TEST_DERIVED_DATA" \
+            "CODE_SIGNING_ALLOWED=NO" \
+            "CODE_SIGNING_REQUIRED=NO"
+
+      - name: Verify installer and appcast contracts
+        run: |
+          set -euo pipefail
+
+          bash scripts/tests/install_contract_test.sh
+          python3 scripts/tests/appcast_contract_test.py
+
       - name: Build universal Release
         run: |
           set -euo pipefail
@@ -177,6 +197,9 @@ jobs:
           echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
           echo "ZIP_PATH=$ZIP_PATH" >> "$GITHUB_ENV"
           echo "ZIP_LENGTH=$ZIP_LENGTH" >> "$GITHUB_ENV"
+
+      - name: Verify packaged product contract
+        run: bash scripts/tests/install_contract_test.sh
 
       - name: Download Sparkle tools
         run: |
