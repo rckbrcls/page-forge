@@ -3,6 +3,9 @@
 Recorded on 2026-07-28 before native implementation. This inventory is a
 behavioral reference, not permission to copy obsolete implementation wholesale.
 
+> Superseded on 2026-07-28: the user explicitly authorized immediate legacy
+> removal. The referenced legacy paths no longer exist in the working tree.
+
 ## Worktree boundary
 
 - Continue on `main`; do not branch, stage, commit, restore, or discard.
