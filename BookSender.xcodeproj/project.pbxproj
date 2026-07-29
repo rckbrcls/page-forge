@@ -292,14 +292,8 @@
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Book Sender";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
-				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
-				INFOPLIST_KEY_SUFeedURL = "https://rckbrcls.com/api/book-sender/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "Y+PX52K5Ey2YxS7dNyscj1qBxlmB9Q+kIaXvBL1b8GQ=";
-				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BookSender/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -329,14 +323,8 @@
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Book Sender";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
-				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
-				INFOPLIST_KEY_SUFeedURL = "https://rckbrcls.com/api/book-sender/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "Y+PX52K5Ey2YxS7dNyscj1qBxlmB9Q+kIaXvBL1b8GQ=";
-				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BookSender/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
