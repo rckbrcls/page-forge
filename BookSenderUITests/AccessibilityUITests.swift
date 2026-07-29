@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class AccessibilityUITests: XCTestCase {
     func testPrimaryJourneyHasKeyboardReachableLabeledStates() {
         let app = XCUIApplication()
@@ -91,9 +92,9 @@ final class AccessibilityUITests: XCTestCase {
             app.secureTextFields["deliverySetup.appPassword"],
             app.textFields["deliverySetup.kindleAddress"],
         ]
-        XCTAssertTrue(fields.allSatisfy(\.exists))
+        XCTAssertTrue(fields.allSatisfy { $0.exists })
         XCTAssertEqual(
-            fields.map(\.label),
+            fields.map { $0.label },
             [
                 "Sender Address",
                 "SMTP Host",

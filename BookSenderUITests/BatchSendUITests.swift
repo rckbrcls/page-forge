@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class BatchSendUITests: XCTestCase {
     func testSendIsDisabledForAnEmptyBatch() {
         let app = XCUIApplication()
