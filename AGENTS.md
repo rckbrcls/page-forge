@@ -22,38 +22,57 @@
 ## Project Context
 
 - Governance source: `.specify/memory/constitution.md`.
-- Active product specification and plan: `specs/004-raycast-epub-workflow/`.
-- Book Sender is a macOS-only, public, self-contained Raycast extension that checks, safely repairs when possible, and sends EPUB or PDF books to Kindle through one command.
-- The final repository contains one npm package and one Raycast extension. Swift, SwiftUI, Xcode, Python, Calibre, and the previous desktop distribution are obsolete and must not be retained as a parallel product.
-- Required dependency direction: `Raycast Commands -> Application Services -> EPUB Audit and Repair Engine -> Archive, XML, Filesystem, and Delivery Adapters`.
+- Active product specification: `specs/005-lightweight-macos-sender/`.
+- Book Sender is a lightweight, self-contained native macOS application with
+  exactly two primary screens: `Delivery Setup` and `Send Book`.
+- The final repository contains one Swift and SwiftUI macOS application plus its
+  tests, fixtures, documentation, and distribution assets.
+- Raycast, Electron, Tauri, Python, Java, Docker, Calibre, installed EPUBCheck,
+  helper processes, local services, executable downloads, and parallel legacy
+  products are obsolete or forbidden runtime dependencies.
+- Required dependency direction:
+  `SwiftUI Screens -> Application Pipeline -> Ebook Audit and Repair Domain -> Archive, XML, Filesystem, SMTP, and Credential Adapters`.
 - Planned source areas:
-  - `src/commands/`: Raycast view composition only
-  - `src/application/`: intake, batch, inspect, prepare, and send orchestration
-  - `src/domain/audit/`: EPUB rules and health derivation
-  - `src/domain/repair/`: repair planning, application, and comparison
-  - `src/domain/models/`: typed reports, failures, plans, results, and state
-  - `src/adapters/`: archive, XML, filesystem, SMTP, and Raycast boundaries
-  - `tests/fixtures/`: small valid, malformed, ambiguous, and malicious EPUB fixtures
+  - `BookSender/App/`: application lifecycle and composition
+  - `BookSender/Features/DeliverySetup/`: SMTP setup screen only
+  - `BookSender/Features/SendBook/`: batch intake, minimal feedback, and delivery screen
+  - `BookSender/Application/Pipeline/`: sequential background orchestration
+  - `BookSender/Domain/Audit/`: EPUB rules and health derivation
+  - `BookSender/Domain/Repair/`: cleanup, restoration, planning, and comparison
+  - `BookSender/Domain/Models/`: typed findings, failures, plans, results, and state
+  - `BookSender/Adapters/`: archive, XML, filesystem, SMTP, and credential boundaries
+  - `BookSenderTests/Fixtures/`: valid, malformed, ambiguous, and malicious EPUB fixtures
 
 ## Product Positioning
 
-- Book Sender is not a Calibre replacement and must not depend on Calibre or any installed ebook engine.
-- Keep one focused pipeline: `Select Book -> Check -> Apply Safe EPUB Repairs -> Validate -> Confirm -> Send to Kindle`.
-- Support EPUB inspection/repair and direct PDF delivery. Do not add conversion or MOBI, AZW, AZW3, or KFX handling.
-- Expose exactly one command: Send Book to Kindle. Inspection and repair are internal stages of that command.
-- Keep SMTP delivery and the official Send to Kindle web handoff distinct and explicit.
-- Do not promise direct Amazon upload automation or Amazon login automation.
+- Keep the visible product limited to SMTP setup and batch book sending.
+- Keep the advanced pipeline internal:
+  `Safety Check -> Structural Audit -> Cleanup/Restore -> Write Working Copy -> Revalidate -> Ready`.
+- Default feedback is concise: checking, preparing, ready, needs attention,
+  sending, and a terminal result.
+- Reveal detailed evidence inline only when it explains a blocked item, failure,
+  applied restoration, or user decision.
+- Support EPUB background preparation and direct PDF delivery. Do not add
+  conversion or MOBI, AZW, AZW3, or KFX handling.
+- Use explicit SMTP delivery only. Do not automate Amazon login, browser upload,
+  or the official Send to Kindle website.
 - Do not implement DRM removal.
 - Keep the product fast, light, minimal, and visually calm.
 
 ## Implementation Conventions
 
-- Keep one shared intake path for Finder-selected files and the Raycast file picker.
-- Process a stable selected snapshot sequentially, one EPUB and one archive entry at a time, and isolate failures per file.
-- Cancellation stops pending scheduling and cooperatively interrupts active streams; SMTP may become `delivery_unknown` after message data begins.
-- Never modify or overwrite an original. EPUB repair uses a separate copy and preserves the original display name for Kindle delivery.
-- Apply only deterministic permitted repairs and revalidate the written copy before delivery.
-- Keep audit and repair rules out of React components.
+- Keep one shared intake path for drag and drop and the Finder file picker.
+- Process a stable confirmed batch sequentially, one EPUB, one archive entry, and
+  one delivery attempt at a time; isolate failures per book.
+- Cancellation stops pending scheduling and cooperatively interrupts active
+  streams; SMTP may become `delivery_unknown` after message data begins.
+- Never modify or overwrite an original. EPUB cleanup and restoration use a
+  separate collision-safe copy and preserve the original display name for Kindle
+  delivery.
+- Apply only deterministic, evidence-backed cleanup or restoration and revalidate
+  the written copy before readiness.
+- Keep audit, repair, restoration, filesystem, credential, and SMTP rules out of
+  SwiftUI views.
 - Use health states:
   - `healthy`
   - `repairable`
@@ -67,16 +86,45 @@
   - `critical`
 - Represent repairability separately from severity.
 - Use typed expected failures; never expose raw archive, XML, filesystem, or SMTP exceptions.
-- Every audit and automatic repair rule requires a focused fixture-backed test.
-- Do not develop or preserve production features in obsolete `PageForge/` or `legacy/` trees.
+- Every audit and automatic cleanup or restoration rule requires a focused fixture-backed test.
+- Keep all production implementation inside `BookSender/**/*.swift`.
 
 ## Dependencies And Platform
 
-- Product surface: TypeScript, React, `@raycast/api`, and Node.js APIs available in Raycast.
-- Planned archive/XML/delivery dependencies: `yauzl`, `yazl`, `saxes`, and `nodemailer`, plus narrowly justified integrity/path helpers.
-- Tests: Vitest with small deterministic EPUB fixtures.
-- Secrets: Raycast password preferences; never direct Keychain access, project files, logs, or remote storage.
-- Forbidden: native binaries, helper processes, executable downloads, Calibre, installed EPUBCheck, Python, Java, Docker, local services, and user-installed processing tools.
+- Product surface: macOS 14.0+, Swift 6 language mode with complete concurrency
+  checking, SwiftUI, AppKit, Observation, Foundation, Security.framework, and
+  UniformTypeIdentifiers.
+- Application state: `@MainActor @Observable` presentation model; one actor-owned
+  sequential pipeline that emits minimal typed events through `AsyncStream`.
+- Source dependencies: exact compatible versions of KeyboardShortcuts,
+  ZIPFoundation, swift-nio, and swift-nio-ssl only. Keep them source-only and
+  inside the app process; review versions and licenses during implementation.
+- Sandbox entitlements: user-selected read-only files and outgoing network client
+  only.
+- Archive/XML: bounded ZIPFoundation entry streaming and Foundation `XMLParser`
+  with external entities disabled; never use `Process`, `/usr/bin/zip`, or
+  `/usr/bin/unzip`.
+- SMTP: a narrow SwiftNIO/NIOSSL state machine supporting implicit TLS and
+  STARTTLS, TLS-only authentication, streaming MIME, cancellation, and typed
+  `delivery_unknown`.
+- Tests: Swift Testing for domain, pipeline, adapter, and fixture contracts;
+  XCTest/XCUITest for UI, accessibility, and performance.
+- Secrets: Data Protection Keychain; never ordinary preferences, project files,
+  logs, reports, presentation models, or remote storage.
+- Forbidden: helper processes, executable downloads, Calibre, installed EPUBCheck,
+  Raycast, Python, Java, Docker, local services, and user-installed processing
+  tools.
+
+## Repository Layout
+
+- `BookSender.xcodeproj/`: the sole application project.
+- `BookSender/`: all production Swift source and app resources.
+- `BookSenderTests/`: domain, application, adapter, privacy, and performance tests.
+- `BookSenderUITests/`: two-screen, keyboard, accessibility, and journey tests.
+- `specs/005-lightweight-macos-sender/`: active product specification and
+  validation records.
+- Do not recreate the removed Raycast, Node, PageForge, Calibre, Python, Sparkle,
+  appcast, or historical product trees.
 
 ## Verification
 

@@ -1,0 +1,108 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		BS0001010000000000000001 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000001 /* KeyboardShortcuts */; };
+		BS0001010000000000000002 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000002 /* ZIPFoundation */; };
+		BS0001010000000000000003 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000003 /* NIOCore */; };
+		BS0001010000000000000004 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000004 /* NIOPosix */; };
+		BS0001010000000000000005 /* NIOSSL in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000005 /* NIOSSL */; };
+		BS0001010000000000000006 /* NIOEmbedded in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000006 /* NIOEmbedded */; };
+		BS0001010000000000000007 /* BookSender.app in Frameworks */ = {isa = PBXBuildFile; fileRef = BS0003010000000000000001 /* BookSender.app */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		BS0004010000000000000001 = {isa = PBXContainerItemProxy; containerPortal = BS0005010000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = BS0006010000000000000001; remoteInfo = BookSender; };
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		BS0003010000000000000001 /* BookSender.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BookSender.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BS0003010000000000000002 /* BookSenderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BookSenderTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BS0003010000000000000003 /* BookSenderUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BookSenderUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		BS0007010000000000000001 /* BookSender */ = {isa = PBXFileSystemSynchronizedRootGroup; path = BookSender; sourceTree = "<group>"; };
+		BS0007010000000000000002 /* BookSenderTests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = BookSenderTests; sourceTree = "<group>"; };
+		BS0007010000000000000003 /* BookSenderUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = BookSenderUITests; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BS0008010000000000000001 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (BS0001010000000000000001, BS0001010000000000000002, BS0001010000000000000003, BS0001010000000000000004, BS0001010000000000000005,); runOnlyForDeploymentPostprocessing = 0; };
+		BS0008010000000000000002 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (BS0001010000000000000006,); runOnlyForDeploymentPostprocessing = 0; };
+		BS0008010000000000000003 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		BS0009010000000000000001 = {isa = PBXGroup; children = (BS0007010000000000000001, BS0007010000000000000002, BS0007010000000000000003, BS0009010000000000000002 /* Products */,); sourceTree = "<group>"; };
+		BS0009010000000000000002 /* Products */ = {isa = PBXGroup; children = (BS0003010000000000000001, BS0003010000000000000002, BS0003010000000000000003,); name = Products; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		BS0006010000000000000001 /* BookSender */ = {isa = PBXNativeTarget; buildConfigurationList = BS0010010000000000000001; buildPhases = (BS0011010000000000000001, BS0008010000000000000001, BS0012010000000000000001,); buildRules = (); dependencies = (); fileSystemSynchronizedGroups = (BS0007010000000000000001,); name = BookSender; packageProductDependencies = (BS0002010000000000000001, BS0002010000000000000002, BS0002010000000000000003, BS0002010000000000000004, BS0002010000000000000005,); productName = BookSender; productReference = BS0003010000000000000001; productType = "com.apple.product-type.application"; };
+		BS0006010000000000000002 /* BookSenderTests */ = {isa = PBXNativeTarget; buildConfigurationList = BS0010010000000000000002; buildPhases = (BS0011010000000000000002, BS0008010000000000000002, BS0012010000000000000002,); buildRules = (); dependencies = (BS0013010000000000000001,); fileSystemSynchronizedGroups = (BS0007010000000000000002,); name = BookSenderTests; packageProductDependencies = (BS0002010000000000000006,); productName = BookSenderTests; productReference = BS0003010000000000000002; productType = "com.apple.product-type.bundle.unit-test"; };
+		BS0006010000000000000003 /* BookSenderUITests */ = {isa = PBXNativeTarget; buildConfigurationList = BS0010010000000000000003; buildPhases = (BS0011010000000000000003, BS0008010000000000000003, BS0012010000000000000003,); buildRules = (); dependencies = (BS0013010000000000000002,); fileSystemSynchronizedGroups = (BS0007010000000000000003,); name = BookSenderUITests; productName = BookSenderUITests; productReference = BS0003010000000000000003; productType = "com.apple.product-type.bundle.ui-testing"; };
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BS0005010000000000000001 /* Project object */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 2660; LastUpgradeCheck = 2660; TargetAttributes = {BS0006010000000000000001 = {CreatedOnToolsVersion = 26.0;}; BS0006010000000000000002 = {CreatedOnToolsVersion = 26.0; TestTargetID = BS0006010000000000000001;}; BS0006010000000000000003 = {CreatedOnToolsVersion = 26.0; TestTargetID = BS0006010000000000000001;};};}; buildConfigurationList = BS0010010000000000000004; compatibilityVersion = "Xcode 16.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base,); mainGroup = BS0009010000000000000001; minimizedProjectReferenceProxies = 1; packageReferences = (BS0014010000000000000001, BS0014010000000000000002, BS0014010000000000000003, BS0014010000000000000004,); preferredProjectObjectVersion = 77; productRefGroup = BS0009010000000000000002; projectDirPath = ""; projectRoot = ""; targets = (BS0006010000000000000001, BS0006010000000000000002, BS0006010000000000000003,); };
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		BS0012010000000000000001 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		BS0012010000000000000002 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		BS0012010000000000000003 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		BS0011010000000000000001 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		BS0011010000000000000002 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		BS0011010000000000000003 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		BS0013010000000000000001 = {isa = PBXTargetDependency; target = BS0006010000000000000001; targetProxy = BS0004010000000000000001; };
+		BS0013010000000000000002 = {isa = PBXTargetDependency; target = BS0006010000000000000001; targetProxy = BS0004010000000000000001; };
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		BS0015010000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor; CODE_SIGN_ENTITLEMENTS = BookSender/BookSender.entitlements; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = YES; ENABLE_HARDENED_RUNTIME = YES; ENABLE_USER_SELECTED_FILES = readonly; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Book Sender"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities"; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks",); MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0.0; PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.BookSender; PRODUCT_NAME = BookSender; REGISTER_APP_GROUPS = NO; SWIFT_APPROACHABLE_CONCURRENCY = NO; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; }; name = Debug; };
+		BS0015010000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor; CODE_SIGN_ENTITLEMENTS = BookSender/BookSender.entitlements; CODE_SIGN_STYLE = Automatic; COMBINE_HIDPI_IMAGES = YES; CURRENT_PROJECT_VERSION = 1; ENABLE_APP_SANDBOX = YES; ENABLE_HARDENED_RUNTIME = YES; ENABLE_USER_SELECTED_FILES = readonly; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Book Sender"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities"; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks",); MACOSX_DEPLOYMENT_TARGET = 14.0; MARKETING_VERSION = 1.0.0; PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.BookSender; PRODUCT_NAME = BookSender; REGISTER_APP_GROUPS = NO; SWIFT_APPROACHABLE_CONCURRENCY = NO; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; }; name = Release; };
+		BS0015010000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.BookSenderTests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BookSender.app/Contents/MacOS/BookSender"; }; name = Debug; };
+		BS0015010000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.BookSenderTests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BookSender.app/Contents/MacOS/BookSender"; }; name = Release; };
+		BS0015010000000000000005 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.BookSenderUITests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; TEST_TARGET_NAME = BookSender; }; name = Debug; };
+		BS0015010000000000000006 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.BookSenderUITests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_STRICT_CONCURRENCY = complete; SWIFT_VERSION = 6.0; TEST_TARGET_NAME = BookSender; }; name = Release; };
+		BS0015010000000000000007 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SWIFT_VERSION = 6.0;}; name = Debug; };
+		BS0015010000000000000008 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_VERSION = 6.0;}; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		BS0010010000000000000001 = {isa = XCConfigurationList; buildConfigurations = (BS0015010000000000000001, BS0015010000000000000002,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		BS0010010000000000000002 = {isa = XCConfigurationList; buildConfigurations = (BS0015010000000000000003, BS0015010000000000000004,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		BS0010010000000000000003 = {isa = XCConfigurationList; buildConfigurations = (BS0015010000000000000005, BS0015010000000000000006,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		BS0010010000000000000004 = {isa = XCConfigurationList; buildConfigurations = (BS0015010000000000000007, BS0015010000000000000008,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		BS0014010000000000000001 /* KeyboardShortcuts */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts"; requirement = {kind = exactVersion; version = 3.0.1;};};
+		BS0014010000000000000002 /* ZIPFoundation */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/weichsel/ZIPFoundation"; requirement = {kind = exactVersion; version = 0.9.19;};};
+		BS0014010000000000000003 /* swift-nio */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/apple/swift-nio"; requirement = {kind = exactVersion; version = 2.86.0;};};
+		BS0014010000000000000004 /* swift-nio-ssl */ = {isa = XCRemoteSwiftPackageReference; repositoryURL = "https://github.com/apple/swift-nio-ssl"; requirement = {kind = exactVersion; version = 2.35.0;};};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		BS0002010000000000000001 /* KeyboardShortcuts */ = {isa = XCSwiftPackageProductDependency; package = BS0014010000000000000001; productName = KeyboardShortcuts;};
+		BS0002010000000000000002 /* ZIPFoundation */ = {isa = XCSwiftPackageProductDependency; package = BS0014010000000000000002; productName = ZIPFoundation;};
+		BS0002010000000000000003 /* NIOCore */ = {isa = XCSwiftPackageProductDependency; package = BS0014010000000000000003; productName = NIOCore;};
+		BS0002010000000000000004 /* NIOPosix */ = {isa = XCSwiftPackageProductDependency; package = BS0014010000000000000003; productName = NIOPosix;};
+		BS0002010000000000000005 /* NIOSSL */ = {isa = XCSwiftPackageProductDependency; package = BS0014010000000000000004; productName = NIOSSL;};
+		BS0002010000000000000006 /* NIOEmbedded */ = {isa = XCSwiftPackageProductDependency; package = BS0014010000000000000003; productName = NIOEmbedded;};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = BS0005010000000000000001 /* Project object */;
+}

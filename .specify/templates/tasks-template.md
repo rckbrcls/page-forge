@@ -6,166 +6,165 @@ description: "Task list template for feature implementation"
 
 **Input**: Design documents from `/specs/[###-feature-name]/`
 
-**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
+**Prerequisites**: plan.md (required), spec.md (required), research.md,
+data-model.md, contracts/
 
-**Tests**: Tests are REQUIRED for every EPUB audit rule and automatic repair. Include
-fixture-backed tests for archive safety and revalidation behavior where relevant.
+**Tests**: Tests are REQUIRED for every EPUB audit, cleanup, restoration, and
+revalidation rule. Include focused tests for archive safety, batch isolation,
+cancellation, credential redaction, and delivery uncertainty where relevant.
 
-**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+**Organization**: Group tasks by independently testable user story while keeping
+shared pipeline foundations explicit.
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
-- Include exact file paths in descriptions
+- **[P]**: Can run in parallel because it touches different files and has no unmet dependency
+- **[Story]**: User story mapping such as US1, US2, or US3
+- Include exact file paths in every task
 
 ## Path Conventions
 
-- **Raycast extension**: `src/commands/`, `src/application/`, `src/domain/`, `src/adapters/`, `tests/fixtures/`
-- **Single package**: do not introduce a monorepo, companion app, local service, or helper process
-- Paths shown below are examples - adjust based on plan.md structure
+- **Native app**: `BookSender/App/`, `BookSender/Features/`,
+  `BookSender/Application/`, `BookSender/Domain/`, `BookSender/Adapters/`
+- **Tests**: `BookSenderTests/` with deterministic fixtures under
+  `BookSenderTests/Fixtures/`
+- Keep one macOS application product; do not add a companion app, helper process,
+  local service, or parallel legacy product
+- Paths are examples and MUST be replaced with the concrete plan layout
 
 ## Constitution Task Expectations
 
-- Foundational work MUST establish typed application and EPUB-engine services before Raycast UI work
-- Audit and repair rules MUST live outside React commands and have focused fixtures and tests
-- Archive tasks MUST include safe limits for traversal, escaping paths, ZIP bombs, duplicates, XML entities, symlinks, remote references, memory, and responsiveness
-- Repair tasks MUST preserve originals, generate collision-safe outputs, revalidate copies, and reject newly introduced critical errors
-- Delivery tasks MUST require explicit user intent and must not expose credentials in files, logs, errors, or reports
-- Do not schedule Calibre, EPUBCheck, format conversion, executables, services, desktop/mobile apps, AI, DRM removal, editing, reading, library, cloud, or account work
+- Foundational work MUST establish typed domain, pipeline, and adapter contracts
+  before SwiftUI screen integration
+- UI tasks MUST preserve exactly `Delivery Setup` and `Send Book`, concise default
+  states, progressive disclosure, keyboard use, and accessibility
+- Pipeline tasks MUST cover safety check, audit, deterministic
+  cleanup/restoration, separate working copy, revalidation, and readiness
+- Archive tasks MUST bound traversal, paths, ZIP bombs, entries, expansion,
+  duplicates, XML entities, links, remote references, time, and memory
+- Batch tasks MUST use a stable snapshot, sequential scheduling, isolated
+  outcomes, cooperative cancellation, and no automatic retry after failure or
+  `delivery_unknown`
+- Delivery tasks MUST require explicit confirmation, use independent SMTP
+  attempts, protect credentials, and sanitize all errors and diagnostics
+- Migration tasks MUST remove obsolete Raycast code and documentation rather than
+  preserve a fallback
+- Do not schedule conversion, DRM removal, external engines, executable
+  downloads, library, history, cloud, account, AI, reader, editor, or third-screen
+  work
 
 <!--
-  ============================================================================
-  IMPORTANT: The tasks below are SAMPLE TASKS for illustration purposes only.
-
-  The /speckit.tasks command MUST replace these with actual tasks based on:
-  - User stories from spec.md (with their priorities P1, P2, P3...)
-  - Feature requirements from plan.md
-  - Entities from data-model.md
-  - Interfaces and workflows from contracts/
-
-  Tasks MUST be organized by user story so each story can be:
-  - Implemented independently
-  - Tested independently
-  - Delivered as an MVP increment
-
-  DO NOT keep these sample tasks in the generated tasks.md file.
-  ============================================================================
+  The sample tasks below MUST be replaced with tasks derived from the active spec,
+  plan, data model, and contracts. Do not retain placeholders in generated tasks.
 -->
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Project initialization and basic structure
+**Purpose**: Establish the native project, test targets, and migration boundary
 
-- [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize [language] project with [framework] dependencies
-- [ ] T003 [P] Configure linting and formatting tools
+- [ ] T001 Create the native macOS project structure from plan.md
+- [ ] T002 Configure the application and test targets with the selected Swift toolchain
+- [ ] T003 [P] Configure formatting, static analysis, and fixture resources
+- [ ] T004 Document and schedule removal of obsolete Raycast and legacy product surfaces
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
+**Purpose**: Build the typed pipeline contracts before user-facing work
 
-**⚠️ CRITICAL**: No user story work can begin until this phase is complete
+**⚠️ CRITICAL**: No user-story UI work begins until this phase is complete
 
-Examples of foundational tasks (adjust based on your project):
+- [ ] T005 Create typed batch, finding, health, preparation, cancellation, and delivery models in BookSender/Domain/Models/
+- [ ] T006 [P] Define audit, repair, restoration, and comparison contracts in BookSender/Domain/
+- [ ] T007 [P] Define bounded archive, XML, filesystem, SMTP, and credential adapters in BookSender/Adapters/
+- [ ] T008 Define the sequential application pipeline in BookSender/Application/Pipeline/
+- [ ] T009 Create deterministic valid, malformed, ambiguous, and malicious fixtures in BookSenderTests/Fixtures/
+- [ ] T010 Add contract tests for original preservation, typed failures, limits, and revalidation in BookSenderTests/
 
-- [ ] T004 Create typed EPUB health and repair models in src/domain/models/[Models].ts
-- [ ] T005 [P] Define audit and repair service contracts in src/application/[Service].ts
-- [ ] T006 [P] Define bounded archive, XML, and filesystem adapter contracts in src/adapters/[Adapter].ts
-- [ ] T007 Create deterministic EPUB and malicious-archive fixtures in tests/fixtures/[Fixture].epub
-- [ ] T008 Add fixture-backed audit and repair tests in tests/[Feature].test.ts
-
-**Checkpoint**: Foundation ready - user story implementation can now begin in parallel
+**Checkpoint**: Pipeline foundation is testable without SwiftUI
 
 ---
 
 ## Phase 3: User Story 1 - [Title] (Priority: P1) 🎯 MVP
 
-**Goal**: [Brief description of what this story delivers]
+**Goal**: [User-visible outcome]
 
-**Independent Test**: [How to verify this story works on its own]
+**Independent Test**: [Acceptance path]
 
-### Tests for User Story 1 (REQUIRED for audit or repair behavior)
+### Tests for User Story 1
 
-> **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
-
-- [ ] T010 [P] [US1] Add domain tests and focused fixtures in tests/[Feature].test.ts
-- [ ] T011 [P] [US1] Add Raycast command behavior tests where applicable in tests/[Command].test.tsx
+- [ ] T011 [P] [US1] Add focused domain and fixture tests in BookSenderTests/[Feature]Tests.swift
+- [ ] T012 [P] [US1] Add screen and accessibility tests in BookSenderTests/[Screen]Tests.swift
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/domain/models/[Entity1].ts
-- [ ] T013 [P] [US1] Create [Entity2] model in src/domain/models/[Entity2].ts
-- [ ] T014 [US1] Implement [Service] in src/application/[Service].ts (depends on T012, T013)
-- [ ] T015 [US1] Implement command behavior in src/commands/[Feature].tsx
-- [ ] T016 [US1] Add typed validation and failure handling in src/application/[Service].ts
-- [ ] T017 [US1] Add Raycast result feedback in src/commands/[Feature].tsx
+- [ ] T013 [P] [US1] Create required domain models in BookSender/Domain/Models/
+- [ ] T014 [US1] Implement pipeline behavior in BookSender/Application/Pipeline/
+- [ ] T015 [US1] Implement only the applicable primary screen in BookSender/Features/
+- [ ] T016 [US1] Add concise derived feedback and actionable inline failure disclosure
 
-**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
+**Checkpoint**: User Story 1 is independently functional and tested
 
 ---
 
 ## Phase 4: User Story 2 - [Title] (Priority: P2)
 
-**Goal**: [Brief description of what this story delivers]
+**Goal**: [User-visible outcome]
 
-**Independent Test**: [How to verify this story works on its own]
+**Independent Test**: [Acceptance path]
 
-### Tests for User Story 2 (REQUIRED for audit or repair behavior)
+### Tests for User Story 2
 
-- [ ] T018 [P] [US2] Add domain tests and focused fixtures in tests/[Feature].test.ts
-- [ ] T019 [P] [US2] Add command tests where applicable in tests/[Command].test.tsx
+- [ ] T017 [P] [US2] Add focused domain and fixture tests in BookSenderTests/[Feature]Tests.swift
+- [ ] T018 [P] [US2] Add interaction and accessibility tests in BookSenderTests/[Screen]Tests.swift
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/domain/models/[Entity].ts
-- [ ] T021 [US2] Implement [Service] in src/application/[Service].ts
-- [ ] T022 [US2] Implement command behavior in src/commands/[Feature].tsx
-- [ ] T023 [US2] Integrate typed result presentation in src/commands/[Feature].tsx
+- [ ] T019 [P] [US2] Extend typed models in BookSender/Domain/Models/
+- [ ] T020 [US2] Implement application behavior in BookSender/Application/
+- [ ] T021 [US2] Integrate the behavior into an existing primary screen
+- [ ] T022 [US2] Add cancellation, recovery, and terminal result handling
 
-**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
+**Checkpoint**: User Stories 1 and 2 are independently functional
 
 ---
 
 ## Phase 5: User Story 3 - [Title] (Priority: P3)
 
-**Goal**: [Brief description of what this story delivers]
+**Goal**: [User-visible outcome]
 
-**Independent Test**: [How to verify this story works on its own]
+**Independent Test**: [Acceptance path]
 
-### Tests for User Story 3 (REQUIRED for audit or repair behavior)
+### Tests for User Story 3
 
-- [ ] T024 [P] [US3] Add domain tests and focused fixtures in tests/[Feature].test.ts
-- [ ] T025 [P] [US3] Add command tests where applicable in tests/[Command].test.tsx
+- [ ] T023 [P] [US3] Add focused behavior tests in BookSenderTests/[Feature]Tests.swift
+- [ ] T024 [P] [US3] Add screen, keyboard, and accessibility tests in BookSenderTests/[Screen]Tests.swift
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/domain/models/[Entity].ts
-- [ ] T027 [US3] Implement [Service] in src/application/[Service].ts
-- [ ] T028 [US3] Implement command behavior in src/commands/[Feature].tsx
+- [ ] T025 [P] [US3] Extend typed models in BookSender/Domain/Models/
+- [ ] T026 [US3] Implement application behavior in BookSender/Application/
+- [ ] T027 [US3] Integrate behavior without adding a primary screen
 
-**Checkpoint**: All user stories should now be independently functional
-
----
-
-[Add more user story phases as needed, following the same pattern]
+**Checkpoint**: All selected user stories are independently functional
 
 ---
 
 ## Phase N: Polish & Cross-Cutting Concerns
 
-**Purpose**: Improvements that affect multiple user stories
+**Purpose**: Verify the lightweight experience and advanced pipeline together
 
-- [ ] TXXX [P] Documentation updates in docs/
-- [ ] TXXX Code cleanup and refactoring
-- [ ] TXXX Performance pass: bounded archive processing, memory use, and responsive Raycast feedback
-- [ ] TXXX UI polish pass: keyboard-first Raycast interaction and clear finding/result presentation
-- [ ] TXXX [P] Additional fixture-backed tests for audit, repair, revalidation, and delivery intent invariants
-- [ ] TXXX Security hardening for archive paths, XML parsing, output paths, and credential handling
-- [ ] TXXX Constitution compliance review against `.specify/memory/constitution.md`
-- [ ] TXXX Run quickstart.md validation
+- [ ] TXXX [P] Update documentation in README.md and docs/
+- [ ] TXXX Remove obsolete Raycast implementation, metadata, tests, and assets
+- [ ] TXXX Verify launch and shortcut responsiveness against the spec
+- [ ] TXXX Verify concise default states and no invented progress
+- [ ] TXXX [P] Complete fixture coverage for audit, cleanup, restoration, revalidation, and malicious inputs
+- [ ] TXXX Verify batch capacity, failure isolation, cancellation, and `delivery_unknown`
+- [ ] TXXX Review protected credentials and redacted diagnostics
+- [ ] TXXX Review keyboard operation, focus, and accessibility
+- [ ] TXXX Run constitution compliance review against `.specify/memory/constitution.md`
+- [ ] TXXX Separate compilation, automated tests, runtime inspection, signing, notarization, and release evidence
 
 ---
 
@@ -173,89 +172,47 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Phase Dependencies
 
-- **Setup (Phase 1)**: No dependencies - can start immediately
-- **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
-- **User Stories (Phase 3+)**: All depend on Foundational phase completion
-  - User stories can then proceed in parallel (if staffed)
-  - Or sequentially in priority order (P1 → P2 → P3)
-- **Polish (Final Phase)**: Depends on all desired user stories being complete
-
-### User Story Dependencies
-
-- **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
-- **User Story 2 (P2)**: Can start after Foundational (Phase 2) - May integrate with US1 but should be independently testable
-- **User Story 3 (P3)**: Can start after Foundational (Phase 2) - May integrate with US1/US2 but should be independently testable
+- **Setup**: Starts first
+- **Foundational**: Depends on Setup and blocks user-story UI work
+- **User Stories**: Depend on Foundational and proceed in priority order unless
+  the plan proves independent parallel work
+- **Polish**: Depends on all selected stories
 
 ### Within Each User Story
 
-- Required audit and repair tests MUST be written and FAIL before implementation
-- Models before services
-- Services before workflow UI
-- Core implementation before integration
-- Story complete before moving to next priority
+- Focused tests and fixtures before accepting an automatic pipeline rule
+- Domain models before application pipeline behavior
+- Application pipeline before SwiftUI integration
+- Core behavior before recovery and polish
+- Story validation before moving to the next priority
 
 ### Parallel Opportunities
 
-- All Setup tasks marked [P] can run in parallel
-- All Foundational tasks marked [P] can run in parallel (within Phase 2)
-- Once Foundational phase completes, all user stories can start in parallel (if team capacity allows)
-- All tests for a user story marked [P] can run in parallel
-- Models within a story marked [P] can run in parallel
-- Different user stories can be worked on in parallel by different team members
-
----
-
-## Parallel Example: User Story 1
-
-```bash
-# Launch required audit and repair tests for User Story 1 together:
-Task: "Domain contract tests and fixtures in tests/[Feature].test.ts"
-Task: "Raycast command behavior tests in tests/[Command].test.tsx"
-
-# Launch all models for User Story 1 together:
-Task: "Create [Entity1] model in src/domain/models/[Entity1].ts"
-Task: "Create [Entity2] model in src/domain/models/[Entity2].ts"
-```
-
----
+- Different adapter contracts and fixtures may proceed in parallel
+- Independent domain and screen tests may proceed in parallel
+- Work touching the same pipeline scheduler, batch state, or primary screen MUST
+  remain coordinated
 
 ## Implementation Strategy
 
-### MVP First (User Story 1 Only)
+### MVP First
 
-1. Complete Phase 1: Setup
-2. Complete Phase 2: Foundational (CRITICAL - blocks all stories)
-3. Complete Phase 3: User Story 1
-4. **STOP and VALIDATE**: Test User Story 1 independently
-5. Demo locally if ready
+1. Complete native setup and typed pipeline foundations
+2. Deliver SMTP setup and protected credentials
+3. Deliver batch intake and background readiness
+4. Deliver explicit sequential SMTP sending
+5. Validate the two-screen experience before expansion
 
 ### Incremental Delivery
 
-1. Complete Setup + Foundational → Foundation ready
-2. Add User Story 1 → Test independently → Deploy/Demo (MVP!)
-3. Add User Story 2 → Test independently → Deploy/Demo
-4. Add User Story 3 → Test independently → Deploy/Demo
-5. Each story adds value without breaking previous stories
-
-### Parallel Team Strategy
-
-With multiple developers:
-
-1. Team completes Setup + Foundational together
-2. Once Foundational is done:
-   - Developer A: User Story 1
-   - Developer B: User Story 2
-   - Developer C: User Story 3
-3. Stories complete and integrate independently
-
----
+1. Typed foundation and fixtures
+2. `Delivery Setup`
+3. `Send Book` intake and concise background preparation
+4. Batch confirmation, delivery, cancellation, and per-item results
+5. Shortcut, accessibility, performance, and distribution readiness
 
 ## Notes
 
-- [P] tasks = different files, no dependencies
-- [Story] label maps task to specific user story for traceability
-- Each user story should be independently completable and testable
-- Verify tests fail before implementing
 - Do not stage or commit unless the user explicitly requests it
-- Stop at any checkpoint to validate story independently
-- Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
+- Do not treat static checks as compilation, tests, runtime behavior, or release evidence
+- Avoid vague tasks, cross-story file conflicts, and abstractions without a concrete rule

@@ -1,246 +1,400 @@
 <!--
 Sync Impact Report
-- Version change: 2.0.0 -> 3.0.0
-- Bump rationale: the product surface, supported inputs, runtime, dependencies,
-  architecture, safety model, and delivery constraints are redefined incompatibly.
-- Modified principles: all prior desktop-app, Calibre, queue, conversion, and
-  Settings principles are replaced by the principles below.
-- Added sections: Product Boundary; EPUB Health and Repair Policy; Architecture,
-  Quality, and Distribution.
-- Removed sections: desktop queue baseline, Calibre engine boundary, conversion
-  contracts, native Settings guidance, legacy Python compatibility, and Keychain
-  requirements.
+- Version change: 3.0.0 -> 4.0.0
+- Bump rationale: the product surface, runtime, interaction model, architecture,
+  credential storage, distribution, and migration direction are redefined
+  incompatibly from a Raycast extension to a native macOS application.
+- Modified principles:
+  - Single-Purpose Book Delivery -> Two-Surface Product
+  - Self-Contained Raycast Extension -> Lightweight Native macOS Application
+  - Original Files Are Immutable -> Original Files Are Immutable
+  - Safe, Deterministic Repairs Only -> Safe Cleanup and Restoration Only
+  - Untrusted-Archive Safety -> Untrusted-Book Safety
+  - Local Processing and Explicit Delivery -> Background Preparation, Explicit Delivery
+  - Transparent, Evidence-Based Health Reports -> Minimal Feedback, Retained Evidence
+  - Validate Before and After Repair -> Validate Before and After Preparation
+  - Domain-First, Typed Architecture -> Domain-First, Typed Architecture
+  - Fixture-Backed Repair Assurance -> Fixture-Backed Pipeline Assurance
+  - Native Raycast Interaction -> Sequential Batch Reliability
+  - Privacy and Credentials -> Local Privacy and Protected Credentials
+  - Simple, Reviewable Distribution -> Simple, Reviewable Distribution
+- Added sections:
+  - Product Surface and Interaction Contract
+  - Background Ebook Preparation Policy
+  - Architecture, Quality, and Distribution
+- Removed sections:
+  - Raycast command, runtime, component, preference, and Store requirements
+  - Raycast-specific source layout and interaction rules
 - Templates updated:
-  - .specify/templates/plan-template.md
-  - .specify/templates/spec-template.md
-  - .specify/templates/tasks-template.md
-  - .specify/templates/checklist-template.md
-- Reviewed without changes: .specify/templates/constitution-template.md
-- Follow-up TODOs: none
+  - ✅ .specify/templates/plan-template.md
+  - ✅ .specify/templates/spec-template.md
+  - ✅ .specify/templates/tasks-template.md
+  - ✅ .specify/templates/checklist-template.md
+- Runtime guidance updated:
+  - ✅ AGENTS.md
+  - ✅ README.md
+  - ✅ docs/desktop-migration.md
+- Active specification updated:
+  - ✅ specs/005-lightweight-macos-sender/spec.md
+  - ✅ specs/005-lightweight-macos-sender/checklists/requirements.md
+- Reviewed without changes:
+  - .specify/templates/constitution-template.md
+  - .specify/templates/commands/ (directory not present)
+- Follow-up TODOs: implementation and obsolete Raycast removal remain future
+  planning and task work; no constitution placeholders are deferred.
 -->
 
 # Book Sender Constitution
 
 ## Core Principles
 
-### I. Single-Purpose Book Delivery
+### I. Two-Surface Product
 
-Book Sender exists only to check EPUB or PDF books, apply safe EPUB repairs, and
-explicitly send a working copy to Kindle through one Raycast command.
-Every feature MUST directly serve this pipeline:
+Book Sender exists only to configure SMTP delivery and send local EPUB or PDF
+books to Kindle. The product MUST expose exactly two primary screens:
+`Delivery Setup` and `Send Book`.
 
-`Select Book -> Check -> Apply Safe EPUB Repairs -> Revalidate -> Confirm -> Send to Kindle`
+The complete user-visible journey MUST remain:
 
-PDF MAY be validated and sent without conversion. The product MUST NOT add MOBI,
-AZW, AZW3, or KFX conversion; DRM removal;
-an EPUB editor or reader; library management; cloud sync; accounts; remote
-backend; mobile or separate desktop apps; AI, chat, agents; or generic document
-support. Adjacent functionality is out of scope even when it appears useful.
+`Configure Delivery -> Select Books -> Wait for Readiness -> Confirm -> Send`
 
-### II. Self-Contained Raycast Extension
+System file pickers, confirmations, alerts, progress presentation, and inline
+disclosures do not count as additional primary screens. The product MUST NOT add
+a library, persistent queue, delivery history, reader, editor, account, cloud
+sync, analytics dashboard, or general ebook-management surface.
 
-Book Sender MUST be one public Raycast extension with exactly one user-facing
-command, `Send Book to Kindle`, that works immediately after
-installation through Raycast. It MUST use TypeScript, React, `@raycast/api`, and
-`@raycast/utils` only when it provides a concrete benefit. Dependencies MUST be
-JavaScript or TypeScript npm packages, or local Node.js APIs available in the
-Raycast runtime.
+Rationale: Book Sender earns complexity in preparation quality, not in navigation.
 
-Swift, SwiftUI, Electron, Tauri, Rust, Python, Java, Docker, helper processes,
-local services, native binaries, executable downloads, Calibre, machine-installed
-EPUBCheck, and user-installed dependencies are FORBIDDEN.
+### II. Lightweight Native macOS Application
 
-### III. Original Files Are Immutable
+Book Sender MUST be one self-contained native macOS application implemented with
+Swift and SwiftUI. It MUST remain fast to launch, small in surface area,
+keyboard-accessible, and visually calm. A configurable global shortcut MAY reveal
+the existing primary window while the application is active.
 
-Book Sender MUST NOT modify, overwrite, rename, or remove a selected book. An EPUB repair
-MUST create a separate output, normally named `book-kindle-ready.epub`. If that
-path exists, the extension MUST choose a safe unused path and report it; it MUST
-never overwrite an existing file silently.
+The final repository MUST contain one macOS application product and its tests,
+fixtures, documentation, and distribution assets. Raycast, Electron, Tauri,
+Python, Java, Docker, helper processes, local services, executable downloads,
+Calibre, installed EPUBCheck, and user-installed processing tools MUST NOT be
+runtime requirements or parallel products.
 
-### IV. Safe, Deterministic Repairs Only
+Dependencies MUST use macOS system capabilities or narrowly justified source
+packages. Native or package dependencies MUST NOT introduce a second process,
+download executable code, or weaken archive, credential, or privacy guarantees.
 
-An automatic repair is permitted only when the fault and its correction are
-unambiguous, no content is invented, the book's intended meaning is not changed,
-the operation is testable, and the outcome can be explained to the user.
+Rationale: the app must feel immediate and self-contained without outsourcing its
+core behavior to installed tools.
 
-Initially permitted repairs, when implemented and tested, are rebuilding and
-normalizing the `mimetype` entry; rebuilding `META-INF/container.xml` only with
-one unambiguous OPF; correcting evident MIME types from extensions; normalizing
-unequivocally equivalent internal paths; rebuilding the ZIP while preserving
-content; fixing references with exactly one matching target; and normalizing XML
-encoding without changing meaning.
+### III. Minimal Interface, Minimal Feedback
 
-The extension MUST NOT automatically delete chapters, rewrite content, summarize
-text, choose among multiple OPFs or covers, remove scripts or fonts, delete orphan
-resources, reconstruct substantial manifest sections, infer navigation, modify
-title, author, or language, alter CSS for appearance, or destructively repair
-XHTML. Ambiguous cases MUST produce a diagnosis without an automatic change.
+The interface MUST use concise labels, strong hierarchy, opaque surfaces, subtle
+borders, restrained motion, and no decorative complexity. Advanced preparation
+MUST NOT create advanced navigation.
 
-### V. Untrusted-Archive Safety
+During normal work, each book MUST expose only a concise state equivalent to
+`Checking`, `Preparing`, `Ready`, `Needs Attention`, `Sending`, and a terminal
+result. Healthy or successfully prepared books MUST NOT require the user to read
+technical findings. Detailed evidence MAY appear through inline progressive
+disclosure only when it helps explain a blocked item, a failure, an applied
+repair, or a user decision.
 
-Every EPUB MUST be treated as untrusted input. Archive and XML handling MUST
-defend against ZIP traversal, absolute or escaping paths, ZIP bombs, excessive
-file size or entry count, duplicate entries, malicious XML and external entities,
-unexpected remote references, invalid filenames, symlinks or equivalent entries,
-excessive memory consumption, and interface blocking. No internal EPUB content
-may be executed.
+Progress feedback MUST remain honest. The app MUST NOT show invented percentages
+for work whose completion cannot be measured. Accessibility labels, keyboard
+focus, cancellation, errors, and terminal outcomes MUST remain clear even when
+the visual presentation is minimal.
 
-Limits and rejection behavior MUST be explicit, deterministic, and reported as
-typed processing failures. Inspection and repair work MUST keep the Raycast
-interface responsive.
+Rationale: quiet feedback reduces cognitive load without hiding actionable risk.
 
-### VI. Local Processing and Explicit Delivery
+### IV. Advanced Background Preparation
 
-Inspection and repair MUST run locally. Book content, diagnostics, and metadata
-MUST NOT be sent to servers, APIs, analytics services, or AI models. The only
-permitted external transmission is a user-initiated Kindle delivery action.
+Selecting an EPUB MUST begin a local background pipeline without requiring the
+user to navigate through inspection or repair controls:
 
-Inspection, repair, and sending MUST be visibly distinct stages of the single
-command. Selecting or repairing a file MUST NOT send it automatically. Sending may
-prepare the corrected file for a user-controlled Kindle flow when direct delivery
-is not configured.
+`Safety Check -> Structural Audit -> Cleanup/Restore -> Write Working Copy -> Revalidate -> Ready`
 
-### VII. Transparent, Evidence-Based Health Reports
+The pipeline MUST finish before an EPUB becomes eligible for delivery. PDF files
+MUST receive bounded eligibility and delivery checks but MUST NOT be converted or
+have their content modified.
 
-Health classification MAY use `Healthy`, `Repairable`, `Needs Review`,
-`Unsupported`, or `Unsafe`, but it MUST be derived from concrete findings and
-MUST NOT replace them. Every finding MUST include a stable code, severity, title,
-description, location when applicable, repairability, applied repair when any,
-and the result of revalidation.
+Preparation MUST keep the interface responsive, publish concise state changes,
+support cooperative cancellation, and retain detailed internal evidence for
+tests and actionable failure disclosure. Background execution MUST NOT imply
+background delivery: no selected or prepared book may be transmitted before an
+explicit confirmation.
 
-The extension MUST NOT present an unexplained generic health score as the primary
-diagnosis.
+Rationale: advanced capability belongs in the pipeline; delivery intent remains
+with the user.
 
-### VIII. Validate Before and After Repair
+### V. Original Files Are Immutable
 
-The repair pipeline MUST inspect the original EPUB, derive a repair plan, create a
-new copy, inspect that copy again, and compare both reports. It MUST report success
-only when the output introduces no new critical errors. A failed or unsafe repair
-MUST preserve the original and clearly report the failure and any output path.
+Book Sender MUST NOT modify, overwrite, rename, move, or remove a selected
+original. Any EPUB cleanup or restoration MUST operate on a separate,
+collision-safe working copy. Existing files MUST never be overwritten silently.
 
-### IX. Domain-First, Typed Architecture
+Temporary and prepared files MUST have explicit lifecycle rules. Failure or
+cancellation MUST preserve every original and pre-existing file, clean incomplete
+temporary output when safe, and never present a partial output as valid.
 
-The EPUB engine MUST remain independent of Raycast UI components and testable
-without rendering React. The required dependency direction is:
+Rationale: a convenience utility must never make the user's source library less
+trustworthy.
 
-`Raycast Commands -> Application Services -> EPUB Audit and Repair Engine -> Archive, XML, and Filesystem Adapters`
+### VI. Safe Cleanup and Restoration Only
 
-React components MUST NOT contain audit or repair rules. Expected outcomes MUST
-use explicit types, including loaded document, finding, severity, repair plan,
-applied repair, report, processing failure, and delivery result. Expected failures
-MUST NOT be represented by unstructured strings or generic exceptions.
+Automatic cleanup or restoration is permitted only when the fault and correction
+are deterministic, supported by concrete evidence, preserve the book's intended
+meaning, and can be verified after writing.
 
-### X. Fixture-Backed Repair Assurance
+Permitted categories MAY include:
 
-Every audit rule and every automatic repair MUST have focused tests and small,
-specific fixtures. The test corpus MUST cover valid EPUBs; invalid ZIPs; absent,
-compressed, or misordered `mimetype`; absent `container.xml`; absent or ambiguous
-OPFs; invalid manifests and spines; missing resources; incorrect MIME types;
-broken references; malicious paths; duplicate entries; and oversized files.
+- rebuilding and normalizing the EPUB `mimetype` entry;
+- restoring `META-INF/container.xml` when exactly one unambiguous package exists;
+- correcting media types that are unequivocally determined by resource content
+  or extension;
+- normalizing equivalent internal paths and fixing references with exactly one
+  matching target;
+- rebuilding the archive while preserving book resources and required ordering;
+- normalizing XML encoding and structurally equivalent markup without editorial
+  change;
+- restoring missing structural declarations only when the remaining book
+  provides one unambiguous source of truth.
 
-An automatic repair without a corresponding test MUST NOT be accepted.
+The pipeline MUST NOT invent or rewrite prose, delete chapters, choose among
+ambiguous packages, covers, or navigation structures, alter title, author,
+language, styling, or layout for preference, remove DRM, or perform destructive
+content cleanup. Ambiguous cases MUST remain unchanged and become
+`Needs Attention`, `Unsupported`, or `Unsafe`.
 
-### XI. Native Raycast Interaction
+Rationale: restoration recovers evidenced structure; it does not reinterpret the
+book.
 
-The user interface MUST use Raycast components and remain command-first, fast,
-and keyboard usable. It MUST NOT imitate a traditional desktop application inside
-Raycast. The initial command set SHOULD stay small and cover inspection,
-preparation, and explicit Kindle sending for selected EPUBs.
+### VII. Untrusted-Book Safety
 
-### XII. Privacy and Credentials
+Every EPUB MUST be treated as an untrusted archive. Archive and XML handling MUST
+defend against traversal, absolute or escaping paths, ZIP bombs, excessive size
+or entry count, duplicate entries, invalid filenames, symlinks or equivalent
+links, malicious XML, external entities, remote references, excessive nesting,
+memory pressure, time exhaustion, and active content.
 
-Credentials MUST NOT be committed, stored in repository files, logged, shown in
-errors or reports, or sent to telemetry. If email delivery is implemented,
-credentials MUST use Raycast secure preferences and the extension README MUST
-describe their handling. The extension MUST NOT collect hidden data.
+Limits and rejection behavior MUST be explicit, deterministic, typed, and tested
+at their boundaries. No book content may be executed, and preparation MUST NOT
+read local or remote resources referenced from inside the book.
 
-### XIII. Simple, Reviewable Distribution
+Rationale: automatic background work increases the need for strict input
+boundaries.
 
-The project MUST remain a single npm package and a single Raycast extension; it
-MUST NOT introduce a monorepo, speculative abstraction, unused layer, dependency
-without a concrete need, or optimization without measurements. Raycast Store
-distribution requires clean build, lint, and typecheck; justified dependencies;
-no downloaded executables; a sufficient README; a publication-compatible license;
-and readable, reviewable code.
+### VIII. Validate Before and After Preparation
 
-## Product Boundary
+The pipeline MUST inspect the original, derive a typed preparation plan, create a
+separate working copy, inspect the written copy again, and compare both results.
+A prepared EPUB becomes `Ready` only when the output introduces no new critical
+finding and satisfies every delivery eligibility rule.
+
+Every finding MUST retain a stable code, severity, location when applicable,
+repairability, applied action when any, and revalidation result. The default UI
+MAY hide this evidence, but the domain model and tests MUST NOT replace it with an
+unexplained score or loose string.
+
+Rationale: minimal presentation is safe only when supported by complete evidence.
+
+### IX. Sequential Batch Reliability
+
+The sending screen MUST accept one or more EPUB and PDF books. Confirmation MUST
+capture a stable batch snapshot. Preparation, archive entry work, and delivery
+MUST be sequential, with at most one active item in each constrained stage.
+
+Failures MUST be isolated per book. One unsupported, unsafe, failed, or
+delivery-unknown item MUST NOT determine another item's outcome. Cancellation
+MUST stop pending scheduling, cooperatively interrupt active streams where safe,
+and preserve completed results.
+
+SMTP cancellation after message data begins MAY produce `delivery_unknown`.
+Neither failed nor delivery-unknown items may be retried automatically.
+
+Rationale: bounded sequential work keeps resource use predictable and outcomes
+understandable.
+
+### X. Local Processing and Explicit SMTP Delivery
+
+Inspection, cleanup, restoration, and revalidation MUST run locally. Book content,
+metadata, diagnostics, filenames, source paths, and credentials MUST NOT be sent
+to analytics, AI models, remote processors, or hidden services.
+
+The only permitted book transmission is an explicit, user-confirmed SMTP delivery
+to the configured Kindle address. Each eligible book MUST have an independent
+delivery attempt. The application MUST NOT automate Amazon login, browser upload,
+or the official Send to Kindle website, and MUST NOT promise provider or Amazon
+acceptance.
+
+Rationale: selecting and preparing books is reversible local work; transmission
+is a separate external side effect.
+
+### XI. Domain-First, Typed Architecture
+
+The required dependency direction is:
+
+`SwiftUI Screens -> Application Pipeline -> Ebook Audit and Repair Domain -> Archive, XML, Filesystem, SMTP, and Credential Adapters`
+
+SwiftUI views MUST compose the two screens and present state; they MUST NOT contain
+archive, audit, repair, restoration, filesystem, credential, or SMTP rules.
+Expected states and failures MUST use explicit models, including selected batch,
+finding, health, preparation plan, applied action, comparison, cancellation, and
+delivery result. Raw adapter exceptions MUST NOT reach the interface.
+
+Rationale: the minimal UI must remain replaceable and the advanced pipeline must
+remain independently testable.
+
+### XII. Fixture-Backed Pipeline Assurance
+
+Every audit rule and every automatic cleanup or restoration rule MUST have a
+focused, deterministic fixture-backed test. Tests MUST cover valid EPUB 2 and
+EPUB 3 books, malformed and ambiguous structures, every permitted repair,
+malicious archives, every safety boundary, cancellation, batch isolation, working
+copy collisions, revalidation regressions, SMTP sanitization, and
+delivery-unknown behavior.
+
+An automatic preparation rule without focused acceptance evidence MUST NOT ship.
+UI tests MUST verify the two-screen boundary, minimal default feedback, keyboard
+operation, accessibility labels, batch progress, failure disclosure, and explicit
+delivery confirmation.
+
+Rationale: invisible background sophistication requires unusually visible test
+evidence.
+
+### XIII. Local Privacy and Protected Credentials
+
+SMTP passwords and equivalent secrets MUST use macOS protected credential
+storage. Secrets MUST NOT be committed, stored in ordinary preference files,
+logged, included in reports, shown after entry, or transmitted anywhere except to
+the explicitly configured SMTP service during a confirmed delivery.
+
+Non-secret preferences MAY remain local. The application MUST collect no hidden
+usage data or telemetry. Diagnostic output MUST redact credentials, book
+excerpts, full source paths, and other unnecessary personal data.
+
+Rationale: an email-delivery utility handles both personal documents and powerful
+credentials.
+
+### XIV. Simple, Reviewable Distribution
+
+The project MUST remain one macOS application target unless a test target or
+distribution helper generated by the standard toolchain has a concrete need.
+Plans MUST reject speculative layers, unused abstractions, duplicated pipelines,
+parallel legacy products, and dependencies without measured value.
+
+Public distribution requires clean compilation, tests, static analysis,
+accessibility review, signing, notarization, privacy documentation, license
+review, and a verified update or release process. Obsolete Raycast, legacy
+desktop, Calibre, conversion, and conflicting documentation MUST be removed as
+explicit migration work, not retained as fallbacks.
+
+Rationale: operational simplicity is part of the product's lightweight promise.
+
+## Product Surface and Interaction Contract
 
 ### Required Capabilities
 
-- Select one or more EPUBs through Finder-selected files or a Raycast file picker.
-- Inspect EPUB structural health and show clear findings.
-- Apply only permitted safe repairs and create a new corrected copy.
-- Show the final report and generated output path.
-- Explicitly send the corrected EPUB to Kindle or prepare it for user-controlled
-  Kindle delivery.
+- Configure sender address, SMTP host, port, security mode, username, protected
+  app password, Kindle address, and the optional global shortcut.
+- Select one or more local EPUB and PDF books through drag and drop or Finder.
+- Prepare books automatically in the background and show only concise default
+  state.
+- Reveal actionable detail inline when a book cannot safely become ready.
+- Confirm one stable eligible batch before sequential independent SMTP delivery.
+- Show per-book terminal results and allow explicit retry of failed items only.
 
 ### Prohibited Expansion
 
-No feature may introduce external engines, remote processing, conversion between
-formats, content authoring or reading, library features, or a product surface
-outside Raycast without a constitutional amendment.
+No feature may introduce a third primary screen; library, persistent queue,
+history, reader, editor, cloud, account, analytics, AI, conversion, DRM removal,
+generic-document, mobile, web, Windows, Linux, or parallel legacy product scope
+without a constitutional amendment.
 
-## EPUB Health and Repair Policy
+## Background Ebook Preparation Policy
 
-Health findings MUST use stable, documented identifiers and a defined severity.
-Repair planning MUST preserve enough evidence to explain why each repair is safe,
-which archive entries changed, and why unaddressed findings remain.
+Health states MUST be `healthy`, `repairable`, `needs_review`, `unsupported`, or
+`unsafe`. Finding severities MUST be `info`, `warning`, `error`, or `critical`.
+Repairability MUST remain separate from severity.
 
-Archive reconstruction MUST preserve original content except for the explicitly
-planned repairs. A revalidation report MUST identify resolved, remaining, and newly
-introduced findings.
+The user-facing pipeline state MUST be derived from typed domain evidence.
+`Ready` means the original PDF is eligible or the EPUB working copy passed
+revalidation. `Needs Attention` means the pipeline cannot proceed without a user
+decision or replacement file. `Failed`, `Cancelled`, and `Delivery Unknown` are
+terminal outcomes and MUST remain distinct.
+
+Prepared copies MUST preserve the original display name for Kindle attachment
+unless a provider constraint requires a safe transformation. Detailed reports
+MUST remain available to tests and diagnostics but MUST stay collapsed during
+normal successful use.
 
 ## Architecture, Quality, and Distribution
 
-### Source Layout
+### Planned Source Layout
 
-Plans MUST use one npm package with a structure equivalent to:
+Plans MUST use one native macOS application with a structure equivalent to:
 
 ```text
-src/
-├── commands/
-├── application/
-├── domain/
-│   ├── audit/
-│   ├── repair/
-│   └── models/
-└── adapters/
-    ├── archive/
-    ├── xml/
-    └── filesystem/
-tests/
-└── fixtures/
+BookSender/
+├── App/
+├── Features/
+│   ├── DeliverySetup/
+│   └── SendBook/
+├── Application/
+│   └── Pipeline/
+├── Domain/
+│   ├── Audit/
+│   ├── Repair/
+│   └── Models/
+├── Adapters/
+│   ├── Archive/
+│   ├── XML/
+│   ├── Filesystem/
+│   ├── SMTP/
+│   └── Credentials/
+└── Resources/
+BookSenderTests/
+└── Fixtures/
 ```
+
+Equivalent names are permitted when the dependency direction and two-screen
+boundary remain explicit.
 
 ### Quality Gates
 
-- Feature specifications MUST state scope boundaries, processing safety, report
-  semantics, output behavior, and explicit delivery intent where relevant.
+- Feature specifications MUST state the two-screen surface, background pipeline,
+  minimal feedback, batch behavior, safety, original preservation, and explicit
+  delivery boundaries.
 - Plans MUST pass the Constitution Check before research and after design.
-- Tasks MUST include fixture-backed tests for every audit rule and auto-repair.
-- Reviews MUST reject untyped expected failures, UI-embedded engine rules,
-  untested repair behavior, unsafe archive handling, and prohibited dependencies.
-- A feature requiring a constitutional exception MUST identify the violated rule,
-  justify the exception, define its limits, and receive an amendment before work.
+- Tasks MUST include fixture-backed tests for every audit, cleanup, restoration,
+  and revalidation rule.
+- Reviews MUST reject UI-embedded domain rules, raw expected failures, invented
+  progress, unbounded archive work, automatic delivery, insecure credential
+  storage, untested preparation, and parallel product surfaces.
+- Static validation, compilation, automated tests, runtime inspection, signing,
+  and production distribution are distinct claims and MUST be reported
+  separately.
 
 ## Governance
 
 This constitution supersedes conflicting product guidance, specifications, plans,
-tasks, and code until it is amended. `spec.md`, `plan.md`, `tasks.md`, and code
-reviews MUST explicitly verify compliance with it.
+tasks, documentation, and code until amended. Every `spec.md`, `plan.md`,
+`tasks.md`, implementation review, and release review MUST explicitly verify
+compliance.
 
 ### Amendments
 
-1. State the motivation, affected clauses, product and security impact, and any
+1. State the motivation, affected clauses, product and security impact, and
    required migration or removal work.
-2. Record the approved exception or replacement in this file before implementation.
-3. Update dependent Spec Kit templates when they conflict with the amendment.
-4. Bump the version using semantic versioning: MAJOR for incompatible principle or
-   product-boundary changes, MINOR for new or materially expanded obligations, and
-   PATCH for clarifications that do not change obligations.
-5. Keep ratification and amendment dates in ISO `YYYY-MM-DD` format.
+2. Record the approved replacement in this file before conflicting implementation.
+3. Update dependent Spec Kit templates and runtime guidance in the same change.
+4. Bump the version using semantic versioning: MAJOR for incompatible principle
+   or product-boundary changes, MINOR for new or materially expanded obligations,
+   and PATCH for clarifications that do not change obligations.
+5. Preserve the original ratification date and update the amendment date in ISO
+   `YYYY-MM-DD` format.
 
 No exception is implicit. A plan or implementation that cannot cite an approved
-constitutional exception MUST be rejected.
+constitutional rule or written amendment MUST be rejected. Compliance evidence
+MUST distinguish static checks, compilation, automated tests, runtime behavior,
+authenticated delivery, and production distribution.
 
-**Version**: 3.0.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-20
+**Version**: 4.0.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-28

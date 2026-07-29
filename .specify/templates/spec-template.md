@@ -11,25 +11,17 @@
 ## User Scenarios & Testing _(mandatory)_
 
 <!--
-  IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
-  Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
-  you should still have a viable MVP (Minimum Viable Product) that delivers value.
-
-  Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
-  Think of each story as a standalone slice of functionality that can be:
-  - Developed independently
-  - Tested independently
-  - Deployed independently
-  - Demonstrated to users independently
+  Prioritize independently testable user journeys. Advanced EPUB preparation is
+  a background capability; do not turn its internal stages into navigation.
 -->
 
 ### User Story 1 - [Brief Title] (Priority: P1)
 
-[Describe this user journey in plain language]
+[Describe the user journey in plain language]
 
-**Why this priority**: [Explain the value and why it has this priority level]
+**Why this priority**: [Explain the value and priority]
 
-**Independent Test**: [Describe how this can be tested independently - e.g., "Can be fully tested by [specific action] and delivers [specific value]"]
+**Independent Test**: [Describe an independent acceptance test]
 
 **Acceptance Scenarios**:
 
@@ -40,11 +32,11 @@
 
 ### User Story 2 - [Brief Title] (Priority: P2)
 
-[Describe this user journey in plain language]
+[Describe the user journey in plain language]
 
-**Why this priority**: [Explain the value and why it has this priority level]
+**Why this priority**: [Explain the value and priority]
 
-**Independent Test**: [Describe how this can be tested independently]
+**Independent Test**: [Describe an independent acceptance test]
 
 **Acceptance Scenarios**:
 
@@ -54,101 +46,77 @@
 
 ### User Story 3 - [Brief Title] (Priority: P3)
 
-[Describe this user journey in plain language]
+[Describe the user journey in plain language]
 
-**Why this priority**: [Explain the value and why it has this priority level]
+**Why this priority**: [Explain the value and priority]
 
-**Independent Test**: [Describe how this can be tested independently]
+**Independent Test**: [Describe an independent acceptance test]
 
 **Acceptance Scenarios**:
 
 1. **Given** [initial state], **When** [action], **Then** [expected outcome]
 
----
-
-[Add more user stories as needed, each with an assigned priority]
-
 ### Edge Cases
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right edge cases.
--->
-
-- What happens when [boundary condition]?
-- How does system handle [error scenario]?
+- What happens when a mixed batch contains eligible, repairable, unsafe, unsupported, and duplicate books?
+- How does cancellation affect pending, active, completed, and delivery-unknown items?
+- What happens when background preparation cannot safely restore a book?
 
 ## Requirements _(mandatory)_
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right functional requirements.
-  Keep requirements aligned with the Page Forge constitution: local EPUB health
-  inspection, safe repair, corrected-copy generation, and explicit Kindle delivery.
--->
-
 ### Functional Requirements
 
-- **FR-001**: System MUST [specific capability, e.g., "accept selected EPUB files"]
-- **FR-002**: System MUST [specific capability, e.g., "report concrete EPUB findings with stable codes"]
-- **FR-003**: Users MUST be able to [key interaction, e.g., "create a revalidated Kindle-ready EPUB copy"]
-- **FR-004**: System MUST [data requirement, e.g., "report a collision-safe generated output path"]
-- **FR-005**: System MUST [behavior, e.g., "require explicit user intent before Kindle delivery"]
+- **FR-001**: System MUST [specific two-screen or delivery-setup capability]
+- **FR-002**: System MUST [specific batch intake or concise-feedback capability]
+- **FR-003**: System MUST [specific background preparation capability]
+- **FR-004**: System MUST [specific original-preservation or safety behavior]
+- **FR-005**: System MUST [specific explicit-delivery behavior]
 
-_Example of marking unclear requirements:_
-
-- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
-- **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
+_Use `[NEEDS CLARIFICATION: specific question]` only when no safe default exists._
 
 ### Constitution Constraints _(mandatory)_
 
-- **CC-001**: Feature MUST directly support the EPUB-to-Kindle pipeline and accept
-  EPUB only
-- **CC-002**: Feature MUST keep processing local, preserve originals, and require
-  explicit delivery intent
-- **CC-003**: Feature MUST NOT introduce conversion, DRM removal, content editing,
-  reading, library, cloud, account, desktop-app, AI, or generic-document scope
-- **CC-004**: Feature MUST use Raycast UI and preserve a small keyboard-first
-  command set
-- **CC-005**: Feature MUST define safe, bounded untrusted-archive processing and
-  keep the interface responsive
-- **CC-006**: Feature MUST use typed reports and failures, separate engine rules
-  from React, and test every audit rule and automatic repair with fixtures
-- **CC-007**: Feature MUST NOT add Calibre, EPUBCheck, binaries, external services,
-  helper processes, or user-installed dependencies
+- **CC-001**: Feature MUST remain within `Delivery Setup` and `Send Book`; dialogs,
+  progress, and inline disclosure MUST NOT become additional primary screens
+- **CC-002**: Feature MUST keep advanced EPUB safety, audit, deterministic
+  cleanup/restoration, separate-copy writing, and revalidation in the background
+- **CC-003**: Feature MUST expose concise derived states and only reveal technical
+  evidence inline when it supports an action, failure, or decision
+- **CC-004**: Feature MUST process a stable batch sequentially, isolate outcomes
+  per book, preserve completed work, and define cooperative cancellation
+- **CC-005**: Feature MUST keep processing local, preserve originals and existing
+  files, and require explicit confirmation before SMTP transmission
+- **CC-006**: Feature MUST use typed pipeline evidence and failures, keep domain
+  rules outside SwiftUI views, and test every automatic rule with fixtures
+- **CC-007**: Feature MUST NOT introduce Raycast, external ebook engines, helper
+  processes, conversion, DRM removal, library, history, cloud, account, AI, or a
+  parallel product surface
 
 ### Key Entities _(include if feature involves data)_
 
-- **[Entity 1]**: [What it represents, key attributes without implementation]
-- **[Entity 2]**: [What it represents, relationships to other entities]
-- **HealthReport** _(when relevant)_: Derived classification plus findings with
-  stable code, severity, location, repairability, applied repair, and revalidation result
+- **Current Batch**: Ordered temporary selected snapshot and aggregate progress
+- **Batch Item**: One EPUB or PDF with eligibility, pipeline state, and outcome
+- **Health Finding**: Stable evidence with severity, repairability, action, and revalidation result
+- **Prepared Book**: Eligible original PDF or validated EPUB working copy
+- **Delivery Attempt**: One explicit independent SMTP transmission and terminal outcome
 
 ## Success Criteria _(mandatory)_
 
-<!--
-  ACTION REQUIRED: Define measurable success criteria.
-  These must be technology-agnostic and measurable.
-  Prefer workflow completion, clarity, and perceived speed over vanity metrics.
--->
-
 ### Measurable Outcomes
 
-- **SC-001**: [Measurable metric, e.g., "User can drop one ebook and see readiness status in under 10 seconds for typical files"]
-- **SC-002**: [Measurable metric, e.g., "Primary prepare flow completes with explicit output path and status"]
-- **SC-003**: [User satisfaction metric, e.g., "First-time user can complete diagnose -> prepare without reading docs"]
-- **SC-004**: [Quality metric, e.g., "Raycast remains responsive while bounded inspection or repair runs"]
+- **SC-001**: [First-use or repeated-send completion metric]
+- **SC-002**: [Launch, shortcut, or concise-feedback responsiveness metric]
+- **SC-003**: [Original-preservation and pipeline-correctness metric]
+- **SC-004**: [Batch isolation and capacity metric]
+- **SC-005**: [Two-screen, accessibility, privacy, or explicit-delivery metric]
 
 ## Assumptions
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right assumptions based on reasonable defaults
-  chosen when the feature description did not specify certain details.
--->
-
-- Target user has Raycast installed and selects local EPUB files
-- Processing uses only the Raycast runtime, local Node.js APIs, and justified pure JS/TS packages
-- Kindle transmission requires explicit user intent and may prepare a file for a user-controlled flow
-- Cloud sync, accounts, external engines, and non-EPUB inputs are out of scope
-- [Additional feature-specific assumption]
+- Target users have a supported Mac, local EPUB or PDF books, valid SMTP
+  credentials, and a Kindle personal-document address
+- The product exposes only delivery setup and sending; EPUB preparation remains
+  an automatic background pipeline
+- A temporary batch is not a persistent queue or delivery history
+- Processing is local and SMTP transmission requires explicit confirmation
+- Cloud sync, accounts, conversion, DRM removal, external engines, and non-book
+  inputs are out of scope

@@ -1,8 +1,11 @@
-# Dependencies and Raycast output
-node_modules/
-dist/
+# Swift and Xcode output
+.build/
 build/
-.raycast/
+DerivedData/
+*.swiftpm/
+Packages/
+xcuserdata/
+*.xcuserstate
 
 # Test and tool output
 coverage/
@@ -14,9 +17,9 @@ npm-debug.log*
 .env.*
 !.env.example
 
-# Page Forge temporary EPUB artifacts
-.page-forge-*.epub
-*.epub.tmp
+# Book Sender temporary artifacts
+.book-sender-*
+*.partial.epub
 
 # macOS and editors
 .DS_Store

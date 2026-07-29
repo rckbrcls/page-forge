@@ -4,7 +4,8 @@
 
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
+**Note**: This template is filled in by the `/speckit.plan` command. See
+`.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
@@ -13,28 +14,27 @@
 ## Technical Context
 
 <!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
+  ACTION REQUIRED: Replace the content in this section with concrete technical
+  details. Keep the selected approach within the native, single-app boundary.
 -->
 
-**Language/Version**: [TypeScript version or NEEDS CLARIFICATION]
+**Language/Version**: [Swift version supported by the selected Xcode toolchain]
 
-**Primary Dependencies**: [e.g., @raycast/api, a justified pure JS/TS archive or XML package]
+**Primary Dependencies**: [SwiftUI, macOS system frameworks, and narrowly justified source packages]
 
-**Storage**: [local EPUB input and explicitly selected output paths; Raycast preferences only when needed]
+**Storage**: [protected credentials, local preferences, selected inputs, and collision-safe temporary/prepared copies]
 
-**Testing**: [TypeScript test runner; small EPUB and malicious-archive fixtures]
+**Testing**: [Swift Testing or XCTest; deterministic EPUB, malicious-archive, pipeline, UI, and SMTP fixtures]
 
-**Target Platform**: [Raycast extension runtime]
+**Target Platform**: [supported macOS version]
 
-**Project Type**: [single-package public Raycast extension]
+**Project Type**: [single native macOS application]
 
-**Performance Goals**: [responsive Raycast UI; bounded archive processing and memory use]
+**Performance Goals**: [fast launch, responsive minimal UI, bounded background preparation, responsive shortcut]
 
-**Constraints**: [EPUB-only; local processing; safe deterministic repairs; no external executable, service, or engine]
+**Constraints**: [two primary screens; local processing; immutable originals; no external engine, helper process, or executable download]
 
-**Scale/Scope**: [small command set; inspect, prepare, and explicitly send Kindle-ready EPUBs]
+**Scale/Scope**: [temporary batches up to the specified acceptance capacity; sequential preparation and delivery]
 
 ## Constitution Check
 
@@ -42,27 +42,31 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 Verify against `.specify/memory/constitution.md`:
 
-- **Mission fit**: Feature directly supports EPUB selection, health inspection,
-  safe repair, corrected-copy generation, or explicit Kindle delivery.
-- **Boundary**: Accept EPUB only. Reject conversion, editing, reading, library,
-  cloud, account, desktop-app, AI, and generic-document scope.
-- **Runtime**: Use TypeScript, React, `@raycast/api`, justified pure JS/TS npm
-  packages, and Node.js APIs available in Raycast. Reject binaries, processes,
-  Calibre, machine-installed EPUBCheck, and user-installed dependencies.
-- **Archive safety**: Define limits and safe handling for traversal, absolute or
-  escaping paths, ZIP bombs, duplicate entries, XML entities, symlinks, remote
-  references, memory pressure, and UI responsiveness.
-- **Repair safety**: Auto-repair only unambiguous, explainable, testable changes
-  that preserve meaning. Ambiguity remains diagnostic-only.
-- **Output and validation**: Never mutate an original. Create a collision-safe new
-  output, revalidate it, compare reports, and reject new critical errors.
-- **Architecture and types**: Keep UI separate from application, EPUB engine, and
-  adapters. Use typed expected results and failures, not loose strings.
-- **Tests and privacy**: Plan fixtures for every audit and repair; process locally;
-  require explicit external delivery intent; protect credentials in Raycast secure
-  preferences if email delivery is included.
-- **Complexity**: Keep one package and one extension. Any exception has a written,
-  approved constitutional amendment.
+- **Mission and surface**: Feature directly supports SMTP setup, book intake,
+  background preparation, or explicit Kindle delivery and introduces no third
+  primary screen.
+- **Native boundary**: Use one Swift and SwiftUI macOS application. Reject
+  Raycast, parallel products, helper processes, executable downloads, Calibre,
+  installed EPUBCheck, and user-installed processing tools.
+- **Minimal interaction**: Default UI exposes concise derived states, honest
+  progress, keyboard access, and actionable inline detail only when needed.
+- **Background pipeline**: EPUB work follows safety check, structural audit,
+  deterministic cleanup/restoration, separate-copy writing, and revalidation
+  before readiness. PDF content remains unchanged.
+- **Original preservation**: Originals and existing files remain immutable;
+  temporary output has explicit cleanup and collision behavior.
+- **Input safety**: Archive and XML limits cover traversal, absolute paths, ZIP
+  bombs, duplicates, entities, links, remote references, memory, and time.
+- **Batch reliability**: Confirm a stable snapshot, process sequentially, isolate
+  per-book failures, preserve completed results, and define cancellation and
+  `delivery_unknown`.
+- **Delivery and privacy**: SMTP transmission is explicit; processing stays local;
+  credentials use protected macOS storage and remain redacted.
+- **Architecture and tests**: Keep SwiftUI separate from application, domain, and
+  adapters. Use typed outcomes and fixture-backed tests for every automatic rule.
+- **Migration and distribution**: Plan removal of obsolete Raycast and legacy
+  surfaces. Keep compilation, tests, runtime validation, signing, notarization,
+  and release verification as distinct gates.
 
 ## Project Structure
 
@@ -70,47 +74,50 @@ Verify against `.specify/memory/constitution.md`:
 
 ```text
 specs/[###-feature]/
-├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+├── plan.md
+├── research.md
+├── data-model.md
+├── quickstart.md
+├── contracts/
+└── tasks.md
 ```
 
 ### Source Code (repository root)
 
 <!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-   for this feature. Keep a single TypeScript package and separate Raycast commands
-   from application, EPUB-engine, and adapter code.
-  The delivered plan must not include Option labels.
+  ACTION REQUIRED: Replace this example with the concrete Xcode layout selected
+  for the feature. Preserve the dependency direction and two-screen boundary.
 -->
 
 ```text
-src/
-├── commands/
-├── application/
-├── domain/
-│   ├── audit/
-│   ├── repair/
-│   └── models/
-└── adapters/
-    ├── archive/
-    ├── xml/
-    └── filesystem/
-tests/
-└── fixtures/
+BookSender/
+├── App/
+├── Features/
+│   ├── DeliverySetup/
+│   └── SendBook/
+├── Application/
+│   └── Pipeline/
+├── Domain/
+│   ├── Audit/
+│   ├── Repair/
+│   └── Models/
+├── Adapters/
+│   ├── Archive/
+│   ├── XML/
+│   ├── Filesystem/
+│   ├── SMTP/
+│   └── Credentials/
+└── Resources/
+BookSenderTests/
+└── Fixtures/
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: [Document the selected structure and reference the real directories captured above]
 
 ## Complexity Tracking
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
-| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
-| -------------------------- | ------------------ | ------------------------------------ |
-| [e.g., 4th project]        | [current need]     | [why 3 projects insufficient]        |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient]  |
+| Violation           | Why Needed         | Simpler Alternative Rejected Because |
+| ------------------- | ------------------ | ------------------------------------ |
+| [specific conflict] | [concrete need]    | [evidence against simpler approach]  |

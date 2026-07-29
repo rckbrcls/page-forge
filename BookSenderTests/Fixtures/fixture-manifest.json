@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "note": "Native fixture binaries are generated deterministically by test support until cutover.",
+  "families": [
+    {
+      "id": "valid-epub-2",
+      "source": "tests/fixtures/valid/fixture-definitions.ts",
+      "expectedHealth": "healthy",
+      "findingCodes": [],
+      "repairActions": []
+    },
+    {
+      "id": "valid-epub-3",
+      "source": "tests/fixtures/valid/fixture-definitions.ts",
+      "expectedHealth": "healthy",
+      "findingCodes": [],
+      "repairActions": []
+    },
+    {
+      "id": "missing-mimetype",
+      "source": "tests/fixtures/repair/mimetype-container-fixtures.ts",
+      "expectedHealth": "repairable",
+      "findingCodes": ["MIMETYPE_MISSING"],
+      "repairActions": ["repair.mimetype"]
+    },
+    {
+      "id": "missing-container-single-package",
+      "source": "tests/fixtures/repair/mimetype-container-fixtures.ts",
+      "expectedHealth": "repairable",
+      "findingCodes": ["CONTAINER_MISSING"],
+      "repairActions": ["repair.container"]
+    },
+    {
+      "id": "ambiguous-package",
+      "source": "tests/fixtures/ambiguous/fixture-definitions.ts",
+      "expectedHealth": "needsReview",
+      "findingCodes": ["PACKAGE_AMBIGUOUS"],
+      "repairActions": []
+    },
+    {
+      "id": "path-traversal",
+      "source": "tests/fixtures/malicious/path-fixtures.ts",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["ARCHIVE_UNSAFE_PATH"],
+      "repairActions": []
+    },
+    {
+      "id": "duplicate-normalized-path",
+      "source": "tests/fixtures/malicious/zip-structure-fixtures.ts",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["ARCHIVE_DUPLICATE_PATH"],
+      "repairActions": []
+    },
+    {
+      "id": "external-entity",
+      "source": "tests/fixtures/malicious/xml-fixtures.ts",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["XML_UNSAFE"],
+      "repairActions": []
+    },
+    {
+      "id": "deep-xml",
+      "source": "tests/fixtures/malicious/xml-fixtures.ts",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["XML_UNSAFE"],
+      "repairActions": []
+    }
+  ]
+}
