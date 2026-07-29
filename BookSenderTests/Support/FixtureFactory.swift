@@ -144,7 +144,7 @@ enum FixtureFactory {
             try archive.addEntry(
                 with: "OEBPS/",
                 type: .directory,
-                uncompressedSize: 0,
+                uncompressedSize: Int64(0),
                 modificationDate: fixedDate,
                 provider: { _, _ in Data() }
             )
@@ -286,7 +286,7 @@ enum FixtureFactory {
             try archive.addEntry(
                 with: "OEBPS/link",
                 type: .symlink,
-                uncompressedSize: 17,
+                uncompressedSize: Int64(17),
                 modificationDate: fixedDate,
                 provider: { position, size in
                     Data("OEBPS/chapter.xhtml".utf8)
