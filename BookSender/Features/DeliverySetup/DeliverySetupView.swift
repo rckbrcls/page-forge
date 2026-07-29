@@ -8,6 +8,7 @@ enum DeliverySetupPresentation {
 struct DeliverySetupView: View {
     @Bindable var model: AppModel
     let presentation: DeliverySetupPresentation
+    @FocusState private var focusedField: DeliveryField?
 
     var body: some View {
         Form {
@@ -50,7 +51,7 @@ struct DeliverySetupView: View {
                 }
                 .buttonStyle(.glassProminent)
                 .buttonBorderShape(.capsule)
-                .padding(.top, 8)
+                .padding(.top, 20)
                 .keyboardShortcut(.defaultAction)
                 .disabled(model.isSavingSetup)
                 .accessibilityIdentifier("deliverySetup.save")
@@ -76,26 +77,51 @@ struct DeliverySetupView: View {
         field("SMTP Host", text: $model.setupDraft.smtpHost, field: .smtpHost)
         field("SMTP Port", text: $model.setupDraft.smtpPort, field: .smtpPort)
 
-        Picker("Security Mode", selection: $model.setupDraft.securityMode) {
-            ForEach(SecurityMode.allCases, id: \.self) { mode in
-                Text(mode.title).tag(mode)
+        VStack(alignment: .leading, spacing: 6) {
+            settingsFieldLabel("Security Mode")
+
+            Picker("Security Mode", selection: $model.setupDraft.securityMode) {
+                ForEach(SecurityMode.allCases, id: \.self) { mode in
+                    Text(mode.title).tag(mode)
+                }
             }
+            .labelsHidden()
+            .buttonBorderShape(.roundedRectangle(radius: 12))
+            .accessibilityLabel("Security Mode")
+            .accessibilityIdentifier("deliverySetup.securityMode")
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .accessibilityIdentifier("deliverySetup.securityMode")
+        .frame(maxWidth: .infinity)
 
         field("Username", text: $model.setupDraft.username, field: .username)
 
-        LabeledContent("App Password") {
-            VStack(alignment: .leading, spacing: 4) {
-                SecureField(
-                    model.setup == nil ? "" : "Enter a new password to update setup",
-                    text: $model.setupDraft.appPassword
+        VStack(alignment: .leading, spacing: 6) {
+            settingsFieldLabel("App Password")
+
+            SecureField(
+                "",
+                text: $model.setupDraft.appPassword,
+                prompt: Text(
+                    model.setup == nil ? "App Password" : "New App Password (optional)"
                 )
-                .accessibilityIdentifier("deliverySetup.appPassword")
-                fieldError(.appPassword)
+            )
+            .labelsHidden()
+            .textFieldStyle(.plain)
+            .focused($focusedField, equals: .appPassword)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(
+                Color(nsColor: .textBackgroundColor),
+                in: RoundedRectangle(cornerRadius: 12)
+            )
+            .overlay {
+                inputBorder(for: .appPassword)
             }
-            .frame(maxWidth: .infinity)
+            .accessibilityLabel("App Password")
+            .accessibilityIdentifier("deliverySetup.appPassword")
+            fieldError(.appPassword)
         }
+        .frame(maxWidth: .infinity)
 
         field("Kindle Address", text: $model.setupDraft.kindleAddress, field: .kindleAddress)
     }
@@ -105,14 +131,36 @@ struct DeliverySetupView: View {
         text: Binding<String>,
         field: DeliveryField
     ) -> some View {
-        LabeledContent(title) {
-            VStack(alignment: .leading, spacing: 4) {
-                TextField("", text: text)
-                    .accessibilityLabel(title)
-                    .accessibilityIdentifier("deliverySetup.\(field.rawValue)")
-                fieldError(field)
-            }
-            .frame(maxWidth: .infinity)
+        VStack(alignment: .leading, spacing: 6) {
+            settingsFieldLabel(title)
+
+            TextField("", text: text, prompt: Text(title))
+                .labelsHidden()
+                .textFieldStyle(.plain)
+                .focused($focusedField, equals: field)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(
+                    Color(nsColor: .textBackgroundColor),
+                    in: RoundedRectangle(cornerRadius: 12)
+                )
+                .overlay {
+                    inputBorder(for: field)
+                }
+                .accessibilityLabel(title)
+                .accessibilityIdentifier("deliverySetup.\(field.rawValue)")
+            fieldError(field)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
+    private func settingsFieldLabel(_ title: String) -> some View {
+        if presentation == .settings {
+            Text(title)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -123,6 +171,16 @@ struct DeliverySetupView: View {
                 .font(.caption)
                 .foregroundStyle(.red)
         }
+    }
+
+    private func inputBorder(for field: DeliveryField) -> some View {
+        RoundedRectangle(cornerRadius: 12)
+            .strokeBorder(
+                focusedField == field
+                    ? Color.accentColor
+                    : Color(nsColor: .separatorColor),
+                lineWidth: focusedField == field ? 3 : 1
+            )
     }
 
     private func message(for error: DeliveryValidationError) -> String {

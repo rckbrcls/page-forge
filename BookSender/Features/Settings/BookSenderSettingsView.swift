@@ -14,7 +14,7 @@ struct BookSenderSettingsView: View {
                 .tag(AppModel.SettingsTab.delivery)
                 .accessibilityIdentifier("settings.delivery.content")
 
-            ShortcutSettingsView(disable: shortcutService.disable)
+            ShortcutSettingsView(setEnabled: shortcutService.setEnabled)
                 .tabItem {
                     Label("Shortcut", systemImage: "keyboard")
                         .accessibilityIdentifier("settings.tab.shortcut")

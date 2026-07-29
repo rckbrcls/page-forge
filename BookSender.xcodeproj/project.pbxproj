@@ -13,6 +13,7 @@
 		BS0001010000000000000004 /* NIOPosix in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000004 /* NIOPosix */; };
 		BS0001010000000000000005 /* NIOSSL in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000005 /* NIOSSL */; };
 		BS0001010000000000000006 /* NIOEmbedded in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000006 /* NIOEmbedded */; };
+		BS0001010000000000000007 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = BS0002010000000000000007 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,6 +48,7 @@
 				BS0001010000000000000003 /* NIOCore in Frameworks */,
 				BS0001010000000000000004 /* NIOPosix in Frameworks */,
 				BS0001010000000000000005 /* NIOSSL in Frameworks */,
+				BS0001010000000000000007 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,6 +115,7 @@
 				BS0002010000000000000003 /* NIOCore */,
 				BS0002010000000000000004 /* NIOPosix */,
 				BS0002010000000000000005 /* NIOSSL */,
+				BS0002010000000000000007 /* Sparkle */,
 			);
 			productName = BookSender;
 			productReference = BS0003010000000000000001 /* BookSender.app */;
@@ -201,6 +204,7 @@
 				BS0014010000000000000002 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 				BS0014010000000000000003 /* XCRemoteSwiftPackageReference "swift-nio" */,
 				BS0014010000000000000004 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */,
+				BS0014010000000000000005 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			productRefGroup = BS0009010000000000000002 /* Products */;
 			projectDirPath = "";
@@ -286,17 +290,22 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Book Sender";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
+				INFOPLIST_KEY_SUFeedURL = "https://rckbrcls.com/api/book-sender/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "Y+PX52K5Ey2YxS7dNyscj1qBxlmB9Q+kIaXvBL1b8GQ=";
+				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.2.0;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.BookSender;
 				PRODUCT_NAME = BookSender;
@@ -318,17 +327,22 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Book Sender";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
+				INFOPLIST_KEY_SUFeedURL = "https://rckbrcls.com/api/book-sender/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "Y+PX52K5Ey2YxS7dNyscj1qBxlmB9Q+kIaXvBL1b8GQ=";
+				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rckbrcls.BookSender;
 				PRODUCT_NAME = BookSender;
 				REGISTER_APP_GROUPS = NO;
@@ -559,6 +573,14 @@
 				version = 2.35.0;
 			};
 		};
+		BS0014010000000000000005 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = exactVersion;
+				version = 2.9.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -591,6 +613,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = BS0014010000000000000003 /* XCRemoteSwiftPackageReference "swift-nio" */;
 			productName = NIOEmbedded;
+		};
+		BS0002010000000000000007 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BS0014010000000000000005 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,16 +1,25 @@
 import AppKit
+import Combine
+import Sparkle
 import SwiftUI
 
 @main
 struct BookSenderApp: App {
     @State private var model: AppModel
     private let shortcutService: ShortcutService
+    private let updaterController: SPUStandardUpdaterController
 
     init() {
         let model = AppModel()
         _model = State(initialValue: model)
         shortcutService = ShortcutService(windowCoordinator: model.windowCoordinator)
         shortcutService.start()
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+        updaterController.updater.updateCheckInterval = 86_400
     }
 
     var body: some Scene {
@@ -38,10 +47,49 @@ struct BookSenderApp: App {
         .windowResizability(.contentMinSize)
         .commands {
             CommandGroup(replacing: .newItem) { }
+            CommandGroup(after: .appInfo) {
+                CheckForUpdatesView(updater: updaterController.updater) {
+                    updaterController.checkForUpdates(nil)
+                }
+            }
         }
 
         Settings {
             BookSenderSettingsView(model: model, shortcutService: shortcutService)
+        }
+    }
+}
+
+private struct CheckForUpdatesView: View {
+    @StateObject private var viewModel: CheckForUpdatesViewModel
+    private let checkForUpdates: () -> Void
+
+    init(updater: SPUUpdater, checkForUpdates: @escaping () -> Void) {
+        _viewModel = StateObject(
+            wrappedValue: CheckForUpdatesViewModel(updater: updater)
+        )
+        self.checkForUpdates = checkForUpdates
+    }
+
+    var body: some View {
+        Button("Check for Updates…", action: checkForUpdates)
+            .disabled(!viewModel.canCheckForUpdates)
+    }
+}
+
+@MainActor
+private final class CheckForUpdatesViewModel: ObservableObject {
+    @Published private(set) var canCheckForUpdates = false
+    private var observation: NSKeyValueObservation?
+
+    init(updater: SPUUpdater) {
+        observation = updater.observe(
+            \.canCheckForUpdates,
+            options: [.initial, .new]
+        ) { [weak self] updater, _ in
+            DispatchQueue.main.async {
+                self?.canCheckForUpdates = updater.canCheckForUpdates
+            }
         }
     }
 }

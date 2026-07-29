@@ -12,6 +12,18 @@ final class SettingsUITests: XCTestCase {
         XCTAssertTrue(senderAddress.waitForExistence(timeout: 2))
         XCTAssertNotEqual(senderAddress.value as? String, "")
 
+        for label in [
+            "Sender Address",
+            "SMTP Host",
+            "SMTP Port",
+            "Security Mode",
+            "Username",
+            "App Password",
+            "Kindle Address",
+        ] {
+            XCTAssertTrue(app.staticTexts[label].exists)
+        }
+
         let shortcutTab = app.descendants(matching: .any)["settings.tab.shortcut"]
         XCTAssertTrue(shortcutTab.waitForExistence(timeout: 2))
         shortcutTab.click()
@@ -19,6 +31,9 @@ final class SettingsUITests: XCTestCase {
         XCTAssertTrue(
             app.descendants(matching: .any)["settings.shortcut"].waitForExistence(timeout: 2)
         )
-        XCTAssertTrue(app.buttons["settings.shortcut.disable"].exists)
+        XCTAssertTrue(app.switches["settings.shortcut.enabled"].exists)
+        XCTAssertFalse(app.buttons["settings.shortcut.disable"].exists)
+        XCTAssertFalse(app.staticTexts["Quick Access"].exists)
+        XCTAssertFalse(app.staticTexts["Shortcut:"].exists)
     }
 }
