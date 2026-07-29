@@ -53,7 +53,10 @@ struct FirstBookJourneyTests {
 
         await pipeline.send(snapshotID: summary.id)
         try await eventually {
-            await pipeline.snapshot().phase == .completed
+            let snapshot = await pipeline.snapshot()
+            let batchCompletedCount = await recorder.batchCompletedCount
+            return snapshot.phase == .completed
+                && batchCompletedCount == 1
         }
 
         let completed = await pipeline.snapshot()

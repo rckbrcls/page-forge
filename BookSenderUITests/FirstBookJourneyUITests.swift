@@ -15,7 +15,6 @@ final class FirstBookJourneyUITests: XCTestCase {
 
         let senderAddress = app.textFields["deliverySetup.senderAddress"]
         let smtpHost = app.textFields["deliverySetup.smtpHost"]
-        let smtpPort = app.textFields["deliverySetup.smtpPort"]
         let username = app.textFields["deliverySetup.username"]
         let appPassword = app.secureTextFields["deliverySetup.appPassword"]
         let kindleAddress = app.textFields["deliverySetup.kindleAddress"]
@@ -49,7 +48,6 @@ final class FirstBookJourneyUITests: XCTestCase {
         app.typeText("smtp.example.com")
         app.typeKey(.tab, modifierFlags: [])
         app.typeText("465")
-        app.typeKey(.tab, modifierFlags: [])
         app.typeKey(.tab, modifierFlags: [])
         app.typeText("reader")
         app.typeKey(.tab, modifierFlags: [])

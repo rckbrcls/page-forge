@@ -14,6 +14,7 @@ final class SettingsUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         app.buttons["sendBook.editSetup"].click()
+        app.typeKey(",", modifierFlags: .command)
 
         let senderAddress = app.textFields["deliverySetup.senderAddress"]
         XCTAssertTrue(senderAddress.waitForExistence(timeout: 2))
