@@ -74,8 +74,10 @@ jobs:
             -scheme "$SCHEME" \
             -destination "platform=macOS" \
             -derivedDataPath "$TEST_DERIVED_DATA" \
-            "CODE_SIGNING_ALLOWED=NO" \
-            "CODE_SIGNING_REQUIRED=NO"
+            "CODE_SIGNING_ALLOWED=YES" \
+            "CODE_SIGNING_REQUIRED=YES" \
+            "CODE_SIGN_IDENTITY=-" \
+            "AD_HOC_CODE_SIGNING_ALLOWED=YES"
 
       - name: Verify installer and appcast contracts
         run: |

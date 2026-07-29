@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class FirstBookJourneyUITests: XCTestCase {
     func testFirstLaunchValidatesSavesAndRelaunchesWithoutBypass() {
         let app = XCUIApplication()

@@ -157,7 +157,8 @@ actor WorkspaceStore: WorkspaceStoring {
         let batchRoot = rootURL
             .appending(component: batchID.uuidString, directoryHint: .isDirectory)
             .standardizedFileURL
-        guard batchRoot.deletingLastPathComponent() == rootURL,
+        guard batchRoot.deletingLastPathComponent().standardizedFileURL.path
+                == rootURL.path,
               let children = try? fileManager.contentsOfDirectory(
                 at: batchRoot,
                 includingPropertiesForKeys: nil,
@@ -181,7 +182,8 @@ actor WorkspaceStore: WorkspaceStoring {
 
         for batch in batches {
             guard UUID(uuidString: batch.lastPathComponent) != nil,
-                  batch.deletingLastPathComponent().standardizedFileURL == rootURL,
+                  batch.deletingLastPathComponent().standardizedFileURL.path
+                    == rootURL.path,
                   let items = try? fileManager.contentsOfDirectory(
                       at: batch,
                       includingPropertiesForKeys: [.contentModificationDateKey],

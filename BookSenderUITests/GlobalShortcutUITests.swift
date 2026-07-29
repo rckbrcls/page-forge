@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class GlobalShortcutUITests: XCTestCase {
     func testShortcutRestoresConfiguredMainWindowWithoutStartingDelivery() {
         let app = XCUIApplication()

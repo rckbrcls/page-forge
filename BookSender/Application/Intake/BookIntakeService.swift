@@ -177,7 +177,8 @@ actor BookIntakeService {
     }
 
     private func sourceValues(for url: URL) throws -> URLResourceValues {
-        try url.resourceValues(forKeys: [
+        let uncachedURL = URL(fileURLWithPath: url.path)
+        return try uncachedURL.resourceValues(forKeys: [
             .isRegularFileKey,
             .isReadableKey,
             .fileSizeKey,

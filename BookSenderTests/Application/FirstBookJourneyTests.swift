@@ -103,6 +103,7 @@ struct FirstBookJourneyTests {
         model.confirmSend()
         try await eventuallyMainActor {
             model.items.first?.delivery == .submitted
+                && model.aggregateMessage == "1 submitted"
         }
         #expect(model.aggregateMessage == "1 submitted")
     }

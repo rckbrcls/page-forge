@@ -47,9 +47,7 @@ struct EPUBRepairEngine: RepairPlanning, ReportComparing, EPUBPreparing {
             default:
                 action = nil
             }
-            guard let action,
-                  actionIDs.insert(action.identifier).inserted
-            else {
+            guard let action else {
                 return PreparationPlan(
                     id: UUID(),
                     originalAuditIdentifier: report.id,
@@ -58,8 +56,10 @@ struct EPUBRepairEngine: RepairPlanning, ReportComparing, EPUBPreparing {
                     decision: .blocked
                 )
             }
-            actions.append(action)
             postconditions.insert(finding.code)
+            if actionIDs.insert(action.identifier).inserted {
+                actions.append(action)
+            }
         }
 
         return PreparationPlan(

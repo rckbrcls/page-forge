@@ -1,5 +1,6 @@
 import XCTest
 
+@MainActor
 final class RecoveryJourneyUITests: XCTestCase {
     func testMixedOutcomesPreserveUnknownAndRetryOnlyFailed() {
         let app = XCUIApplication()
