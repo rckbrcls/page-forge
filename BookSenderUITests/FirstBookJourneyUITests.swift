@@ -73,7 +73,7 @@ final class FirstBookJourneyUITests: XCTestCase {
         in element: XCUIElement,
         with value: String
     ) {
-        element.click()
+        element.doubleClick()
         element.typeKey("a", modifierFlags: .command)
         element.typeText(value)
     }

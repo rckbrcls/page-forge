@@ -69,11 +69,13 @@ jobs:
           set -euo pipefail
 
           TEST_DERIVED_DATA="$RUNNER_TEMP/TestDerivedData"
+          # Data Protection Keychain integration requires a developer-signed host.
           xcodebuild test \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
             -destination "platform=macOS" \
             -derivedDataPath "$TEST_DERIVED_DATA" \
+            -skip-testing:BookSenderTests/KeychainCredentialStoreTests \
             "CODE_SIGNING_ALLOWED=YES" \
             "CODE_SIGNING_REQUIRED=YES" \
             "CODE_SIGN_IDENTITY=-" \

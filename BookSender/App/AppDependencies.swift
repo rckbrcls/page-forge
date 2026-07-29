@@ -45,7 +45,14 @@ struct AppDependencies {
                 .appending(component: "Workspaces")
             : nil
         let workspaceStore = WorkspaceStore(rootURL: workspaceRoot)
-        let credentialStore = KeychainCredentialStore()
+        let credentialStore: any CredentialStoring
+        if isUITesting {
+            credentialStore = IsolatedUITestCredentialStore(
+                serviceName: serviceName
+            )
+        } else {
+            credentialStore = KeychainCredentialStore()
+        }
         let preferencesStore = DeliveryPreferencesStore(
             suiteName: defaultsSuiteName
         )
@@ -139,6 +146,58 @@ struct AppDependencies {
             ).write(to: url, options: .atomic)
             return url
         }
+    }
+}
+
+private actor IsolatedUITestCredentialStore: CredentialStoring {
+    private let serviceName: String
+
+    init(serviceName: String) {
+        self.serviceName = serviceName
+    }
+
+    func save(
+        secret: String,
+        service: String,
+        account: String,
+        revision: Int
+    ) throws -> CredentialReference {
+        guard !secret.isEmpty,
+              service == serviceName,
+              account.hasPrefix("revision-"),
+              revision > 0
+        else {
+            throw failure()
+        }
+        return CredentialReference(
+            service: service,
+            account: account,
+            revision: revision
+        )
+    }
+
+    func read(_ reference: CredentialReference) throws -> String {
+        guard exists(reference) else {
+            throw failure()
+        }
+        return "isolated-ui-test-credential"
+    }
+
+    func exists(_ reference: CredentialReference) -> Bool {
+        reference.service == serviceName
+            && reference.account.hasPrefix("revision-")
+            && reference.revision > 0
+    }
+
+    func delete(_ reference: CredentialReference) {}
+
+    private func failure() -> SanitizedFailure {
+        SanitizedFailure(
+            family: .credential,
+            code: "credential.ui-test",
+            message: "The UI test credential is unavailable.",
+            recoveryAction: .editSetup
+        )
     }
 }
 
