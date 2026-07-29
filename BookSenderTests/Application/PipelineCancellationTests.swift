@@ -69,33 +69,34 @@ struct PipelineCancellationTests {
         let stores = try TestStores.make()
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
+        let pipeline = graph.dependencies.pipeline
         let setup = try await graph.dependencies.setupService.save(
             validDraft(),
             replacing: nil
         )
         let pdf = try FixtureFactory.makePDF(valid: true, in: stores.rootURL)
-        await graph.dependencies.pipeline.add([pdf])
+        await pipeline.add([pdf])
         try await eventually {
-            await graph.dependencies.pipeline.snapshot().items.first?
+            await pipeline.snapshot().items.first?
                 .preparation == .ready
         }
         let summary = try #require(
-            await graph.dependencies.pipeline.confirmation(
+            await pipeline.confirmation(
                 setup: setup,
                 kind: .initial
             )
         )
-        let before = await graph.dependencies.pipeline.snapshot()
+        let before = await pipeline.snapshot()
 
-        await graph.dependencies.pipeline.remove(before.items[0].id)
-        await graph.dependencies.pipeline.clear()
+        await pipeline.remove(before.items[0].id)
+        await pipeline.clear()
 
-        let after = await graph.dependencies.pipeline.snapshot()
+        let after = await pipeline.snapshot()
         #expect(after.id == before.id)
         #expect(after.items.count == 1)
-        await graph.dependencies.pipeline.releaseConfirmation(summary.id)
-        await graph.dependencies.pipeline.remove(before.items[0].id)
-        #expect((await graph.dependencies.pipeline.snapshot()).items.isEmpty)
+        await pipeline.releaseConfirmation(summary.id)
+        await pipeline.remove(before.items[0].id)
+        #expect((await pipeline.snapshot()).items.isEmpty)
     }
 
     private func eventually(

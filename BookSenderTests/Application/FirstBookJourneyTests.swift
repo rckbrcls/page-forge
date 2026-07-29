@@ -14,6 +14,7 @@ struct FirstBookJourneyTests {
                 .failed(sanitizedFailure("smtp.provider-550")),
             ]
         )
+        let pipeline = graph.dependencies.pipeline
         let setup = try await graph.dependencies.setupService.save(
             validDraft(),
             replacing: nil
@@ -24,38 +25,38 @@ struct FirstBookJourneyTests {
         try Data("%PDF-1.7\nsecond\n%%EOF\n".utf8).write(to: second)
         let recorder = PipelineEventRecorder()
         let eventTask = Task {
-            for await event in graph.dependencies.pipeline.events {
+            for await event in pipeline.events {
                 await recorder.append(event)
             }
         }
         defer { eventTask.cancel() }
 
-        await graph.dependencies.pipeline.add([first, second])
+        await pipeline.add([first, second])
         try await eventually {
-            let batch = await graph.dependencies.pipeline.snapshot()
+            let batch = await pipeline.snapshot()
             return batch.items.count == 2
                 && batch.items.allSatisfy { $0.preparation == .ready }
         }
         let summary = try #require(
-            await graph.dependencies.pipeline.confirmation(
+            await pipeline.confirmation(
                 setup: setup,
                 kind: .initial
             )
         )
-        let frozen = await graph.dependencies.pipeline.snapshot()
+        let frozen = await pipeline.snapshot()
 
         #expect(summary.eligibleCount == 2)
         #expect(frozen.activeSnapshot?.eligibleItems.count == 2)
         #expect(frozen.activeSnapshot?.setup.revision == setup.revision)
-        await graph.dependencies.pipeline.remove(frozen.items[0].id)
-        #expect((await graph.dependencies.pipeline.snapshot()).items.count == 2)
+        await pipeline.remove(frozen.items[0].id)
+        #expect((await pipeline.snapshot()).items.count == 2)
 
-        await graph.dependencies.pipeline.send(snapshotID: summary.id)
+        await pipeline.send(snapshotID: summary.id)
         try await eventually {
-            await graph.dependencies.pipeline.snapshot().phase == .completed
+            await pipeline.snapshot().phase == .completed
         }
 
-        let completed = await graph.dependencies.pipeline.snapshot()
+        let completed = await pipeline.snapshot()
         #expect(completed.items.count == 2)
         #expect(completed.items.filter { $0.delivery.isTerminal }.count == 2)
         #expect(
@@ -70,7 +71,7 @@ struct FirstBookJourneyTests {
                 return false
             }
         )
-        #expect((await graph.dependencies.pipeline.deliveryAttempts()).count == 2)
+        #expect((await pipeline.deliveryAttempts()).count == 2)
         #expect(await recorder.batchCompletedCount == 1)
         #expect(await recorder.terminalItemEventCount == 2)
     }

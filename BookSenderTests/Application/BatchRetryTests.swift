@@ -12,6 +12,7 @@ struct BatchRetryTests {
             stores: stores,
             outcomes: [.failed(failed), .deliveryUnknown, .submitted, .failed(failed)]
         )
+        let pipeline = graph.dependencies.pipeline
         let setup = try await graph.dependencies.setupService.save(
             validDraft(),
             replacing: nil
@@ -21,23 +22,23 @@ struct BatchRetryTests {
             try Data("%PDF-1.7\n\(index)\n%%EOF\n".utf8).write(to: url)
             return url
         }
-        await graph.dependencies.pipeline.add(urls)
+        await pipeline.add(urls)
         try await eventually {
-            let batch = await graph.dependencies.pipeline.snapshot()
+            let batch = await pipeline.snapshot()
             return batch.items.count == 4
                 && batch.items.allSatisfy { $0.preparation == .ready }
         }
         let initial = try #require(
-            await graph.dependencies.pipeline.confirmation(
+            await pipeline.confirmation(
                 setup: setup,
                 kind: .initial
             )
         )
-        await graph.dependencies.pipeline.send(snapshotID: initial.id)
+        await pipeline.send(snapshotID: initial.id)
         try await eventually {
-            await graph.dependencies.pipeline.snapshot().phase == .completed
+            await pipeline.snapshot().phase == .completed
         }
-        let firstBatch = await graph.dependencies.pipeline.snapshot()
+        let firstBatch = await pipeline.snapshot()
         let failedIDs = firstBatch.items.compactMap { item in
             if case .failed = item.delivery { return item.id }
             return nil
@@ -48,13 +49,13 @@ struct BatchRetryTests {
         })
 
         let retry = try #require(
-            await graph.dependencies.pipeline.confirmation(
+            await pipeline.confirmation(
                 setup: setup,
                 kind: .retryFailed
             )
         )
         let retrySnapshot = try #require(
-            (await graph.dependencies.pipeline.snapshot()).activeSnapshot
+            (await pipeline.snapshot()).activeSnapshot
         )
 
         #expect(retry.kind == .retryFailed)

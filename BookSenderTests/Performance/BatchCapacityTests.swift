@@ -13,6 +13,7 @@ struct BatchCapacityTests {
                 : .submitted
         }
         let graph = TestDependencyGraph.make(stores: stores, outcomes: outcomes)
+        let pipeline = graph.dependencies.pipeline
         let setup = try await graph.dependencies.setupService.save(
             validDraft(),
             replacing: nil
@@ -23,28 +24,28 @@ struct BatchCapacityTests {
             return url
         }
 
-        await graph.dependencies.pipeline.add(urls)
+        await pipeline.add(urls)
         try await eventually {
-            let batch = await graph.dependencies.pipeline.snapshot()
+            let batch = await pipeline.snapshot()
             return batch.items.count == 20
                 && batch.items.allSatisfy { $0.preparation == .ready }
         }
         let summary = try #require(
-            await graph.dependencies.pipeline.confirmation(
+            await pipeline.confirmation(
                 setup: setup,
                 kind: .initial
             )
         )
-        await graph.dependencies.pipeline.send(snapshotID: summary.id)
+        await pipeline.send(snapshotID: summary.id)
         try await eventually {
-            await graph.dependencies.pipeline.snapshot().phase == .completed
+            await pipeline.snapshot().phase == .completed
         }
 
-        let batch = await graph.dependencies.pipeline.snapshot()
+        let batch = await pipeline.snapshot()
         #expect(batch.items.count == 20)
         #expect(batch.completedCount == 20)
         #expect(batch.items.allSatisfy { $0.delivery.isTerminal })
-        #expect((await graph.dependencies.pipeline.deliveryAttempts()).count == 20)
+        #expect((await pipeline.deliveryAttempts()).count == 20)
         #expect(SafetyLimits.standard.permitsBatchItemCount(20))
     }
 
