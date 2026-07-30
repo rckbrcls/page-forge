@@ -162,7 +162,7 @@ if ! printf "%s\n" "$SIGNING_DETAILS" \
 fi
 
 SIGNED_ENTITLEMENTS="$TMP_DIR/signed-entitlements.plist"
-codesign -d --entitlements - "$APP_PATH" > "$SIGNED_ENTITLEMENTS"
+codesign -d --entitlements - --xml "$APP_PATH" > "$SIGNED_ENTITLEMENTS"
 if [ "$(/usr/libexec/PlistBuddy \
   -c "Print :com.apple.security.cs.disable-library-validation" \
   "$SIGNED_ENTITLEMENTS")" != "true" ]; then
@@ -183,7 +183,7 @@ verify_pinned_component() {
       echo "A nested app component uses a forbidden ad-hoc signature."
       exit 1
     fi
-    if codesign -d --entitlements - "$component" 2>/dev/null \
+    if codesign -d --entitlements - --xml "$component" 2>/dev/null \
       | grep -Fq "com.apple.security.cs.disable-library-validation"; then
       echo "A nested app component has a forbidden library validation exception."
       exit 1

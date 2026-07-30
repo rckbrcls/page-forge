@@ -16,6 +16,7 @@ grep -Fq 'Signature=adhoc' "$INSTALLER"
 grep -Fq 'ACTUAL_REQUIREMENT' "$INSTALLER"
 grep -Fq 'TeamIdentifier=not set' "$INSTALLER"
 grep -Fq 'com.apple.security.cs.disable-library-validation' "$INSTALLER"
+grep -Fq 'codesign -d --entitlements - --xml "$APP_PATH"' "$INSTALLER"
 grep -Fq 'A nested app component has a forbidden library validation exception.' "$INSTALLER"
 grep -Fq 'verify_pinned_component' "$INSTALLER"
 grep -Eq 'ACTUAL_BUNDLE_IDENTIFIER' "$INSTALLER"
@@ -78,7 +79,7 @@ if [ -n "${ZIP_PATH:-}" ]; then
   fi
 
   SIGNED_ENTITLEMENTS="$TEMP_DIRECTORY/signed-entitlements.plist"
-  codesign -d --entitlements - "$APP_PATH" > "$SIGNED_ENTITLEMENTS"
+  codesign -d --entitlements - --xml "$APP_PATH" > "$SIGNED_ENTITLEMENTS"
   if [ "$(/usr/libexec/PlistBuddy \
     -c "Print :com.apple.security.cs.disable-library-validation" \
     "$SIGNED_ENTITLEMENTS")" != "true" ]; then
@@ -94,7 +95,7 @@ if [ -n "${ZIP_PATH:-}" ]; then
     "$SPARKLE_FRAMEWORK/Versions/B/Updater.app" \
     "$SPARKLE_FRAMEWORK"; do
     if [ -e "$component" ] \
-      && codesign -d --entitlements - "$component" 2>/dev/null \
+      && codesign -d --entitlements - --xml "$component" 2>/dev/null \
         | grep -Fq "com.apple.security.cs.disable-library-validation"; then
       echo "A nested release component has a forbidden library validation exception."
       exit 1

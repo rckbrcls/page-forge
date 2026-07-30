@@ -346,7 +346,7 @@ jobs:
           fi
 
           SIGNED_ENTITLEMENTS="$RUNNER_TEMP/signed-entitlements.plist"
-          codesign -d --entitlements - "$APP_PATH" > "$SIGNED_ENTITLEMENTS"
+          codesign -d --entitlements - --xml "$APP_PATH" > "$SIGNED_ENTITLEMENTS"
           test "$(/usr/libexec/PlistBuddy -c "Print :com.apple.security.app-sandbox" "$SIGNED_ENTITLEMENTS")" = "true"
           test "$(/usr/libexec/PlistBuddy -c "Print :com.apple.security.cs.disable-library-validation" "$SIGNED_ENTITLEMENTS")" = "true"
           test "$(/usr/libexec/PlistBuddy -c "Print :com.apple.security.network.client" "$SIGNED_ENTITLEMENTS")" = "true"
@@ -360,7 +360,7 @@ jobs:
             "$SPARKLE_FRAMEWORK/Versions/B/Updater.app" \
             "$SPARKLE_FRAMEWORK"; do
             if [ -e "$component" ] \
-              && codesign -d --entitlements - "$component" 2>/dev/null \
+              && codesign -d --entitlements - --xml "$component" 2>/dev/null \
                 | grep -Fq "com.apple.security.cs.disable-library-validation"; then
               echo "Only the main executable may disable library validation."
               exit 1
