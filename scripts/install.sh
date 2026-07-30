@@ -149,6 +149,27 @@ if [ "$ACTUAL_REQUIREMENT" != "$PINNED_DESIGNATED_REQUIREMENT" ]; then
   exit 1
 fi
 
+SIGNING_DETAILS=$(codesign -dvvv "$APP_PATH" 2>&1)
+if ! printf "%s\n" "$SIGNING_DETAILS" \
+  | grep -Eq '^CodeDirectory .*flags=.*\(.*runtime.*\)'; then
+  echo "The downloaded app does not use the required hardened runtime."
+  exit 1
+fi
+if ! printf "%s\n" "$SIGNING_DETAILS" \
+  | grep -Fqx "TeamIdentifier=not set"; then
+  echo "The downloaded app has an unexpected Team ID contract."
+  exit 1
+fi
+
+SIGNED_ENTITLEMENTS="$TMP_DIR/signed-entitlements.plist"
+codesign -d --entitlements - "$APP_PATH" > "$SIGNED_ENTITLEMENTS"
+if [ "$(/usr/libexec/PlistBuddy \
+  -c "Print :com.apple.security.cs.disable-library-validation" \
+  "$SIGNED_ENTITLEMENTS")" != "true" ]; then
+  echo "The downloaded app is missing its required library validation exception."
+  exit 1
+fi
+
 SPARKLE_FRAMEWORK="$APP_PATH/Contents/Frameworks/Sparkle.framework"
 verify_pinned_component() {
   local component="$1"
@@ -160,6 +181,11 @@ verify_pinned_component() {
       "$component"
     if codesign -dvvv "$component" 2>&1 | grep -Fq "Signature=adhoc"; then
       echo "A nested app component uses a forbidden ad-hoc signature."
+      exit 1
+    fi
+    if codesign -d --entitlements - "$component" 2>/dev/null \
+      | grep -Fq "com.apple.security.cs.disable-library-validation"; then
+      echo "A nested app component has a forbidden library validation exception."
       exit 1
     fi
   fi

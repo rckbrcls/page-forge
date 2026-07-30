@@ -87,6 +87,12 @@ the downloaded quarantine attribute; users installing manually may need
 Finder's **Open** action. SMTP delivery remains experimental and unavailable in
 version `0.2.0`.
 
+The self-signed identity has no Apple Team ID. Release builds keep the hardened
+runtime and use only its library-validation exception on the main executable so
+the pinned Sparkle framework can load. The release pipeline and installer still
+require every bundled Sparkle executable to use the pinned certificate, and the
+pipeline launches the signed app before packaging.
+
 SMTP passwords are stored only in the traditional macOS Keychain. The first
 version using this corrected storage contract asks for the password once;
 updates signed with the same pinned identity retain access without asking again.

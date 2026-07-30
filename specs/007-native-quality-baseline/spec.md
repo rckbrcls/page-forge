@@ -131,6 +131,10 @@ and verify that setup remains complete without exposing the password.
 5. **Given** a release lacks or diverges from the pinned signing material,
    **When** automation validates it, **Then** publication stops before packaging
    and never falls back to ad-hoc signing.
+6. **Given** the pinned self-signed identity has no Apple Team ID, **When** the
+   signed app loads Sparkle under the hardened runtime, **Then** only the main
+   executable's library-validation exception permits the pinned framework and
+   the process remains alive through the release launch gate.
 
 ### Edge Cases
 
@@ -151,6 +155,8 @@ and verify that setup remains complete without exposing the password.
 - Release secrets are absent, malformed, or identify a different certificate.
 - A nested Sparkle component is unsigned, ad-hoc signed, or signed by another
   identity.
+- A statically valid signed app is rejected by dyld because the self-signed main
+  executable and Sparkle framework have no Apple Team ID.
 - Emergency certificate rotation is required after loss or compromise.
 
 ## Requirements _(mandatory)_
@@ -212,6 +218,12 @@ and verify that setup remains complete without exposing the password.
   requirement-divergent archives before replacing an installed app.
 - **FR-023**: Sparkle EdDSA MUST remain an independent mandatory update-archive
   signature.
+- **FR-024**: Distributed builds MUST retain the hardened runtime and MAY disable
+  only library validation on the main executable to load bundled Sparkle code
+  signed by the pinned self-signed identity.
+- **FR-025**: A signed-app launch smoke test MUST keep the process alive for a
+  bounded interval before packaging; dyld rejection or early exit MUST fail the
+  release.
 
 ### Constitution Constraints _(mandatory)_
 
@@ -232,9 +244,10 @@ and verify that setup remains complete without exposing the password.
 - **CC-007**: Feature MUST NOT introduce external ebook engines, helper
   processes, conversion, DRM removal, library, history, cloud, account, AI, or a
   parallel product surface.
-- **CC-008**: Feature MUST use traditional Keychain storage and the stable pinned
-  release identity required by constitution 7.0.0; ad-hoc signing is permitted
-  only for non-distributed test hosts.
+- **CC-008**: Feature MUST use traditional Keychain storage, the stable pinned
+  release identity, the bounded library-validation exception, and the launch
+  gate required by constitution 7.1.0; ad-hoc signing is permitted only for
+  non-distributed test hosts.
 
 ### Key Entities
 

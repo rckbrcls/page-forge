@@ -166,6 +166,9 @@ primary screens.
 - [X] T041 [P] Run signing-policy, installer, appcast, and isolated temporary-signing contract checks from scripts/tests/signing_contract_test.sh, scripts/tests/install_contract_test.sh, scripts/tests/appcast_contract_test.py, and scripts/tests/local_signing_smoke_test.sh
 - [X] T042 Run final static diff, forbidden-pattern, plist, workflow, and certificate checks and record results in specs/007-native-quality-baseline/validation/static-gate.md
 - [X] T043 Review constitution 7.0.0 compliance and separate static, compilation, test, runtime, provider, signing, update, and production claims in specs/007-native-quality-baseline/validation/release-readiness.md
+- [X] T044 [US4] Record the v0.2.2 dyld incident and amend constitution 7.1.0 for the bounded library-validation exception in specs/007-native-quality-baseline/validation/release-0.2.2-runtime-incident.md and .specify/memory/constitution.md
+- [X] T045 [US4] Require hardened runtime, missing Team ID, the main-app library-validation exception, pinned nested signatures, and a signed launch smoke test in .github/workflows/release.yml, scripts/install.sh, and scripts/tests/
+- [ ] T046 [US4] Publish v0.2.3 and verify the workflow launch gate, public artifact, installer, appcast, and installed-app launch
 
 ---
 

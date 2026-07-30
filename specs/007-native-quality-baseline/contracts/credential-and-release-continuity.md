@@ -27,11 +27,20 @@
    invalid nested signatures stop release before packaging without fallback.
 6. Temporary runner Keychains, decoded PKCS#12 files, Sparkle private keys, and
    imported certificate material are removed on step exit.
+7. Distributed code retains hardened runtime. Only the main executable carries
+   `com.apple.security.cs.disable-library-validation`, because the pinned
+   self-signed certificate has no Apple Team ID.
+8. Every bundled Sparkle executable remains signed by the pinned certificate
+   despite the main executable's library-validation exception.
+9. The signed app must remain alive through the bounded launch smoke test before
+   packaging.
 
 ## Installer and update
 
 1. The installer verifies strict main and nested signatures, the pinned
-   certificate, and the exact main designated requirement before replacement.
+   certificate, the exact main designated requirement, hardened runtime, missing
+   Team ID contract, and required library-validation exception before
+   replacement.
 2. Unsigned, ad-hoc, differently signed, or requirement-divergent archives are
    rejected even when their bytes are otherwise intact.
 3. Sparkle EdDSA remains an independent mandatory archive signature.

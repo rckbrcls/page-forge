@@ -1,19 +1,17 @@
 <!--
 Sync Impact Report
-- Version change: 6.0.0 -> 7.0.0
-- Bump rationale: credential continuity now depends on the traditional macOS
-  Keychain and one pinned self-signed release identity; the former ad-hoc
-  distribution contract is incompatible with that security boundary.
+- Version change: 7.0.0 -> 7.1.0
+- Bump rationale: the pinned self-signed identity has no Apple Team ID, so the
+  hardened runtime needs one explicit library-validation exception to load the
+  independently pinned Sparkle framework.
 - Modified principles:
-  - Local Privacy and Protected Credentials
   - Simple, Reviewable Distribution
 - Added obligations:
-  - Distributed versions use one stable certificate and explicit designated
-    requirement.
-  - Missing or divergent signing material blocks publication without fallback.
-  - The installer pins the release certificate and designated requirement.
-  - Identity rotation requires explicit authorization, migration planning, and
-    one-time credential re-entry disclosure.
+  - Keep the hardened runtime while limiting its exception to library
+    validation on the main executable.
+  - Every bundled Sparkle executable remains pinned to the release certificate.
+  - A signed-app launch smoke test blocks packaging when dyld rejects a
+    framework or the process exits during the launch gate.
 - Runtime guidance updated:
   - ✅ AGENTS.md
 - Specifications and distribution guidance updated:
@@ -22,7 +20,8 @@ Sync Impact Report
   - ✅ specs/007-native-quality-baseline/
   - ✅ README.md
   - ✅ docs/deployment.md
-- Follow-up TODOs: first corrected-version credential acceptance and the first
+- Follow-up TODOs: v0.2.3 launch acceptance, first corrected-version credential
+  acceptance, and the first
   same-identity N-to-N+1 Sparkle update remain separate runtime gates.
 -->
 
@@ -309,6 +308,15 @@ verify the pinned certificate and exact main-app designated requirement before
 replacing an installed application. Sparkle EdDSA verification remains an
 independent mandatory protection.
 
+The self-signed identity has no Apple-issued Team ID. Distributed builds MUST
+retain the hardened runtime and MAY disable only library validation on the main
+executable so that its pinned Sparkle framework can load. This exception MUST
+NOT authorize unsigned or differently signed distributed components: CI and the
+installer MUST continue verifying every bundled Sparkle executable against the
+pinned certificate. A signed-app launch smoke test MUST keep the executable
+alive for a bounded interval before packaging so static signature checks cannot
+mask a dyld rejection.
+
 The private identity MUST remain outside the repository, with an encrypted
 backup and release-automation secrets; only its public DER certificate may be
 versioned. Rotation requires explicit authorization, a migration plan, and
@@ -434,4 +442,4 @@ constitutional rule or written amendment MUST be rejected. Compliance evidence
 MUST distinguish static checks, compilation, automated tests, runtime behavior,
 authenticated delivery, and production distribution.
 
-**Version**: 7.0.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-30
+**Version**: 7.1.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-30

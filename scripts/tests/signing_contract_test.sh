@@ -11,6 +11,8 @@ bash -n "$INSTALLER"
 bash -n "$POLICY"
 bash -n scripts/signing/bootstrap_release_identity.sh
 bash -n scripts/tests/local_signing_smoke_test.sh
+bash -n scripts/tests/signed_app_launch_smoke_test.sh
+test -x scripts/tests/signed_app_launch_smoke_test.sh
 source "$POLICY"
 
 REQUIREMENT_BINARY=$(mktemp)
@@ -56,7 +58,18 @@ grep -Fq 'security list-keychains' "$WORKFLOW"
 grep -Fq 'cmp -s "$SIGNING_CERTIFICATE_PATH" "$IMPORTED_CERTIFICATE_DER"' "$WORKFLOW"
 grep -Fq 'Signature=adhoc' "$WORKFLOW"
 grep -Fq 'ACTUAL_REQUIREMENT' "$WORKFLOW"
+grep -Fq 'TeamIdentifier=not set' "$WORKFLOW"
+grep -Fq 'com.apple.security.cs.disable-library-validation' "$WORKFLOW"
+grep -Fq 'Only the main executable may disable library validation.' "$WORKFLOW"
+grep -Fq 'scripts/tests/signed_app_launch_smoke_test.sh' "$WORKFLOW"
 grep -Fq 'trap cleanup_signing_material EXIT' "$WORKFLOW"
+
+if [ "$(/usr/libexec/PlistBuddy \
+  -c "Print :com.apple.security.cs.disable-library-validation" \
+  BookSender/BookSender.entitlements)" != "true" ]; then
+  echo "The release library validation exception is missing."
+  exit 1
+fi
 
 if grep -Fq -- '--sign -' "$WORKFLOW"; then
   echo "The release workflow contains an ad-hoc signing fallback."

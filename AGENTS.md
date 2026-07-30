@@ -146,6 +146,13 @@
 - Sparkle EdDSA remains independent and mandatory. The self-signed identity is
   not Developer ID, provides no Apple notarization, and does not remove
   Gatekeeper friction from manual installation.
+- Distributed builds MUST retain the hardened runtime. Because the pinned
+  self-signed identity has no Apple Team ID, only the main executable MAY carry
+  `com.apple.security.cs.disable-library-validation`.
+- The library-validation exception MUST NOT weaken artifact verification:
+  every bundled Sparkle executable remains signed by the pinned certificate.
+- A signed-app launch smoke test MUST pass before packaging so dyld framework
+  rejection or an early process exit blocks publication.
 
 ## Repository Layout
 

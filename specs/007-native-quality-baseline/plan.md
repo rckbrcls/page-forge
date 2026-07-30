@@ -235,6 +235,11 @@ Do not create a new architectural layer.
 7. Document that the first corrected version may request the password once and
    that same-identity updates preserve access; disclose the lack of Developer ID,
    notarization, and normal Gatekeeper trust.
+8. Keep hardened runtime and add only the main-executable library-validation
+   exception required by the pinned self-signed identity's missing Team ID.
+9. Require the exact runtime/entitlement combination in CI and the installer,
+   keep every Sparkle executable pinned, and launch the signed app before
+   packaging.
 
 ## Post-Design Constitution Check
 

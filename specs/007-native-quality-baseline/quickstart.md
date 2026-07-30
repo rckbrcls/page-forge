@@ -20,6 +20,7 @@ plutil -lint BookSender/BookSender.entitlements
 openssl x509 -inform DER -in scripts/signing/BookSenderReleaseSigning.cer -noout -subject -fingerprint -sha1
 bash scripts/tests/signing_contract_test.sh
 bash scripts/tests/install_contract_test.sh
+bash -n scripts/tests/signed_app_launch_smoke_test.sh
 rg -n 'DispatchQueue|\.tabItem\(|loadItem\(forTypeIdentifier|sheet\(isPresented: \$model\.isShowingConfirmation|font\(\.system\(size:|\.caption2' BookSender --glob '*.swift'
 rg -n 'kSecUseDataProtectionKeychain|kSecAttrAccessible|kSecAttrSynchronizable|--sign -' BookSender .github scripts
 ```
@@ -30,6 +31,9 @@ Expected result:
 - No retained target patterns without a reviewed, documented reason.
 - The public certificate, signing policy, workflow, and installer use one
   fingerprint and exact designated requirement with no distribution fallback.
+- The release requires hardened runtime, the bounded main-executable
+  library-validation exception, pinned nested Sparkle signatures, and a signed
+  launch gate before packaging.
 - No new dependency, primary screen, executable helper, runtime service, or
   persistence surface.
 

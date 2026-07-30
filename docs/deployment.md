@@ -31,6 +31,7 @@ GitHub Actions
 -> installer and appcast contract suites
 -> universal Release build
 -> pinned self-signed release signing
+-> signed-app launch smoke test
 -> BookSender-macos-universal-vX.Y.Z.zip
 -> Sparkle EdDSA signature
 -> appcast.xml commit
@@ -49,6 +50,14 @@ explicit designated requirement anchored to the pinned certificate. Missing
 secrets, an invalid PKCS#12, certificate drift, ad-hoc signing, a changed
 requirement, or an invalid nested signature blocks the release before packaging.
 The release ZIP contains only `BookSender.app`.
+
+The pinned self-signed certificate has no Apple Team ID. The main executable
+therefore retains the hardened runtime with only
+`com.apple.security.cs.disable-library-validation` enabled so that the pinned
+Sparkle framework can load. Nested Sparkle executables remain signed and checked
+against the same certificate. After signing, the workflow runs the executable
+for five seconds and blocks packaging if dyld rejects a framework or the process
+exits early.
 
 The private key is stored only in the local login Keychain, the encrypted
 PKCS#12 backup, and GitHub Actions secrets. Only the public DER certificate is
@@ -111,8 +120,12 @@ archive-authentication boundary.
 - Confirm the workflow `headSha`, tag target, and release target are identical.
 - Confirm the ZIP contains both `arm64` and `x86_64`.
 - Confirm nested and main app code signatures pass strict verification.
+- Confirm the main app retains hardened runtime, has no Team ID, and carries
+  only the required library-validation runtime exception.
 - Confirm the certificate fingerprint and exact main-app designated requirement
   match `scripts/signing/release-signing-policy.sh`.
+- Confirm the signed-app launch smoke test survives its bounded five-second
+  gate before packaging.
 - Confirm the appcast reports the expected short version, build, URL, size, and
   EdDSA signature.
 - Confirm the Pages appcast and canonical proxy return the same item.

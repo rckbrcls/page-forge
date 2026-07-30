@@ -176,8 +176,33 @@ surface, helper process, or new product persistence surface is required. The
 first corrected save creates a traditional-Keychain item; inaccessible legacy
 items are not migrated and require one password entry.
 
+## Decision 10: Keep hardened runtime with one bounded library exception
+
+**Decision**: Keep hardened runtime on distributed code and add
+`com.apple.security.cs.disable-library-validation` only to the main executable.
+Continue signing and verifying every bundled Sparkle executable with the pinned
+self-signed certificate, and run the signed main executable for a bounded
+five-second launch gate before packaging.
+
+**Rationale**: Apple-issued Team IDs are absent from the pinned self-signed
+identity. Hardened runtime enables library validation and dyld rejects Sparkle
+even when static strict-signature checks pass. The one documented runtime
+exception is narrower than removing hardened runtime, while certificate pinning,
+bundle sealing, Sparkle EdDSA, and the launch gate preserve independent checks.
+
+**Alternatives considered**:
+
+- Remove hardened runtime. Rejected because it would discard unrelated runtime
+  protections to solve one library-loading restriction.
+- Rotate to another self-signed certificate. Rejected because self-signed
+  identities still lack an Apple-issued Team ID and rotation breaks credential
+  continuity.
+- Rely on strict `codesign` verification. Rejected because v0.2.2 passed static
+  verification but dyld rejected Sparkle at process launch.
+
 ## Primary references
 
 - [NSItemProvider.loadTransferable(type:completionHandler:)](https://developer.apple.com/documentation/foundation/nsitemprovider/loadtransferable(type:completionhandler:))
 - [Transferable](https://developer.apple.com/documentation/coretransferable/transferable)
 - [Tab](https://developer.apple.com/documentation/swiftui/tab)
+- [Disable Library Validation Entitlement](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.security.cs.disable-library-validation)
