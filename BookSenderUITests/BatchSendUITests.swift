@@ -49,4 +49,34 @@ final class BatchSendUITests: XCTestCase {
         XCTAssertTrue(app.buttons["sendBook.dropTarget"].exists)
         XCTAssertFalse(app.staticTexts["Delivery Unknown"].exists)
     }
+
+    func testBlockedEPUBShowsActionableDetailsAndDisclosureToggles() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-uiTesting",
+            "-resetSetup",
+            "-configuredSetup",
+            "-uiTestInvalidEPUB",
+        ]
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            app.staticTexts["Needs Attention"].waitForExistence(timeout: 5)
+        )
+        let explanation = app.staticTexts[
+            "The EPUB archive is not safe to process."
+        ]
+        XCTAssertTrue(explanation.waitForExistence(timeout: 2))
+
+        let details = app.buttons.matching(
+            NSPredicate(format: "label == %@", "Details")
+        ).firstMatch
+        XCTAssertTrue(details.exists)
+        details.click()
+        XCTAssertTrue(explanation.waitForNonExistence(timeout: 2))
+        details.click()
+        XCTAssertTrue(explanation.waitForExistence(timeout: 2))
+        XCTAssertFalse(app.buttons["sendBook.send"].isEnabled)
+    }
 }

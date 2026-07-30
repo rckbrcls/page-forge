@@ -5,6 +5,7 @@ import Testing
 struct EPUBPreparationJourneyTests {
     @Test(arguments: [
         FixtureFactory.EPUBVariant.validEPUB3,
+        .epub2LegacyTrueTypeMediaType,
         .missingMimetype,
         .missingContainer,
     ])

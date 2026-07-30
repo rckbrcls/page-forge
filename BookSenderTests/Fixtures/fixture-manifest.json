@@ -23,6 +23,15 @@
       "expectedReady": true
     },
     {
+      "id": "epub-2-legacy-true-type-media-type",
+      "kind": "epub",
+      "definitionDigest": "5f97202e261401594643d25b92b6732959c0f66ce45cfe0401bd4b1fd60e97e1",
+      "expectedHealth": "healthy",
+      "findingCodes": [],
+      "repairActions": [],
+      "expectedReady": true
+    },
+    {
       "id": "valid-pdf",
       "kind": "pdf",
       "definitionDigest": "ecd8083f2ecae269937269e428d7a45124282080bac7d42081994aa4cf29b693",
@@ -165,6 +174,15 @@
       "id": "active-content",
       "kind": "epub",
       "definitionDigest": "eae7ce8a6fb79fe1944414e144dc24f24d71b325880279b458c6039178e320f2",
+      "expectedHealth": "unsafe",
+      "findingCodes": ["ACTIVE_CONTENT"],
+      "repairActions": [],
+      "expectedReady": false
+    },
+    {
+      "id": "text-javascript-active-content",
+      "kind": "epub",
+      "definitionDigest": "69f26da33578b59125ccea46b85fffb3f6f674b32f63018bb2268a4bb06f2deb",
       "expectedHealth": "unsafe",
       "findingCodes": ["ACTIVE_CONTENT"],
       "repairActions": [],

@@ -315,8 +315,9 @@ struct EPUBAuditEngine: EPUBAuditing {
                 )
             }
 
-            if let expected = expectedMediaType(for: resolved),
-               expected != declaredType {
+            let normalizedDeclaredType = normalizedMediaType(declaredType)
+            if let expectation = mediaTypeExpectation(for: resolved),
+               !expectation.compatible.contains(normalizedDeclaredType) {
                 findings.append(
                     finding(
                         .manifestMediaTypeMismatch,
@@ -325,13 +326,13 @@ struct EPUBAuditEngine: EPUBAuditing {
                         location: resolved,
                         evidence: [
                             "declared": declaredType,
-                            "expected": expected,
+                            "expected": expectation.preferred,
                         ]
                     )
                 )
             }
             let properties = item.attributes["properties"]?.lowercased() ?? ""
-            if declaredType == "application/javascript"
+            if scriptMediaTypes.contains(normalizedDeclaredType)
                 || properties.split(separator: " ").contains("scripted") {
                 findings.append(
                     finding(
@@ -455,22 +456,82 @@ struct EPUBAuditEngine: EPUBAuditing {
             .contains(scheme)
     }
 
-    private func expectedMediaType(for path: String) -> String? {
+    private func mediaTypeExpectation(for path: String) -> MediaTypeExpectation? {
         switch (path as NSString).pathExtension.lowercased() {
-        case "xhtml", "html", "htm": "application/xhtml+xml"
-        case "css": "text/css"
-        case "ncx": "application/x-dtbncx+xml"
-        case "svg": "image/svg+xml"
-        case "jpg", "jpeg": "image/jpeg"
-        case "png": "image/png"
-        case "gif": "image/gif"
-        case "otf": "font/otf"
-        case "ttf": "font/ttf"
-        case "woff": "font/woff"
-        case "woff2": "font/woff2"
-        case "js": "application/javascript"
+        case "xhtml", "html", "htm":
+            expectation("application/xhtml+xml")
+        case "css":
+            expectation("text/css")
+        case "ncx":
+            expectation("application/x-dtbncx+xml")
+        case "svg":
+            expectation("image/svg+xml")
+        case "jpg", "jpeg":
+            expectation("image/jpeg")
+        case "png":
+            expectation("image/png")
+        case "gif":
+            expectation("image/gif")
+        case "otf":
+            expectation(
+                "font/otf",
+                compatible: [
+                    "application/font-sfnt",
+                    "application/vnd.ms-opentype",
+                    "application/x-font-opentype",
+                ]
+            )
+        case "ttf":
+            expectation(
+                "font/ttf",
+                compatible: [
+                    "application/font-sfnt",
+                    "application/x-font-ttf",
+                ]
+            )
+        case "woff":
+            expectation(
+                "font/woff",
+                compatible: [
+                    "application/font-woff",
+                    "application/x-font-woff",
+                ]
+            )
+        case "woff2":
+            expectation("font/woff2")
+        case "js":
+            expectation(
+                "application/javascript",
+                compatible: Array(scriptMediaTypes)
+            )
         default: nil
         }
+    }
+
+    private var scriptMediaTypes: Set<String> {
+        [
+            "application/ecmascript",
+            "application/javascript",
+            "text/javascript",
+        ]
+    }
+
+    private func normalizedMediaType(_ value: String) -> String {
+        let baseType = value.split(separator: ";", maxSplits: 1).first
+            .map(String.init) ?? value
+        return baseType
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+    }
+
+    private func expectation(
+        _ preferred: String,
+        compatible: [String] = []
+    ) -> MediaTypeExpectation {
+        MediaTypeExpectation(
+            preferred: preferred,
+            compatible: Set(compatible).union([preferred])
+        )
     }
 
     private func archiveFinding(for failure: SanitizedFailure) -> HealthFinding {
@@ -546,4 +607,9 @@ struct EPUBAuditEngine: EPUBAuditing {
             evidence: evidence
         )
     }
+}
+
+private struct MediaTypeExpectation {
+    let preferred: String
+    let compatible: Set<String>
 }

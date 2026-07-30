@@ -2,39 +2,81 @@ import SwiftUI
 
 struct ItemDetailDisclosure: View {
     let item: BatchItemPresentation
+    @State private var isExpanded: Bool
+
+    init(item: BatchItemPresentation) {
+        self.item = item
+        _isExpanded = State(initialValue: Self.startsExpanded(item))
+    }
 
     var body: some View {
-        DisclosureGroup("Details") {
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(item.findings) { finding in
-                    Text(message(for: finding))
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                isExpanded.toggle()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        .accessibilityHidden(true)
+                    Text("Details")
+                    Spacer()
                 }
-                ForEach(item.appliedActions) { action in
-                    Label(
-                        actionTitle(action.action),
-                        systemImage: action.verified
-                            ? "checkmark"
-                            : "exclamationmark"
-                    )
-                }
-                if let failure = preparationFailure {
-                    Text(failure.message)
-                }
-                if case .failed(let failure) = item.delivery {
-                    Text(failure.message)
-                }
-                if case .deliveryUnknown = item.delivery {
-                    Text(
-                        "The server may have accepted this book. Check Kindle before retrying."
-                    )
-                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
-            .font(.callout)
-            .foregroundStyle(.secondary)
+            .buttonStyle(.plain)
+            .accessibilityLabel("Details")
+            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+            .accessibilityIdentifier(
+                "sendBook.itemDetails.\(item.id.uuidString)"
+            )
+
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(item.findings) { finding in
+                        Text(message(for: finding))
+                    }
+                    ForEach(item.appliedActions) { action in
+                        Label(
+                            actionTitle(action.action),
+                            systemImage: action.verified
+                                ? "checkmark"
+                                : "exclamationmark"
+                        )
+                    }
+                    if let failure = preparationFailure {
+                        Text(failure.message)
+                    }
+                    if case .failed(let failure) = item.delivery {
+                        Text(failure.message)
+                    }
+                    if case .deliveryUnknown = item.delivery {
+                        Text(
+                            "The server may have accepted this book. Check Kindle before retrying."
+                        )
+                    }
+                }
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .padding(.leading, 18)
+            }
         }
-        .accessibilityIdentifier(
-            "sendBook.itemDetails.\(item.id.uuidString)"
-        )
+    }
+
+    private static func startsExpanded(_ item: BatchItemPresentation) -> Bool {
+        switch item.preparation {
+        case .needsAttention, .excluded:
+            return true
+        case .waiting, .checking, .preparing, .ready, .cancelled:
+            break
+        }
+        switch item.delivery {
+        case .failed, .deliveryUnknown:
+            return true
+        case .notScheduled, .sending, .submitted, .cancelled:
+            return false
+        }
     }
 
     private var preparationFailure: SanitizedFailure? {

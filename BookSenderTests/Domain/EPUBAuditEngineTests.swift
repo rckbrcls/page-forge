@@ -14,6 +14,7 @@ struct EPUBAuditEngineTests {
         ] = [
             (.validEPUB2, .healthy, []),
             (.validEPUB3, .healthy, []),
+            (.epub2LegacyTrueTypeMediaType, .healthy, []),
             (.missingMimetype, .repairable, [.mimetypeMissing]),
             (.invalidMimetype, .repairable, [.mimetypeInvalid]),
             (.lateMimetype, .repairable, [.mimetypeNotFirst]),
@@ -28,6 +29,7 @@ struct EPUBAuditEngineTests {
             (.ambiguousReference, .needsReview, [.referenceAmbiguous]),
             (.encryptedContent, .unsafe, [.encryptedContent]),
             (.activeContent, .unsafe, [.activeContent]),
+            (.textJavaScriptActiveContent, .unsafe, [.activeContent]),
             (.remoteReference, .unsafe, [.remoteReference]),
             (.pathTraversal, .unsafe, [.archiveUnsafePath]),
             (.absolutePath, .unsafe, [.archiveUnsafePath]),

@@ -108,7 +108,11 @@ struct AppDependencies {
             workspaceStore: workspaceStore
         )
         let bootstrapFixtureURLs: [URL]
-        if isUITesting, arguments.contains("-uiTestPDFs") {
+        if isUITesting, arguments.contains("-uiTestInvalidEPUB") {
+            bootstrapFixtureURLs = (
+                try? makeIsolatedUITestInvalidEPUB()
+            ).map { [$0] } ?? []
+        } else if isUITesting, arguments.contains("-uiTestPDFs") {
             bootstrapFixtureURLs = (
                 try? makeIsolatedUITestPDFs(
                     count: arguments.contains("-uiTestTwoBooks") ? 2 : 1
@@ -125,6 +129,19 @@ struct AppDependencies {
             bootstrapMode: bootstrapMode,
             bootstrapFixtureURLs: bootstrapFixtureURLs
         )
+    }
+
+    private static func makeIsolatedUITestInvalidEPUB() throws -> URL {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(component: "BookSender-UITests")
+            .appending(component: "Fixtures")
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+        let url = directory.appending(component: "Needs-Attention.epub")
+        try Data("not-an-epub".utf8).write(to: url, options: .atomic)
+        return url
     }
 
     private static func makeIsolatedUITestPDFs(

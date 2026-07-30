@@ -24,6 +24,7 @@ enum FixtureFactory {
     enum EPUBVariant: String, CaseIterable {
         case validEPUB2
         case validEPUB3
+        case epub2LegacyTrueTypeMediaType
         case missingMimetype
         case invalidMimetype
         case lateMimetype
@@ -38,6 +39,7 @@ enum FixtureFactory {
         case ambiguousReference
         case encryptedContent
         case activeContent
+        case textJavaScriptActiveContent
         case remoteReference
         case pathTraversal
         case absolutePath
@@ -188,7 +190,10 @@ enum FixtureFactory {
             )
         }
 
-        let version = variant == .validEPUB2 ? "2.0" : "3.0"
+        let version = variant == .validEPUB2
+            || variant == .epub2LegacyTrueTypeMediaType
+            ? "2.0"
+            : "3.0"
         let package = variant == .invalidPackage
             ? "<package><manifest>"
             : packageXML(version: version, variant: variant)
@@ -213,10 +218,25 @@ enum FixtureFactory {
             <?xml version="1.0" encoding="UTF-8"?>
             <html xmlns="http://www.w3.org/1999/xhtml"><body><p>Book Sender fixture.</p></body></html>
             """
-        if variant != .missingReference && variant != .ambiguousReference {
+        if variant == .textJavaScriptActiveContent {
+            try add(
+                Data("document.body.textContent = 'fixture';".utf8),
+                path: "OEBPS/script.js",
+                to: archive,
+                date: fixedDate
+            )
+        } else if variant != .missingReference && variant != .ambiguousReference {
             try add(
                 Data(chapter.utf8),
                 path: "OEBPS/chapter.xhtml",
+                to: archive,
+                date: fixedDate
+            )
+        }
+        if variant == .epub2LegacyTrueTypeMediaType {
+            try add(
+                Data("fixture-font".utf8),
+                path: "OEBPS/Fonts/book.ttf",
                 to: archive,
                 date: fixedDate
             )
@@ -439,13 +459,26 @@ enum FixtureFactory {
             href = "chapter.xhtml"
         case .remoteReference:
             href = "https://example.invalid/chapter.xhtml"
+        case .textJavaScriptActiveContent:
+            href = "script.js"
         default:
             href = "chapter.xhtml"
         }
-        let mediaType = variant == .mediaTypeMismatch
-            ? "image/png"
-            : "application/xhtml+xml"
+        let mediaType: String
+        switch variant {
+        case .mediaTypeMismatch:
+            mediaType = "image/png"
+        case .textJavaScriptActiveContent:
+            mediaType = "text/javascript"
+        default:
+            mediaType = "application/xhtml+xml"
+        }
         let scripted = variant == .activeContent ? " properties=\"scripted\"" : ""
+        let legacyFont = variant == .epub2LegacyTrueTypeMediaType
+            ? """
+                <item id="book-font" href="Fonts/book.ttf" media-type="application/x-font-ttf"/>
+              """
+            : ""
         return """
             <?xml version="1.0" encoding="UTF-8"?>
             <package xmlns="http://www.idpf.org/2007/opf" version="\(version)" unique-identifier="book-id">
@@ -456,6 +489,7 @@ enum FixtureFactory {
               </metadata>
               <manifest>
                 <item id="chapter" href="\(href)" media-type="\(mediaType)"\(scripted)/>
+                \(legacyFont)
               </manifest>
               <spine><itemref idref="chapter"/></spine>
             </package>
