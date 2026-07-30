@@ -146,6 +146,12 @@
 - Sparkle EdDSA remains independent and mandatory. The self-signed identity is
   not Developer ID, provides no Apple notarization, and does not remove
   Gatekeeper friction from manual installation.
+- The installer MUST verify the GitHub asset SHA-256 digest and the pinned
+  public DER certificate before registering only that public certificate in
+  the user's default Keychain. The first registration MUST require explicit
+  terminal confirmation. Registration MUST be idempotent and MUST NOT use
+  `security add-trusted-cert`, import a private key, or install an explicit
+  Always Trust override.
 - Distributed builds MUST retain the hardened runtime. Because the pinned
   self-signed identity has no Apple Team ID, only the main executable MAY carry
   `com.apple.security.cs.disable-library-validation`.
@@ -153,6 +159,10 @@
   every bundled Sparkle executable remains signed by the pinned certificate.
 - A signed-app launch smoke test MUST pass before packaging so dyld framework
   rejection or an early process exit blocks publication.
+- Publication MUST also depend on a separate clean macOS runner that never
+  receives the PKCS#12, installs the packaged candidate through the real
+  public-certificate bootstrap, confirms that no private signing identity was
+  imported, and passes strict signature and launch checks.
 
 ## Repository Layout
 

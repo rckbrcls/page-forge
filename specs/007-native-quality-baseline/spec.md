@@ -213,7 +213,7 @@ and verify that setup remains complete without exposing the password.
   designated requirement anchored to it and `com.rckbrcls.BookSender`.
 - **FR-021**: Missing or invalid PKCS#12 secrets, certificate drift, designated
   requirement drift, ad-hoc signing, or invalid nested signatures MUST fail the
-  release before packaging with no fallback.
+  release before packaging or publication with no fallback.
 - **FR-022**: The installer MUST reject unsigned, ad-hoc, differently signed, or
   requirement-divergent archives before replacing an installed app.
 - **FR-023**: Sparkle EdDSA MUST remain an independent mandatory update-archive
@@ -224,6 +224,15 @@ and verify that setup remains complete without exposing the password.
 - **FR-025**: A signed-app launch smoke test MUST keep the process alive for a
   bounded interval before packaging; dyld rejection or early exit MUST fail the
   release.
+- **FR-026**: The installer MUST verify the GitHub Release asset SHA-256 digest
+  and pinned public DER certificate, then idempotently register only that public
+  certificate in the user's default Keychain when absent and after explicit
+  terminal confirmation; it MUST NOT import a private key or install an explicit
+  trust override.
+- **FR-027**: Publication MUST depend on a separate clean macOS runner that
+  receives neither PKCS#12 nor private identity, installs the packaged candidate
+  through the real certificate bootstrap, proves no private identity was
+  imported, and passes strict signature and launch verification.
 
 ### Constitution Constraints _(mandatory)_
 
@@ -292,6 +301,9 @@ and verify that setup remains complete without exposing the password.
 - **SC-009**: Automated signing contracts reject every missing-secret, invalid
   PKCS#12, certificate-drift, requirement-drift, ad-hoc, unsigned, and
   differently signed fixture before packaging or replacement.
+- **SC-010**: A release cannot be published unless a fresh macOS runner with no
+  private signing identity registers only the pinned public certificate and
+  keeps the installed candidate alive through the launch gate.
 
 ## Assumptions
 

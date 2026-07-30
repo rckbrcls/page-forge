@@ -69,11 +69,15 @@ Book Sender is distributed through GitHub Releases:
 curl -fsSL https://rckbrcls.com/api/book-sender/install | bash
 ```
 
-The installer selects the universal Book Sender archive, validates the app
-identity, pinned release certificate, designated requirement, and nested code
-signatures, then installs `BookSender.app` into
+The installer selects the universal Book Sender archive, validates its GitHub
+Release SHA-256 digest and pinned public certificate, registers only that public
+code-signing certificate in the user's Keychain when absent, and then validates
+the app identity, designated requirement, and nested code signatures. It
+installs `BookSender.app` into
 `/Applications` or `~/Applications`. Review
 [`scripts/install.sh`](scripts/install.sh) before running it.
+The first corrected installation asks for explicit terminal confirmation before
+registering the public certificate.
 
 The app uses Sparkle for daily update checks and exposes
 **Check for Updates…** in the application menu. Releases and appcast archives
@@ -83,15 +87,18 @@ Releases produced under the corrected contract use one stable self-signed
 `Book Sender Release Signing` identity and are not notarized by Apple. This
 preserves Keychain access across normally signed corrected updates but is not
 Developer ID and does not provide normal Gatekeeper trust. The installer removes
-the downloaded quarantine attribute; users installing manually may need
-Finder's **Open** action. SMTP delivery remains experimental and unavailable in
-version `0.2.0`.
+the downloaded quarantine attribute after verification. Certificate
+registration is idempotent, stores no private key or email password, and does
+not install an explicit Always Trust override. Users installing manually may
+need Finder's **Open** action.
 
 The self-signed identity has no Apple Team ID. Release builds keep the hardened
 runtime and use only its library-validation exception on the main executable so
 the pinned Sparkle framework can load. The release pipeline and installer still
-require every bundled Sparkle executable to use the pinned certificate, and the
-pipeline launches the signed app before packaging.
+require every bundled Sparkle executable to use the pinned certificate. After
+packaging, a separate clean macOS runner receives no private signing material,
+installs the candidate through the real certificate bootstrap, and must launch
+the installed app before publication.
 
 SMTP passwords are stored only in the traditional macOS Keychain. The first
 version using this corrected storage contract asks for the password once;

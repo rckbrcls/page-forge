@@ -32,8 +32,10 @@ Expected result:
 - The public certificate, signing policy, workflow, and installer use one
   fingerprint and exact designated requirement with no distribution fallback.
 - The release requires hardened runtime, the bounded main-executable
-  library-validation exception, pinned nested Sparkle signatures, and a signed
-  launch gate before packaging.
+  library-validation exception, pinned nested Sparkle signatures, and signed
+  launch gates in both the signing and clean-consumer jobs.
+- The installer verifies the GitHub asset digest, imports only the pinned public
+  certificate when absent, and never invokes `security add-trusted-cert`.
 - No new dependency, primary screen, executable helper, runtime service, or
   persistence surface.
 
@@ -120,7 +122,10 @@ Run separately from local test acceptance:
 3. Confirm sandbox, pinned certificate, exact designated requirement,
    traditional Keychain, Sparkle EdDSA, appcast, and release artifacts through
    the release process.
-4. Replace corrected version N with N+1 signed by the same identity and confirm
+4. Confirm the separate clean-consumer runner received no PKCS#12, registered
+   only the public certificate, installed the candidate, and passed strict
+   signature plus launch validation before publication.
+5. Replace corrected version N with N+1 signed by the same identity and confirm
    the credential remains readable; then verify a real Sparkle update when two
    corrected versions exist.
 

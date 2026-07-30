@@ -10,6 +10,13 @@ PINNED_DESIGNATED_REQUIREMENT='certificate root = H"51f0c83093408095c09f3cf5359e
 ASSET_PREFIX="BookSender-macos-universal-v"
 REPO="rckbrcls/page-forge"
 GITHUB_API="https://api.github.com/repos/${REPO}/releases"
+SIGNING_CERTIFICATE_URL="https://rckbrcls.github.io/page-forge/book-sender/BookSenderReleaseSigning.cer"
+
+ARCHIVE_OVERRIDE="${BOOKSENDER_INSTALLER_ARCHIVE_PATH:-}"
+CERTIFICATE_OVERRIDE="${BOOKSENDER_INSTALLER_CERTIFICATE_PATH:-}"
+KEYCHAIN_OVERRIDE="${BOOKSENDER_INSTALLER_KEYCHAIN_PATH:-}"
+TARGET_DIRECTORY_OVERRIDE="${BOOKSENDER_INSTALLER_TARGET_DIRECTORY:-}"
+CERTIFICATE_REGISTRATION_ACCEPTED="${BOOKSENDER_INSTALLER_ACCEPT_CERTIFICATE_REGISTRATION:-0}"
 
 usage() {
   cat << EOF
@@ -49,24 +56,32 @@ if [ "$(uname -s)" != "Darwin" ]; then
   exit 1
 fi
 
-if [ -n "$VERSION" ]; then
-  RELEASE_URL="${GITHUB_API}/tags/v${VERSION}"
-else
-  RELEASE_URL="${GITHUB_API}/latest"
-fi
-
 TMP_DIR=$(mktemp -d)
 cleanup() {
   rm -rf "$TMP_DIR"
 }
 trap cleanup EXIT
 
-RELEASE_JSON=$(curl -fsSL \
-  -H "Accept: application/vnd.github+json" \
-  -H "X-GitHub-Api-Version: 2022-11-28" \
-  "$RELEASE_URL")
+if [ -n "$ARCHIVE_OVERRIDE" ]; then
+  if [[ "$ARCHIVE_OVERRIDE" != /* ]] || [ ! -f "$ARCHIVE_OVERRIDE" ]; then
+    echo "The archive override must reference an absolute existing ZIP."
+    exit 1
+  fi
+  ZIP_PATH="$ARCHIVE_OVERRIDE"
+  ASSET_NAME=$(basename "$ZIP_PATH")
+else
+  if [ -n "$VERSION" ]; then
+    RELEASE_URL="${GITHUB_API}/tags/v${VERSION}"
+  else
+    RELEASE_URL="${GITHUB_API}/latest"
+  fi
 
-ASSET_JSON=$(printf "%s" "$RELEASE_JSON" | python3 -c '
+  RELEASE_JSON=$(curl -fsSL \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    "$RELEASE_URL")
+
+  ASSET_JSON=$(printf "%s" "$RELEASE_JSON" | python3 -c '
 import json
 import sys
 
@@ -87,24 +102,69 @@ if len(matches) != 1:
     sys.exit(1)
 
 asset = matches[0]
+digest = asset.get("digest", "")
+if not digest.startswith("sha256:"):
+    print("ERROR: Release asset is missing its SHA-256 digest.", file=sys.stderr)
+    sys.exit(1)
+
 print(json.dumps({
     "name": asset["name"],
     "url": asset["browser_download_url"],
     "size": asset["size"],
+    "digest": digest,
 }))
 ' "$ASSET_PREFIX")
 
-ASSET_NAME=$(printf "%s" "$ASSET_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["name"])')
-ASSET_URL=$(printf "%s" "$ASSET_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["url"])')
-ASSET_SIZE=$(printf "%s" "$ASSET_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["size"])')
-ZIP_PATH="$TMP_DIR/$ASSET_NAME"
+  ASSET_NAME=$(printf "%s" "$ASSET_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["name"])')
+  ASSET_URL=$(printf "%s" "$ASSET_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["url"])')
+  ASSET_SIZE=$(printf "%s" "$ASSET_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["size"])')
+  ASSET_DIGEST=$(printf "%s" "$ASSET_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["digest"])')
+  ZIP_PATH="$TMP_DIR/$ASSET_NAME"
 
-echo "Downloading $ASSET_NAME..."
-curl -fL "$ASSET_URL" -o "$ZIP_PATH"
+  echo "Downloading $ASSET_NAME..."
+  curl -fL "$ASSET_URL" -o "$ZIP_PATH"
 
-DOWNLOADED_SIZE=$(stat -f%z "$ZIP_PATH")
-if [ "$DOWNLOADED_SIZE" -ne "$ASSET_SIZE" ]; then
-  echo "Downloaded file size mismatch (expected $ASSET_SIZE, got $DOWNLOADED_SIZE)."
+  DOWNLOADED_SIZE=$(stat -f%z "$ZIP_PATH")
+  if [ "$DOWNLOADED_SIZE" -ne "$ASSET_SIZE" ]; then
+    echo "Downloaded file size mismatch (expected $ASSET_SIZE, got $DOWNLOADED_SIZE)."
+    exit 1
+  fi
+
+  EXPECTED_SHA256="${ASSET_DIGEST#sha256:}"
+  DOWNLOADED_SHA256=$(shasum -a 256 "$ZIP_PATH" | awk '{print $1}')
+  if [ "$DOWNLOADED_SHA256" != "$EXPECTED_SHA256" ]; then
+    echo "Downloaded file digest does not match the GitHub Release asset."
+    exit 1
+  fi
+fi
+
+if [ -n "$CERTIFICATE_OVERRIDE" ]; then
+  if [[ "$CERTIFICATE_OVERRIDE" != /* ]] || [ ! -f "$CERTIFICATE_OVERRIDE" ]; then
+    echo "The certificate override must reference an absolute existing DER certificate."
+    exit 1
+  fi
+  PINNED_CERTIFICATE_PATH="$CERTIFICATE_OVERRIDE"
+else
+  PINNED_CERTIFICATE_PATH="$TMP_DIR/BookSenderReleaseSigning.cer"
+  echo "Downloading the pinned Book Sender public signing certificate..."
+  curl -fsSL "$SIGNING_CERTIFICATE_URL" -o "$PINNED_CERTIFICATE_PATH"
+fi
+
+ACTUAL_CERTIFICATE_SHA1=$(openssl x509 \
+  -inform DER \
+  -in "$PINNED_CERTIFICATE_PATH" \
+  -noout \
+  -fingerprint \
+  -sha1 \
+  | cut -d= -f2 \
+  | tr -d ':')
+if [ "$ACTUAL_CERTIFICATE_SHA1" != "$SIGNING_CERTIFICATE_SHA1" ]; then
+  echo "The public signing certificate does not match the pinned fingerprint."
+  exit 1
+fi
+if ! openssl x509 -inform DER -in "$PINNED_CERTIFICATE_PATH" -noout -text \
+  | grep -Fq "Code Signing"; then
+  echo "The pinned certificate is not restricted to code signing."
   exit 1
 fi
 
@@ -129,6 +189,56 @@ if [ -n "$VERSION" ]; then
   ACTUAL_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$INFO_PLIST")
   if [ "$ACTUAL_VERSION" != "$VERSION" ]; then
     echo "Unexpected app version: $ACTUAL_VERSION"
+    exit 1
+  fi
+fi
+
+if [ -n "$KEYCHAIN_OVERRIDE" ]; then
+  if [[ "$KEYCHAIN_OVERRIDE" != /* ]] || [ ! -f "$KEYCHAIN_OVERRIDE" ]; then
+    echo "The Keychain override must reference an absolute existing Keychain."
+    exit 1
+  fi
+  USER_KEYCHAIN="$KEYCHAIN_OVERRIDE"
+else
+  USER_KEYCHAIN=$(security default-keychain -d user \
+    | sed -e 's/^[[:space:]]*"//' -e 's/"[[:space:]]*$//')
+  if [[ "$USER_KEYCHAIN" != /* ]] || [ ! -f "$USER_KEYCHAIN" ]; then
+    echo "The default user Keychain could not be resolved."
+    exit 1
+  fi
+fi
+
+certificate_is_registered() {
+  security find-certificate -a -Z "$USER_KEYCHAIN" 2>/dev/null \
+    | grep -F "SHA-1 hash: $SIGNING_CERTIFICATE_SHA1" >/dev/null
+}
+
+if ! certificate_is_registered; then
+  if [ "$CERTIFICATE_REGISTRATION_ACCEPTED" != "1" ]; then
+    if [ ! -r /dev/tty ]; then
+      echo "Certificate registration requires an interactive terminal."
+      exit 1
+    fi
+    printf "%s" \
+      "Register the pinned Book Sender public code-signing certificate in your user Keychain? [y/N] " \
+      >/dev/tty
+    IFS= read -r registration_response </dev/tty
+    case "$registration_response" in
+      y|Y|yes|YES)
+        ;;
+      *)
+        echo "Certificate registration was cancelled."
+        exit 1
+        ;;
+    esac
+  fi
+  echo "Registering the pinned Book Sender public certificate in your user Keychain..."
+  echo "Only the public code-signing certificate is stored; no private key or email password is added."
+  security import "$PINNED_CERTIFICATE_PATH" \
+    -k "$USER_KEYCHAIN" \
+    -t cert >/dev/null
+  if ! certificate_is_registered; then
+    echo "The public signing certificate could not be registered."
     exit 1
   fi
 fi
@@ -197,10 +307,19 @@ verify_pinned_component "$SPARKLE_FRAMEWORK/Versions/B/Autoupdate"
 verify_pinned_component "$SPARKLE_FRAMEWORK/Versions/B/Updater.app"
 verify_pinned_component "$SPARKLE_FRAMEWORK"
 
-TARGET_DIR="/Applications"
-if [ ! -w "$TARGET_DIR" ]; then
-  TARGET_DIR="$HOME/Applications"
+if [ -n "$TARGET_DIRECTORY_OVERRIDE" ]; then
+  if [[ "$TARGET_DIRECTORY_OVERRIDE" != /* ]]; then
+    echo "The target directory override must be absolute."
+    exit 1
+  fi
+  TARGET_DIR="$TARGET_DIRECTORY_OVERRIDE"
   mkdir -p "$TARGET_DIR"
+else
+  TARGET_DIR="/Applications"
+  if [ ! -w "$TARGET_DIR" ]; then
+    TARGET_DIR="$HOME/Applications"
+    mkdir -p "$TARGET_DIR"
+  fi
 fi
 
 TARGET_PATH="$TARGET_DIR/$APP_BUNDLE_NAME"

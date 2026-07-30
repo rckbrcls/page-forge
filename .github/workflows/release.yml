@@ -9,17 +9,21 @@ on:
         type: string
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
 
 concurrency:
   group: book-sender-release
   cancel-in-progress: false
 
 jobs:
-  release:
+  build_release_candidate:
+    name: Build release candidate
     runs-on: macos-26
+    outputs:
+      zip_name: ${{ steps.package.outputs.zip_name }}
+      zip_length: ${{ steps.package.outputs.zip_length }}
+      zip_sha256: ${{ steps.package.outputs.zip_sha256 }}
+      ed_signature: ${{ steps.sparkle-signature.outputs.ed_signature }}
     env:
       PROJECT: BookSender.xcodeproj
       SCHEME: BookSender
@@ -34,7 +38,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: true
+          persist-credentials: false
 
       - name: Validate release input
         env:
@@ -376,6 +380,7 @@ jobs:
             --minimum-seconds 5
 
       - name: Package ZIP
+        id: package
         run: |
           set -euo pipefail
 
@@ -384,9 +389,14 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_PATH"
 
           ZIP_LENGTH=$(stat -f%z "$ZIP_PATH")
+          ZIP_SHA256=$(shasum -a 256 "$ZIP_PATH" | awk '{print $1}')
           echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
           echo "ZIP_PATH=$ZIP_PATH" >> "$GITHUB_ENV"
           echo "ZIP_LENGTH=$ZIP_LENGTH" >> "$GITHUB_ENV"
+          echo "ZIP_SHA256=$ZIP_SHA256" >> "$GITHUB_ENV"
+          echo "zip_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+          echo "zip_length=$ZIP_LENGTH" >> "$GITHUB_OUTPUT"
+          echo "zip_sha256=$ZIP_SHA256" >> "$GITHUB_OUTPUT"
 
       - name: Verify packaged product contract
         run: bash scripts/tests/install_contract_test.sh
@@ -404,6 +414,7 @@ jobs:
           echo "SPARKLE_BIN=$RUNNER_TEMP/sparkle/bin" >> "$GITHUB_ENV"
 
       - name: Sign update with EdDSA
+        id: sparkle-signature
         env:
           SPARKLE_EDDSA_PRIVATE_KEY: ${{ secrets.SPARKLE_EDDSA_PRIVATE_KEY }}
         run: |
@@ -430,6 +441,164 @@ jobs:
           fi
 
           echo "ED_SIGNATURE=$SIGNATURE" >> "$GITHUB_ENV"
+          echo "ed_signature=$SIGNATURE" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: booksender-release-candidate
+          path: ${{ runner.temp }}/${{ steps.package.outputs.zip_name }}
+          if-no-files-found: error
+          retention-days: 1
+
+  validate_clean_consumer:
+    name: Validate clean consumer
+    runs-on: macos-26
+    needs: build_release_candidate
+    env:
+      SHORT_VERSION: ${{ inputs.version }}
+      ZIP_NAME: ${{ needs.build_release_candidate.outputs.zip_name }}
+      ZIP_SHA256: ${{ needs.build_release_candidate.outputs.zip_sha256 }}
+    steps:
+      - name: Checkout validation source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Download release candidate
+        uses: actions/download-artifact@v4
+        with:
+          name: booksender-release-candidate
+          path: ${{ runner.temp }}/release-candidate
+
+      - name: Validate clean consumer installation and launch
+        run: |
+          set -euo pipefail
+
+          source scripts/signing/release-signing-policy.sh
+
+          ZIP_PATH="$RUNNER_TEMP/release-candidate/$ZIP_NAME"
+          TEMP_KEYCHAIN="$RUNNER_TEMP/BookSenderConsumerValidation.keychain-db"
+          TEMP_APPLICATIONS="$RUNNER_TEMP/ConsumerApplications"
+          TEMP_KEYCHAIN_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')
+          ORIGINAL_USER_KEYCHAINS=()
+          while IFS= read -r keychain_entry; do
+            keychain_entry="${keychain_entry#*\"}"
+            keychain_entry="${keychain_entry%\"*}"
+            if [ -n "$keychain_entry" ]; then
+              ORIGINAL_USER_KEYCHAINS+=("$keychain_entry")
+            fi
+          done < <(security list-keychains -d user)
+
+          cleanup_consumer_validation() {
+            if [ "${#ORIGINAL_USER_KEYCHAINS[@]}" -gt 0 ]; then
+              security list-keychains \
+                -d user \
+                -s "${ORIGINAL_USER_KEYCHAINS[@]}" >/dev/null 2>&1 || true
+            fi
+            security delete-keychain "$TEMP_KEYCHAIN" >/dev/null 2>&1 || true
+            rm -rf "$TEMP_APPLICATIONS"
+          }
+          trap cleanup_consumer_validation EXIT
+
+          test -f "$ZIP_PATH"
+          ACTUAL_ZIP_SHA256=$(shasum -a 256 "$ZIP_PATH" | awk '{print $1}')
+          if [ "$ACTUAL_ZIP_SHA256" != "$ZIP_SHA256" ]; then
+            echo "Release candidate digest changed before clean-consumer validation."
+            exit 1
+          fi
+          if security find-certificate -a -Z 2>/dev/null \
+            | grep -F "SHA-1 hash: $SIGNING_CERTIFICATE_SHA1" >/dev/null; then
+            echo "The clean consumer runner already trusts the pinned certificate."
+            exit 1
+          fi
+
+          mkdir -p "$TEMP_APPLICATIONS"
+          security create-keychain -p "$TEMP_KEYCHAIN_PASSWORD" "$TEMP_KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$TEMP_KEYCHAIN"
+          security unlock-keychain -p "$TEMP_KEYCHAIN_PASSWORD" "$TEMP_KEYCHAIN"
+          security list-keychains \
+            -d user \
+            -s "$TEMP_KEYCHAIN" "${ORIGINAL_USER_KEYCHAINS[@]}"
+
+          BOOKSENDER_INSTALLER_ARCHIVE_PATH="$ZIP_PATH" \
+          BOOKSENDER_INSTALLER_CERTIFICATE_PATH="$GITHUB_WORKSPACE/$SIGNING_CERTIFICATE_PATH" \
+          BOOKSENDER_INSTALLER_KEYCHAIN_PATH="$TEMP_KEYCHAIN" \
+          BOOKSENDER_INSTALLER_TARGET_DIRECTORY="$TEMP_APPLICATIONS" \
+          BOOKSENDER_INSTALLER_ACCEPT_CERTIFICATE_REGISTRATION=1 \
+          bash scripts/install.sh --version "$SHORT_VERSION"
+
+          if ! security find-certificate -a -Z "$TEMP_KEYCHAIN" 2>/dev/null \
+            | grep -F "SHA-1 hash: $SIGNING_CERTIFICATE_SHA1" >/dev/null; then
+            echo "The installer did not register the pinned public certificate."
+            exit 1
+          fi
+          if security find-identity -p codesigning "$TEMP_KEYCHAIN" \
+            | grep -Fq "$SIGNING_CERTIFICATE_SHA1"; then
+            echo "The consumer bootstrap imported a forbidden private identity."
+            exit 1
+          fi
+
+          APP_PATH="$TEMP_APPLICATIONS/BookSender.app"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          codesign \
+            --verify \
+            -R="anchor H\"$SIGNING_CERTIFICATE_SHA1\" and identifier \"$SIGNING_BUNDLE_IDENTIFIER\"" \
+            "$APP_PATH"
+          scripts/tests/signed_app_launch_smoke_test.sh \
+            --app "$APP_PATH" \
+            --minimum-seconds 5
+
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs:
+      - build_release_candidate
+      - validate_clean_consumer
+    env:
+      REPO: rckbrcls/page-forge
+      APPCAST_PATH: appcast.xml
+      SHORT_VERSION: ${{ inputs.version }}
+      BUILD_VERSION: ${{ github.run_number }}
+      ZIP_NAME: ${{ needs.build_release_candidate.outputs.zip_name }}
+      ZIP_LENGTH: ${{ needs.build_release_candidate.outputs.zip_length }}
+      ZIP_SHA256: ${{ needs.build_release_candidate.outputs.zip_sha256 }}
+      ED_SIGNATURE: ${{ needs.build_release_candidate.outputs.ed_signature }}
+    steps:
+      - name: Checkout publication source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Download validated release candidate
+        uses: actions/download-artifact@v4
+        with:
+          name: booksender-release-candidate
+          path: ${{ runner.temp }}/release-candidate
+
+      - name: Validate publication inputs
+        run: |
+          set -euo pipefail
+
+          ZIP_PATH="$RUNNER_TEMP/release-candidate/$ZIP_NAME"
+          test -f "$ZIP_PATH"
+          ACTUAL_ZIP_LENGTH=$(wc -c < "$ZIP_PATH" | tr -d ' ')
+          if [ "$ACTUAL_ZIP_LENGTH" != "$ZIP_LENGTH" ]; then
+            echo "Validated release candidate size changed before publication."
+            exit 1
+          fi
+          ACTUAL_ZIP_SHA256=$(sha256sum "$ZIP_PATH" | awk '{print $1}')
+          if [ "$ACTUAL_ZIP_SHA256" != "$ZIP_SHA256" ]; then
+            echo "Validated release candidate digest changed before publication."
+            exit 1
+          fi
+          if [ -z "$ED_SIGNATURE" ]; then
+            echo "Validated release candidate is missing its Sparkle signature."
+            exit 1
+          fi
+          echo "ZIP_PATH=$ZIP_PATH" >> "$GITHUB_ENV"
 
       - name: Update appcast
         run: |
@@ -463,7 +632,9 @@ jobs:
             echo
             echo "### Install"
             echo
-            echo '\`curl -fsSL https://rckbrcls.com/api/book-sender/install | bash\`'
+            printf '%s\n' '`curl -fsSL https://rckbrcls.com/api/book-sender/install | bash`'
+            echo
+            echo "The first corrected installation registers only the pinned public code-signing certificate in the user Keychain."
             echo
             echo "### Update"
             echo
@@ -521,6 +692,10 @@ jobs:
   deploy-pages:
     runs-on: ubuntu-latest
     needs: release
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

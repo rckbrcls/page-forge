@@ -55,9 +55,15 @@ The pinned self-signed certificate has no Apple Team ID. The main executable
 therefore retains the hardened runtime with only
 `com.apple.security.cs.disable-library-validation` enabled so that the pinned
 Sparkle framework can load. Nested Sparkle executables remain signed and checked
-against the same certificate. After signing, the workflow runs the executable
-for five seconds and blocks packaging if dyld rejects a framework or the process
-exits early.
+against the same certificate. The signing runner performs an initial launch
+check, packages the candidate, and uploads it without publishing.
+
+A separate clean macOS runner then receives the ZIP but never receives the
+PKCS#12 or private signing identity. It creates an isolated empty Keychain,
+executes the real installer bootstrap, confirms that only the public certificate
+was registered, installs to an isolated application directory, verifies strict
+signatures, and keeps the installed executable alive for five seconds. GitHub
+Release and Pages publication depend on that clean-consumer job.
 
 The private key is stored only in the local login Keychain, the encrypted
 PKCS#12 backup, and GitHub Actions secrets. Only the public DER certificate is
@@ -97,10 +103,19 @@ Install a specific release:
 curl -fsSL https://rckbrcls.com/api/book-sender/install | bash -s -- --version 0.2.0
 ```
 
-The installer accepts only the Book Sender universal ZIP, validates
-`BookSender.app`, `com.rckbrcls.BookSender`, the requested version when present,
-the pinned certificate, exact designated requirement, and nested signatures
-before replacing an existing Book Sender install.
+The installer accepts only the Book Sender universal ZIP, verifies the GitHub
+Release asset SHA-256 digest, downloads the versioned public DER certificate,
+and pins its fingerprint before any Keychain change. When absent, it registers
+only that public code-signing certificate in the user's default Keychain after
+explicit terminal confirmation. The operation is idempotent, imports no private
+key or email password, and does not use `security add-trusted-cert` or an
+explicit Always Trust override.
+
+After registration, the installer validates `BookSender.app`,
+`com.rckbrcls.BookSender`, the requested version when present, the exact
+designated requirement, hardened runtime contract, and nested signatures before
+replacing an existing Book Sender install. Removing the certificate from the
+Keychain requires this one-time bootstrap again.
 
 ## Security boundary
 
@@ -125,7 +140,9 @@ archive-authentication boundary.
 - Confirm the certificate fingerprint and exact main-app designated requirement
   match `scripts/signing/release-signing-policy.sh`.
 - Confirm the signed-app launch smoke test survives its bounded five-second
-  gate before packaging.
+  gate in both the signing job and the separate clean-consumer job.
+- Confirm the clean-consumer Keychain contains the public certificate but no
+  private signing identity before publication.
 - Confirm the appcast reports the expected short version, build, URL, size, and
   EdDSA signature.
 - Confirm the Pages appcast and canonical proxy return the same item.

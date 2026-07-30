@@ -64,6 +64,41 @@ grep -Fq 'codesign -d --entitlements - --xml "$APP_PATH"' "$WORKFLOW"
 grep -Fq 'Only the main executable may disable library validation.' "$WORKFLOW"
 grep -Fq 'scripts/tests/signed_app_launch_smoke_test.sh' "$WORKFLOW"
 grep -Fq 'trap cleanup_signing_material EXIT' "$WORKFLOW"
+grep -Fq 'build_release_candidate:' "$WORKFLOW"
+grep -Fq 'validate_clean_consumer:' "$WORKFLOW"
+grep -Fq 'actions/upload-artifact@v4' "$WORKFLOW"
+grep -Fq 'actions/download-artifact@v4' "$WORKFLOW"
+grep -Fq 'Validate clean consumer installation and launch' "$WORKFLOW"
+grep -Fq 'BOOKSENDER_INSTALLER_ARCHIVE_PATH="$ZIP_PATH"' "$WORKFLOW"
+grep -Fq 'BOOKSENDER_INSTALLER_CERTIFICATE_PATH="$GITHUB_WORKSPACE/$SIGNING_CERTIFICATE_PATH"' "$WORKFLOW"
+grep -Fq 'BOOKSENDER_INSTALLER_KEYCHAIN_PATH="$TEMP_KEYCHAIN"' "$WORKFLOW"
+grep -Fq 'BOOKSENDER_INSTALLER_TARGET_DIRECTORY="$TEMP_APPLICATIONS"' "$WORKFLOW"
+grep -Fq 'BOOKSENDER_INSTALLER_ACCEPT_CERTIFICATE_REGISTRATION=1' "$WORKFLOW"
+grep -Fq 'The consumer bootstrap imported a forbidden private identity.' "$WORKFLOW"
+grep -Fq 'Validated release candidate size changed before publication.' "$WORKFLOW"
+grep -Fq 'Release candidate digest changed before clean-consumer validation.' "$WORKFLOW"
+grep -Fq 'Validated release candidate digest changed before publication.' "$WORKFLOW"
+grep -Fq 'contents: read' "$WORKFLOW"
+
+CONSUMER_JOB=$(sed -n '/^  validate_clean_consumer:/,/^  release:/p' "$WORKFLOW")
+printf "%s\n" "$CONSUMER_JOB" | grep -Fq 'needs: build_release_candidate'
+printf "%s\n" "$CONSUMER_JOB" | grep -Fq 'security create-keychain'
+printf "%s\n" "$CONSUMER_JOB" | grep -Fq 'security find-certificate'
+printf "%s\n" "$CONSUMER_JOB" | grep -Fq 'security find-identity'
+printf "%s\n" "$CONSUMER_JOB" | grep -Fq 'scripts/tests/signed_app_launch_smoke_test.sh'
+if printf "%s\n" "$CONSUMER_JOB" | grep -Fq 'BOOKSENDER_CODESIGN_P12'; then
+  echo "Clean consumer validation must not receive the private signing identity."
+  exit 1
+fi
+if printf "%s\n" "$CONSUMER_JOB" | grep -Fq 'contents: write'; then
+  echo "Clean consumer validation must not receive repository write permission."
+  exit 1
+fi
+
+PUBLICATION_JOB=$(sed -n '/^  release:/,/^  deploy-pages:/p' "$WORKFLOW")
+printf "%s\n" "$PUBLICATION_JOB" | grep -Fq 'validate_clean_consumer'
+printf "%s\n" "$PUBLICATION_JOB" | grep -Fq 'gh release create'
+printf "%s\n" "$PUBLICATION_JOB" | grep -Fq 'contents: write'
 
 if [ "$(/usr/libexec/PlistBuddy \
   -c "Print :com.apple.security.cs.disable-library-validation" \
@@ -90,6 +125,14 @@ INSTALLER_REQUIREMENT=$(sed -n \
   "$INSTALLER")
 if [ "$INSTALLER_REQUIREMENT" != "$SIGNING_DESIGNATED_REQUIREMENT" ]; then
   echo "The installer designated requirement does not match the release policy."
+  exit 1
+fi
+
+grep -Fq 'SIGNING_CERTIFICATE_URL=' "$INSTALLER"
+grep -Fq 'security import "$PINNED_CERTIFICATE_PATH"' "$INSTALLER"
+grep -Fq 'security find-certificate -a -Z "$USER_KEYCHAIN"' "$INSTALLER"
+if grep -Fq 'add-trusted-cert' "$INSTALLER"; then
+  echo "The installer must not install an Always Trust override."
   exit 1
 fi
 

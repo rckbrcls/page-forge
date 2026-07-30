@@ -270,7 +270,9 @@ adapters only report typed observations and failures.
 10. **Final absence scan and release verification**: confirm one app product,
     no stale project references or forbidden runtimes, then separately verify
     the pinned self-signed archive, Sparkle signature, package contents, public
-    release artifact, and installation on a clean supported macOS account.
+    release artifact, and installation on a separate clean macOS runner that
+    receives no private identity and registers only the pinned public
+    certificate before launch.
 
 Existing unrelated worktree changes, including current `.pi` and
 `.pi-subagents` deletions, are outside this migration and must not be restored,

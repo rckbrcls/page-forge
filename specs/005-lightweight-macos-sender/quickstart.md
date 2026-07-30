@@ -89,11 +89,14 @@ Treat these as separate checks:
 
 1. archive the Release configuration;
 2. inspect sandbox entitlements and linked dependencies;
-3. validate the pinned certificate, exact main-app designated requirement, and
-   all main and nested signatures without ad-hoc fallback;
+3. validate the asset SHA-256 digest, pinned public certificate, exact main-app
+   designated requirement, and all main and nested signatures without ad-hoc
+   fallback;
 4. validate the Sparkle EdDSA signature and appcast item;
 5. inspect the packaged archive contents;
-6. install and launch on a clean supported account;
+6. on a separate clean macOS runner with no private identity, register only the
+   public certificate, install the candidate, prove no private identity was
+   imported, and launch;
 7. publish through the chosen GitHub release workflow;
 8. download the public artifact and verify size, signature, app identity,
    two-screen behavior, update configuration, and absence of legacy runtime

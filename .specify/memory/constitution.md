@@ -1,17 +1,19 @@
 <!--
 Sync Impact Report
-- Version change: 7.0.0 -> 7.1.0
-- Bump rationale: the pinned self-signed identity has no Apple Team ID, so the
-  hardened runtime needs one explicit library-validation exception to load the
-  independently pinned Sparkle framework.
+- Version change: 7.1.0 -> 7.2.0
+- Bump rationale: a launch check on the runner that imported the private signing
+  identity does not prove that a clean consumer Mac can resolve the self-signed
+  certificate chain.
 - Modified principles:
   - Simple, Reviewable Distribution
 - Added obligations:
-  - Keep the hardened runtime while limiting its exception to library
-    validation on the main executable.
-  - Every bundled Sparkle executable remains pinned to the release certificate.
-  - A signed-app launch smoke test blocks packaging when dyld rejects a
-    framework or the process exits during the launch gate.
+  - The installer verifies the GitHub asset digest and pinned public certificate
+    before registering only that public certificate in the user Keychain.
+  - Registration is idempotent and must not import a private key or install an
+    explicit Always Trust override.
+  - A separate clean macOS runner receives only the packaged release candidate,
+    executes the installer bootstrap, verifies that no private identity exists,
+    and launches the installed app before publication.
 - Runtime guidance updated:
   - ✅ AGENTS.md
 - Specifications and distribution guidance updated:
@@ -20,8 +22,8 @@ Sync Impact Report
   - ✅ specs/007-native-quality-baseline/
   - ✅ README.md
   - ✅ docs/deployment.md
-- Follow-up TODOs: v0.2.3 launch acceptance, first corrected-version credential
-  acceptance, and the first
+- Follow-up TODOs: v0.2.4 clean-consumer and installed-app acceptance, first
+  corrected-version credential acceptance, and the first
   same-identity N-to-N+1 Sparkle update remain separate runtime gates.
 -->
 
@@ -304,9 +306,15 @@ Ad-hoc or unsigned distributed artifacts are forbidden. Missing private signing
 material, an invalid PKCS#12, a divergent certificate, a changed designated
 requirement, or an invalid nested signature MUST fail the release before
 packaging or publication; no fallback identity is permitted. The installer MUST
-verify the pinned certificate and exact main-app designated requirement before
-replacing an installed application. Sparkle EdDSA verification remains an
-independent mandatory protection.
+verify the GitHub Release asset SHA-256 digest, the pinned public certificate,
+and the exact main-app designated requirement before replacing an installed
+application. If the public certificate is absent, the installer MUST register
+only the versioned DER certificate in the user's default Keychain before strict
+signature verification and MUST request explicit terminal confirmation before
+the first registration. Registration MUST be idempotent and MUST NOT import a
+private key, install an explicit trust override, or weaken the pinned
+fingerprint. Sparkle EdDSA verification remains an independent mandatory
+protection.
 
 The self-signed identity has no Apple-issued Team ID. Distributed builds MUST
 retain the hardened runtime and MAY disable only library validation on the main
@@ -314,8 +322,12 @@ executable so that its pinned Sparkle framework can load. This exception MUST
 NOT authorize unsigned or differently signed distributed components: CI and the
 installer MUST continue verifying every bundled Sparkle executable against the
 pinned certificate. A signed-app launch smoke test MUST keep the executable
-alive for a bounded interval before packaging so static signature checks cannot
-mask a dyld rejection.
+alive for a bounded interval so static signature checks cannot mask a dyld
+rejection. Publication MUST additionally depend on a separate clean macOS runner
+that never receives the PKCS#12 or private signing identity, installs the
+packaged candidate through the real certificate bootstrap into an isolated
+Keychain and application directory, proves that no private identity was
+imported, and passes strict signing plus launch verification.
 
 The private identity MUST remain outside the repository, with an encrypted
 backup and release-automation secrets; only its public DER certificate may be
@@ -325,6 +337,8 @@ clear notice that one-time credential re-entry may be required.
 Developer ID and notarization are not provided by this channel. Documentation
 MUST disclose that a self-signed identity preserves application continuity but
 does not give Apple notarization or normal Gatekeeper trust for manual installs.
+It MUST also disclose the one-time public-certificate registration and that
+removing or rotating that certificate can require the bootstrap again.
 
 Release review MUST still distinguish compilation, tests, static analysis,
 accessibility, privacy, license review, archive signing, update verification,
@@ -442,4 +456,4 @@ constitutional rule or written amendment MUST be rejected. Compliance evidence
 MUST distinguish static checks, compilation, automated tests, runtime behavior,
 authenticated delivery, and production distribution.
 
-**Version**: 7.1.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-30
+**Version**: 7.2.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-30

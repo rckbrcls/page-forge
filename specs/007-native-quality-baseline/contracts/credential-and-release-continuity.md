@@ -24,7 +24,8 @@
    `com.rckbrcls.BookSender`.
 4. Ad-hoc and unsigned distributed artifacts are forbidden.
 5. Missing secrets, invalid PKCS#12, certificate drift, requirement drift, or
-   invalid nested signatures stop release before packaging without fallback.
+   invalid nested signatures stop release before packaging or publication
+   without fallback.
 6. Temporary runner Keychains, decoded PKCS#12 files, Sparkle private keys, and
    imported certificate material are removed on step exit.
 7. Distributed code retains hardened runtime. Only the main executable carries
@@ -34,17 +35,26 @@
    despite the main executable's library-validation exception.
 9. The signed app must remain alive through the bounded launch smoke test before
    packaging.
+10. A separate clean macOS runner receives the packaged candidate but no PKCS#12
+    or private identity, and publication depends on its successful installation,
+    strict signature verification, and launch.
 
 ## Installer and update
 
-1. The installer verifies strict main and nested signatures, the pinned
-   certificate, the exact main designated requirement, hardened runtime, missing
-   Team ID contract, and required library-validation exception before
-   replacement.
+1. The installer verifies the GitHub Release asset SHA-256 digest, pinned public
+   DER certificate, strict main and nested signatures, the exact main designated
+   requirement, hardened runtime, missing Team ID contract, and required
+   library-validation exception before replacement.
 2. Unsigned, ad-hoc, differently signed, or requirement-divergent archives are
    rejected even when their bytes are otherwise intact.
 3. Sparkle EdDSA remains an independent mandatory archive signature.
 4. Version N to N+1 signed under the same policy must retain credential access.
+5. When absent, the installer registers only the pinned public certificate in
+   the user's default Keychain after explicit terminal confirmation.
+   Registration is idempotent and imports neither a private key nor an explicit
+   Always Trust override.
+6. Clean-consumer validation proves the bootstrap Keychain contains the public
+   certificate but no private signing identity before the app is launched.
 
 ## Rotation and disclosure
 

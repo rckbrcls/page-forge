@@ -10,6 +10,20 @@ grep -Eq 'BUNDLE_IDENTIFIER="com\.rckbrcls\.BookSender"' "$INSTALLER"
 grep -Eq 'SIGNING_CERTIFICATE_SHA1="[A-F0-9]{40}"' "$INSTALLER"
 grep -Fq 'PINNED_DESIGNATED_REQUIREMENT=' "$INSTALLER"
 grep -Eq 'ASSET_PREFIX="BookSender-macos-universal-v"' "$INSTALLER"
+grep -Fq 'SIGNING_CERTIFICATE_URL=' "$INSTALLER"
+grep -Fq 'asset.get("digest", "")' "$INSTALLER"
+grep -Fq 'shasum -a 256 "$ZIP_PATH"' "$INSTALLER"
+grep -Fq 'security default-keychain -d user' "$INSTALLER"
+grep -Fq 'security find-certificate -a -Z "$USER_KEYCHAIN"' "$INSTALLER"
+grep -Fq 'security import "$PINNED_CERTIFICATE_PATH"' "$INSTALLER"
+grep -Fq -- '-t cert >/dev/null' "$INSTALLER"
+grep -Fq 'Only the public code-signing certificate is stored' "$INSTALLER"
+grep -Fq 'BOOKSENDER_INSTALLER_ARCHIVE_PATH' "$INSTALLER"
+grep -Fq 'BOOKSENDER_INSTALLER_CERTIFICATE_PATH' "$INSTALLER"
+grep -Fq 'BOOKSENDER_INSTALLER_KEYCHAIN_PATH' "$INSTALLER"
+grep -Fq 'BOOKSENDER_INSTALLER_TARGET_DIRECTORY' "$INSTALLER"
+grep -Fq 'BOOKSENDER_INSTALLER_ACCEPT_CERTIFICATE_REGISTRATION' "$INSTALLER"
+grep -Fq 'Certificate registration was cancelled.' "$INSTALLER"
 grep -Eq 'codesign --verify --deep --strict --verbose=2 "\$APP_PATH"' "$INSTALLER"
 grep -Fq 'codesign --verify -R="$DESIGNATED_REQUIREMENT" "$APP_PATH"' "$INSTALLER"
 grep -Fq 'Signature=adhoc' "$INSTALLER"
@@ -22,6 +36,15 @@ grep -Fq 'verify_pinned_component' "$INSTALLER"
 grep -Eq 'ACTUAL_BUNDLE_IDENTIFIER' "$INSTALLER"
 grep -Eq 'mktemp -d' "$INSTALLER"
 grep -Eq 'trap cleanup EXIT' "$INSTALLER"
+
+if grep -Fq 'add-trusted-cert' "$INSTALLER"; then
+  echo "Installer must not add an Always Trust override."
+  exit 1
+fi
+if grep -Eq 'security import .*-(A|w)( |$)' "$INSTALLER"; then
+  echo "Installer must not import private-key access controls."
+  exit 1
+fi
 
 if grep -Eqi 'PageForge|Raycast|Calibre|Electron|Tauri' "$INSTALLER"; then
   echo "Installer references a forbidden legacy product or runtime."
@@ -49,13 +72,77 @@ if [ -n "${ZIP_PATH:-}" ]; then
   fi
 
   TEMP_DIRECTORY=$(mktemp -d)
+  TEMP_KEYCHAIN="$TEMP_DIRECTORY/Consumer.keychain-db"
+  TEMP_APPLICATIONS="$TEMP_DIRECTORY/Applications"
+  TEMP_KEYCHAIN_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')
+  ORIGINAL_USER_KEYCHAINS=()
+  while IFS= read -r keychain_entry; do
+    keychain_entry="${keychain_entry#*\"}"
+    keychain_entry="${keychain_entry%\"*}"
+    if [ -n "$keychain_entry" ]; then
+      ORIGINAL_USER_KEYCHAINS+=("$keychain_entry")
+    fi
+  done < <(security list-keychains -d user)
   cleanup_archive() {
+    if [ "${#ORIGINAL_USER_KEYCHAINS[@]}" -gt 0 ]; then
+      security list-keychains \
+        -d user \
+        -s "${ORIGINAL_USER_KEYCHAINS[@]}" >/dev/null 2>&1 || true
+    fi
+    security delete-keychain "$TEMP_KEYCHAIN" >/dev/null 2>&1 || true
     rm -rf "$TEMP_DIRECTORY"
   }
   trap cleanup_archive EXIT
-  ditto -x -k "$ZIP_PATH" "$TEMP_DIRECTORY"
-  APP_PATH="$TEMP_DIRECTORY/BookSender.app"
   source scripts/signing/release-signing-policy.sh
+  mkdir -p "$TEMP_APPLICATIONS"
+  security create-keychain -p "$TEMP_KEYCHAIN_PASSWORD" "$TEMP_KEYCHAIN"
+  security set-keychain-settings -lut 21600 "$TEMP_KEYCHAIN"
+  security unlock-keychain -p "$TEMP_KEYCHAIN_PASSWORD" "$TEMP_KEYCHAIN"
+  security list-keychains \
+    -d user \
+    -s "$TEMP_KEYCHAIN" "${ORIGINAL_USER_KEYCHAINS[@]}"
+
+  if security find-certificate -a -Z "$TEMP_KEYCHAIN" 2>/dev/null \
+    | grep -F "SHA-1 hash: $SIGNING_CERTIFICATE_SHA1" >/dev/null; then
+    echo "Temporary consumer Keychain unexpectedly contains the pinned certificate."
+    exit 1
+  fi
+
+  export BOOKSENDER_INSTALLER_ARCHIVE_PATH="$ZIP_PATH"
+  export BOOKSENDER_INSTALLER_CERTIFICATE_PATH="$PWD/$SIGNING_CERTIFICATE_PATH"
+  export BOOKSENDER_INSTALLER_KEYCHAIN_PATH="$TEMP_KEYCHAIN"
+  export BOOKSENDER_INSTALLER_TARGET_DIRECTORY="$TEMP_APPLICATIONS"
+  export BOOKSENDER_INSTALLER_ACCEPT_CERTIFICATE_REGISTRATION=1
+  bash "$INSTALLER"
+
+  if ! security find-certificate -a -Z "$TEMP_KEYCHAIN" 2>/dev/null \
+    | grep -F "SHA-1 hash: $SIGNING_CERTIFICATE_SHA1" >/dev/null; then
+    echo "Installer did not register the pinned public certificate."
+    exit 1
+  fi
+  if security find-identity -p codesigning "$TEMP_KEYCHAIN" \
+    | grep -Fq "$SIGNING_CERTIFICATE_SHA1"; then
+    echo "Installer imported a private signing identity."
+    exit 1
+  fi
+
+  REGISTERED_CERTIFICATE_COUNT=$(security find-certificate \
+    -a \
+    -Z \
+    "$TEMP_KEYCHAIN" 2>/dev/null \
+    | grep -Fc "SHA-1 hash: $SIGNING_CERTIFICATE_SHA1")
+  bash "$INSTALLER"
+  REPEATED_CERTIFICATE_COUNT=$(security find-certificate \
+    -a \
+    -Z \
+    "$TEMP_KEYCHAIN" 2>/dev/null \
+    | grep -Fc "SHA-1 hash: $SIGNING_CERTIFICATE_SHA1")
+  if [ "$REPEATED_CERTIFICATE_COUNT" -ne "$REGISTERED_CERTIFICATE_COUNT" ]; then
+    echo "Repeated installation duplicated the pinned public certificate."
+    exit 1
+  fi
+
+  APP_PATH="$TEMP_APPLICATIONS/BookSender.app"
   EVALUATED_REQUIREMENT="anchor H\"$SIGNING_CERTIFICATE_SHA1\" and identifier \"$SIGNING_BUNDLE_IDENTIFIER\""
   codesign --verify --deep --strict --verbose=2 "$APP_PATH"
   codesign --verify -R="$EVALUATED_REQUIREMENT" "$APP_PATH"

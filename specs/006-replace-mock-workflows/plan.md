@@ -309,7 +309,9 @@ The release workflow must run the approved test suite before publishing a versio
 that claims real delivery. Pinned self-signed signing, exact designated
 requirement verification, Sparkle EdDSA, appcast, clean-account installation,
 credential continuity, and public artifact verification remain separate release
-gates.
+gates. Clean-account installation must run on a separate macOS runner with no
+private signing material, use the real idempotent public-certificate bootstrap,
+and block publication on strict-signature or launch failure.
 
 ## Implementation Sequence
 

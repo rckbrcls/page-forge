@@ -141,10 +141,13 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **FR-042**: Background preparation MUST complete before an EPUB enters the stable eligible snapshot presented for delivery confirmation.
 - **FR-043**: The primary window MUST use a system behind-window material across its content and titlebar areas, while custom Liquid Glass remains limited to important functional controls.
 - **FR-044**: The macOS app MUST support manual and daily Sparkle update checks through the HTTPS Book Sender appcast, and every published update archive MUST carry the configured EdDSA signature.
-- **FR-045**: The public installer MUST select only the Book Sender universal ZIP, validate the app bundle name, bundle identifier, requested version, and code signature, and install only `BookSender.app`.
+- **FR-045**: The public installer MUST select only the Book Sender universal ZIP, verify its GitHub Release SHA-256 digest and pinned public certificate, validate the app bundle name, bundle identifier, requested version, and code signature, and install only `BookSender.app`.
 - **FR-046**: Every distributed version and nested executable MUST use the same pinned self-signed release certificate; the main app MUST retain the explicit designated requirement anchored to that certificate and `com.rckbrcls.BookSender`.
-- **FR-047**: Release automation MUST fail before packaging when signing secrets are missing or invalid, the certificate or designated requirement diverges, an ad-hoc signature appears, or a nested signature is invalid; no signing fallback is permitted.
+- **FR-047**: Release automation MUST fail before packaging or publication when signing secrets are missing or invalid, the certificate or designated requirement diverges, an ad-hoc signature appears, or a nested signature is invalid; no signing fallback is permitted.
 - **FR-048**: The installer MUST reject unsigned, ad-hoc, differently signed, or designated-requirement-divergent archives before replacing the installed application, while Sparkle EdDSA remains independently mandatory.
+- **FR-049**: When the pinned public certificate is absent, the installer MUST register only the versioned DER certificate in the user's default Keychain before strict signature verification; registration MUST be idempotent and MUST NOT import a private key or install an explicit trust override.
+- **FR-050**: Publication MUST depend on a separate clean macOS runner that receives no private signing material, installs the packaged candidate through the real certificate bootstrap, proves no private identity was imported, and passes strict signature and launch checks.
+- **FR-051**: The first public-certificate registration MUST require explicit terminal confirmation and cancellation MUST leave the installed app unchanged.
 
 ### Non-Functional Requirements
 
@@ -169,6 +172,7 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **CC-007**: The feature MUST NOT introduce Raycast, an external ebook engine, processing helper, conversion, DRM removal, library, history, cloud, account, AI, third primary screen, or parallel product. Sparkle's embedded installer service is permitted only for application updates.
 - **CC-008**: The app MUST target macOS 26.0 or later, use an adaptive system material for the complete window background, and reserve Liquid Glass for the functional control layer.
 - **CC-009**: Distribution MUST use the approved GitHub Release, GitHub Pages, Sparkle EdDSA, pinned self-signed signing identity, exact designated requirement, and reviewable installer channel, and MUST disclose that Developer ID and notarization are not present.
+- **CC-010**: A launch performed while the private signing identity is present MUST NOT substitute for clean-consumer installation and launch evidence.
 
 ### Key Entities
 

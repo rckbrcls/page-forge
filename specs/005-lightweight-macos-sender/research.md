@@ -56,7 +56,10 @@ attributes. Store non-secret setup and shortcut preferences in `UserDefaults`.
 while the traditional Keychain recognizes normal updates through the app's
 stable designated requirement without requiring paid Apple signing. The secret
 can be loaded transiently for validation or send and must never enter
-presentation models, errors, logs, or snapshots.
+presentation models, errors, logs, or snapshots. The first corrected
+installation verifies and registers only the fingerprint-pinned public
+code-signing certificate in the user Keychain; it never imports the private
+identity or installs an explicit trust override.
 
 **Alternatives considered**: Data Protection Keychain was rejected because the
 sandboxed app lacked the required access-group entitlement under the free

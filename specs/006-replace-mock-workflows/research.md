@@ -67,7 +67,10 @@ explicit main-app designated requirement.
 recognize normal updates and avoids the missing access-group entitlement that
 blocked Data Protection Keychain access in the free distribution model. Stable
 self-signed signing preserves continuity without pretending to provide
-Developer ID or notarization.
+Developer ID or notarization. The installer must first verify the release digest
+and public DER fingerprint, then register only that public certificate in the
+user Keychain when absent. A clean consumer runner with no private identity must
+prove this bootstrap and launch before publication.
 
 **Alternatives considered**: Re-entering the password on every launch is poor
 product behavior; file storage or embedded-key encryption weakens the secret

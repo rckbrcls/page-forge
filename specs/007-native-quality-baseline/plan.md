@@ -240,6 +240,14 @@ Do not create a new architectural layer.
 9. Require the exact runtime/entitlement combination in CI and the installer,
    keep every Sparkle executable pinned, and launch the signed app before
    packaging.
+10. Verify the GitHub asset SHA-256 digest and public DER fingerprint in the
+    installer, then idempotently register only that public certificate in the
+    user's default Keychain when absent. Never import a private key or install an
+    explicit Always Trust override.
+11. Transfer the packaged candidate to a separate clean macOS runner with no
+    private signing material. Publish only after the real installer bootstrap,
+    no-private-identity assertion, strict signature checks, and installed-app
+    launch all pass.
 
 ## Post-Design Constitution Check
 

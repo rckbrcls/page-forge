@@ -248,6 +248,14 @@ sending the current batch.
 - **FR-035**: The installer MUST enforce the pinned certificate and designated
   requirement before replacing an installation; Sparkle EdDSA remains a
   separate required update signature.
+- **FR-036**: The installer MUST verify the GitHub asset SHA-256 digest and
+  pinned public DER certificate, then idempotently register only that public
+  certificate in the user's default Keychain when absent and after explicit
+  terminal confirmation; no private key or explicit trust override is
+  permitted.
+- **FR-037**: Publication MUST require a separate clean macOS runner with no
+  private signing material to install the packaged candidate through the real
+  bootstrap and pass strict signature plus launch validation.
 
 ### Constitution Constraints _(mandatory)_
 

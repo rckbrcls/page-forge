@@ -170,12 +170,15 @@ Before changing README/release notes from experimental or unavailable:
 1. require compilation and the full approved unit/UI suite in release automation;
 2. archive universal Release;
 3. inspect sandbox entitlements and linked dependencies;
-4. validate the pinned certificate, exact designated requirement, and app and
-   nested signatures without ad-hoc fallback;
+4. validate the asset SHA-256 digest, pinned public certificate, exact
+   designated requirement, and app and nested signatures without ad-hoc
+   fallback;
 5. validate Sparkle EdDSA and appcast identity;
 6. inspect ZIP contents and absence of fixtures, previews, secrets, or legacy
    runtimes;
-7. install and launch on a clean supported account;
+7. on a separate clean macOS runner with no private identity, execute the real
+   public-certificate bootstrap, install, prove no private identity was
+   imported, and launch;
 8. verify an N-to-N+1 Sparkle update;
 9. publish, redownload, and revalidate the public artifact and endpoints.
 10. save a credential in the first corrected version and verify an N-to-N+1

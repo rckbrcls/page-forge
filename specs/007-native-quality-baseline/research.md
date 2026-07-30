@@ -200,6 +200,37 @@ bundle sealing, Sparkle EdDSA, and the launch gate preserve independent checks.
 - Rely on strict `codesign` verification. Rejected because v0.2.2 passed static
   verification but dyld rejected Sparkle at process launch.
 
+## Decision 11: Bootstrap the public certificate and validate on a clean runner
+
+**Decision**: The installer verifies the GitHub asset SHA-256 digest and pinned
+DER fingerprint, then idempotently imports only that public Code Signing
+certificate into the user's default Keychain when absent. It does not use
+`security add-trusted-cert`, set an explicit Always Trust override, or import a
+private key. The first registration requires explicit terminal confirmation.
+Publication depends on a separate macOS runner that never receives the PKCS#12,
+installs the packaged candidate through the real bootstrap, proves no private
+identity exists, and launches the installed app.
+
+**Rationale**: The v0.2.3 signing runner imported the private identity before its
+launch gate. Although the temporary signing Keychain was deleted at step exit,
+that environment did not represent a clean consumer Mac. The downloaded
+artifact failed strict verification and aborted until the pinned public
+certificate was made available through an isolated Keychain. Importing only the
+public DER certificate then made strict verification and the Apple Silicon
+launch gate pass without an explicit trust override.
+
+**Alternatives considered**:
+
+- Install an explicit Always Trust override. Rejected because the narrower
+  public-certificate registration is sufficient and more reviewable.
+- Import the PKCS#12 on consumer machines. Rejected because private signing
+  material must never leave release automation and encrypted backup storage.
+- Keep launch validation in the signing job only. Rejected because the signing
+  environment can cache or otherwise resolve the certificate chain in ways a
+  clean consumer cannot.
+- Remove App Sandbox or hardened runtime. Rejected because the public-certificate
+  bootstrap preserves the existing security boundaries.
+
 ## Primary references
 
 - [NSItemProvider.loadTransferable(type:completionHandler:)](https://developer.apple.com/documentation/foundation/nsitemprovider/loadtransferable(type:completionhandler:))
