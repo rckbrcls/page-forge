@@ -47,21 +47,25 @@ Sources: [SwiftUI Window](https://developer.apple.com/documentation/swiftui/wind
 
 ## Decision 3: Credential and preference storage
 
-**Decision**: Store only the SMTP app password in a generic-password Data
-Protection Keychain item using `kSecUseDataProtectionKeychain = true`,
-`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, and no synchronization. Store
-non-secret setup and shortcut preferences in `UserDefaults`.
+**Decision**: Store only the SMTP app password in a generic-password item in the
+traditional file-based macOS Keychain. Do not set
+`kSecUseDataProtectionKeychain`, `kSecAttrAccessible`, or synchronization
+attributes. Store non-secret setup and shortcut preferences in `UserDefaults`.
 
-**Rationale**: Security.framework is the native encrypted secret boundary. The
-secret can be loaded transiently on a non-main executor for validation or send
-and must never enter presentation models, errors, logs, or snapshots.
+**Rationale**: Security.framework remains the native protected secret boundary,
+while the traditional Keychain recognizes normal updates through the app's
+stable designated requirement without requiring paid Apple signing. The secret
+can be loaded transiently for validation or send and must never enter
+presentation models, errors, logs, or snapshots.
 
-**Alternatives considered**: `UserDefaults`, plist files, custom encryption, and
-iCloud-synchronized Keychain items do not meet the local-secret contract.
+**Alternatives considered**: Data Protection Keychain was rejected because the
+sandboxed app lacked the required access-group entitlement under the free
+distribution model. `UserDefaults`, plist files, custom encryption, embedded
+keys, and synchronized Keychain items do not meet the local-secret contract.
 
 Sources: [Keychain Services](https://developer.apple.com/documentation/security/keychain-services/),
 [Adding a password](https://developer.apple.com/documentation/security/adding-a-password-to-the-keychain),
-[Data Protection Keychain](https://developer.apple.com/documentation/security/ksecusedataprotectionkeychain).
+[Code Signing Requirement Language](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/RequirementLang/RequirementLang.html).
 
 ## Decision 4: Sandbox, intake, and temporary lifecycle
 

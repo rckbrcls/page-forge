@@ -61,6 +61,45 @@ jobs:
           echo "SHORT_VERSION=$RELEASE_VERSION" >> "$GITHUB_ENV"
           echo "BUILD_VERSION=$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
 
+      - name: Validate pinned release signing inputs
+        env:
+          BOOKSENDER_CODESIGN_P12_BASE64: ${{ secrets.BOOKSENDER_CODESIGN_P12_BASE64 }}
+          BOOKSENDER_CODESIGN_P12_PASSWORD: ${{ secrets.BOOKSENDER_CODESIGN_P12_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          source scripts/signing/release-signing-policy.sh
+
+          if [ -z "${BOOKSENDER_CODESIGN_P12_BASE64:-}" ]; then
+            echo "Missing BOOKSENDER_CODESIGN_P12_BASE64 secret."
+            exit 1
+          fi
+          if [ -z "${BOOKSENDER_CODESIGN_P12_PASSWORD:-}" ]; then
+            echo "Missing BOOKSENDER_CODESIGN_P12_PASSWORD secret."
+            exit 1
+          fi
+          if [ ! -f "$SIGNING_CERTIFICATE_PATH" ]; then
+            echo "The pinned public signing certificate is missing."
+            exit 1
+          fi
+          if [ "$SIGNING_BUNDLE_IDENTIFIER" != "$BUNDLE_IDENTIFIER" ]; then
+            echo "The pinned signing policy has an unexpected bundle identifier."
+            exit 1
+          fi
+
+          ACTUAL_CERTIFICATE_SHA1=$(openssl x509 \
+            -inform DER \
+            -in "$SIGNING_CERTIFICATE_PATH" \
+            -noout \
+            -fingerprint \
+            -sha1 \
+            | cut -d= -f2 \
+            | tr -d ':')
+          if [ "$ACTUAL_CERTIFICATE_SHA1" != "$SIGNING_CERTIFICATE_SHA1" ]; then
+            echo "The pinned public signing certificate does not match the release policy."
+            exit 1
+          fi
+
       - name: Show Xcode version
         run: xcodebuild -version
 
@@ -69,14 +108,12 @@ jobs:
           set -euo pipefail
 
           TEST_DERIVED_DATA="$RUNNER_TEMP/TestDerivedData"
-          # Data Protection Keychain integration requires a developer-signed host.
           # The native Settings scene is not exposed by the hosted runner.
           xcodebuild test \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
             -destination "platform=macOS" \
             -derivedDataPath "$TEST_DERIVED_DATA" \
-            -skip-testing:BookSenderTests/KeychainCredentialStoreTests \
             -skip-testing:BookSenderUITests/SettingsUITests \
             "CODE_SIGNING_ALLOWED=YES" \
             "CODE_SIGNING_REQUIRED=YES" \
@@ -88,6 +125,7 @@ jobs:
           set -euo pipefail
 
           bash scripts/tests/install_contract_test.sh
+          bash scripts/tests/signing_contract_test.sh
           python3 scripts/tests/appcast_contract_test.py
 
       - name: Build universal Release
@@ -136,9 +174,71 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :SUPublicEDKey" "$INFO_PLIST" >/dev/null
           test "$(/usr/libexec/PlistBuddy -c "Print :SUEnableInstallerLauncherService" "$INFO_PLIST")" = "true"
 
-      - name: Sign app bundle ad hoc
+      - name: Sign app bundle with pinned release identity
+        env:
+          BOOKSENDER_CODESIGN_P12_BASE64: ${{ secrets.BOOKSENDER_CODESIGN_P12_BASE64 }}
+          BOOKSENDER_CODESIGN_P12_PASSWORD: ${{ secrets.BOOKSENDER_CODESIGN_P12_PASSWORD }}
         run: |
           set -euo pipefail
+
+          source scripts/signing/release-signing-policy.sh
+
+          SIGNING_KEYCHAIN="$RUNNER_TEMP/booksender-release-signing.keychain-db"
+          P12_PATH="$RUNNER_TEMP/booksender-release-signing.p12"
+          IMPORTED_CERTIFICATE_PEM="$RUNNER_TEMP/booksender-release-signing.pem"
+          IMPORTED_CERTIFICATE_DER="$RUNNER_TEMP/booksender-release-signing.cer"
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')
+
+          cleanup_signing_material() {
+            security delete-keychain "$SIGNING_KEYCHAIN" >/dev/null 2>&1 || true
+            rm -f \
+              "$SIGNING_KEYCHAIN" \
+              "$P12_PATH" \
+              "$IMPORTED_CERTIFICATE_PEM" \
+              "$IMPORTED_CERTIFICATE_DER"
+          }
+          trap cleanup_signing_material EXIT
+
+          printf "%s" "$BOOKSENDER_CODESIGN_P12_BASE64" \
+            | /usr/bin/base64 -D > "$P12_PATH"
+          chmod 600 "$P12_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$SIGNING_KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$SIGNING_KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$SIGNING_KEYCHAIN"
+          security import "$P12_PATH" \
+            -k "$SIGNING_KEYCHAIN" \
+            -P "$BOOKSENDER_CODESIGN_P12_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$SIGNING_KEYCHAIN" >/dev/null
+
+          security find-certificate \
+            -c "$SIGNING_IDENTITY_NAME" \
+            -p \
+            "$SIGNING_KEYCHAIN" > "$IMPORTED_CERTIFICATE_PEM"
+          openssl x509 \
+            -in "$IMPORTED_CERTIFICATE_PEM" \
+            -outform DER \
+            -out "$IMPORTED_CERTIFICATE_DER"
+          if ! cmp -s "$SIGNING_CERTIFICATE_PATH" "$IMPORTED_CERTIFICATE_DER"; then
+            echo "The imported identity does not match the pinned public certificate."
+            exit 1
+          fi
+
+          SIGNING_IDENTITY_SHA1=$(security find-identity \
+            -p codesigning \
+            "$SIGNING_KEYCHAIN" \
+            | grep -F "\"$SIGNING_IDENTITY_NAME\"" \
+            | awk 'NR == 1 {print $2}')
+          if [ "$SIGNING_IDENTITY_SHA1" != "$SIGNING_CERTIFICATE_SHA1" ]; then
+            echo "The imported signing identity has an unexpected fingerprint."
+            exit 1
+          fi
 
           SPARKLE_FRAMEWORK="$APP_PATH/Contents/Frameworks/Sparkle.framework"
           if [ ! -d "$SPARKLE_FRAMEWORK" ]; then
@@ -149,7 +249,13 @@ jobs:
           sign_runtime_component() {
             local component="$1"
             if [ -e "$component" ]; then
-              codesign --force --sign - --options runtime --timestamp=none "$component"
+              codesign \
+                --force \
+                --keychain "$SIGNING_KEYCHAIN" \
+                --sign "$SIGNING_IDENTITY_SHA1" \
+                --options runtime \
+                --timestamp=none \
+                "$component"
             fi
           }
 
@@ -159,7 +265,8 @@ jobs:
           if [ -e "$DOWNLOADER_XPC" ]; then
             codesign \
               --force \
-              --sign - \
+              --keychain "$SIGNING_KEYCHAIN" \
+              --sign "$SIGNING_IDENTITY_SHA1" \
               --options runtime \
               --timestamp=none \
               --preserve-metadata=entitlements \
@@ -168,7 +275,13 @@ jobs:
 
           sign_runtime_component "$SPARKLE_FRAMEWORK/Versions/B/Autoupdate"
           sign_runtime_component "$SPARKLE_FRAMEWORK/Versions/B/Updater.app"
-          codesign --force --sign - --timestamp=none "$SPARKLE_FRAMEWORK"
+          codesign \
+            --force \
+            --keychain "$SIGNING_KEYCHAIN" \
+            --sign "$SIGNING_IDENTITY_SHA1" \
+            --options runtime \
+            --timestamp=none \
+            "$SPARKLE_FRAMEWORK"
 
           EXPANDED_ENTITLEMENTS="$RUNNER_TEMP/BookSender.entitlements"
           sed \
@@ -177,12 +290,32 @@ jobs:
 
           codesign \
             --force \
-            --sign - \
+            --keychain "$SIGNING_KEYCHAIN" \
+            --sign "$SIGNING_IDENTITY_SHA1" \
+            --options runtime \
             --timestamp=none \
             --entitlements "$EXPANDED_ENTITLEMENTS" \
+            -r="designated => anchor H\"$SIGNING_CERTIFICATE_SHA1\" and identifier \"$BUNDLE_IDENTIFIER\"" \
             "$APP_PATH"
 
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          codesign \
+            --verify \
+            -R="anchor H\"$SIGNING_CERTIFICATE_SHA1\" and identifier \"$BUNDLE_IDENTIFIER\"" \
+            "$APP_PATH"
+
+          if codesign -dvvv "$APP_PATH" 2>&1 | grep -Fq "Signature=adhoc"; then
+            echo "Distributed artifacts must not use ad-hoc signing."
+            exit 1
+          fi
+
+          EXPECTED_REQUIREMENT="$SIGNING_DESIGNATED_REQUIREMENT"
+          ACTUAL_REQUIREMENT=$(codesign -d -r- "$APP_PATH" 2>&1 \
+            | sed -n 's/^designated => //p')
+          if [ "$ACTUAL_REQUIREMENT" != "$EXPECTED_REQUIREMENT" ]; then
+            echo "The app designated requirement changed unexpectedly."
+            exit 1
+          fi
 
           SIGNED_ENTITLEMENTS="$RUNNER_TEMP/signed-entitlements.plist"
           codesign -d --entitlements :- "$APP_PATH" > "$SIGNED_ENTITLEMENTS"
@@ -231,6 +364,10 @@ jobs:
           fi
 
           KEY_FILE="$RUNNER_TEMP/sparkle_ed25519.key"
+          cleanup_sparkle_key() {
+            rm -f "$KEY_FILE"
+          }
+          trap cleanup_sparkle_key EXIT
           printf "%s" "$SPARKLE_EDDSA_PRIVATE_KEY" > "$KEY_FILE"
           chmod 600 "$KEY_FILE"
 
@@ -287,7 +424,7 @@ jobs:
             echo
             echo "### Distribution"
             echo
-            echo "This build uses ad-hoc code signing and is not notarized by Apple."
+            echo "This build uses the pinned self-signed Book Sender release identity and is not notarized by Apple."
           } > "$NOTES_FILE"
 
           echo "NOTES_FILE=$NOTES_FILE" >> "$GITHUB_ENV"
@@ -323,6 +460,7 @@ jobs:
           mkdir -p public/book-sender
           cp "$APPCAST_PATH" public/book-sender/appcast.xml
           cp scripts/install.sh public/book-sender/install
+          cp scripts/signing/BookSenderReleaseSigning.cer public/book-sender/BookSenderReleaseSigning.cer
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

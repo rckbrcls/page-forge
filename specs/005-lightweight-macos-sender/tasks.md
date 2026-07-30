@@ -14,6 +14,12 @@ evidence before it is accepted.
 produce independently testable increments. Legacy deletion is a final gated
 cutover, never a prerequisite for porting behavior or fixtures.
 
+**Security amendment (2026-07-30)**: Completed task wording that names Data
+Protection Keychain or ad-hoc distribution is historical evidence of the former
+6.0.0 contract. Constitution 7.0.0 and
+`specs/007-native-quality-baseline/tasks.md` supersede those requirements with
+traditional Keychain storage and the pinned self-signed release identity.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: May run in parallel because it touches independent files and has no

@@ -70,7 +70,8 @@ curl -fsSL https://rckbrcls.com/api/book-sender/install | bash
 ```
 
 The installer selects the universal Book Sender archive, validates the app
-identity and ad-hoc code signature, and installs `BookSender.app` into
+identity, pinned release certificate, designated requirement, and nested code
+signatures, then installs `BookSender.app` into
 `/Applications` or `~/Applications`. Review
 [`scripts/install.sh`](scripts/install.sh) before running it.
 
@@ -78,10 +79,17 @@ The app uses Sparkle for daily update checks and exposes
 **Check for Updates…** in the application menu. Releases and appcast archives
 are protected with Sparkle EdDSA signatures.
 
-Current releases use ad-hoc code signing and are not notarized by Apple. The
-installer removes the downloaded quarantine attribute; users installing
-manually may need Finder's **Open** action. SMTP delivery remains experimental
-and unavailable in version `0.2.0`.
+Releases produced under the corrected contract use one stable self-signed
+`Book Sender Release Signing` identity and are not notarized by Apple. This
+preserves Keychain access across normally signed corrected updates but is not
+Developer ID and does not provide normal Gatekeeper trust. The installer removes
+the downloaded quarantine attribute; users installing manually may need
+Finder's **Open** action. SMTP delivery remains experimental and unavailable in
+version `0.2.0`.
+
+SMTP passwords are stored only in the traditional macOS Keychain. The first
+version using this corrected storage contract asks for the password once;
+updates signed with the same pinned identity retain access without asking again.
 
 See [`docs/deployment.md`](docs/deployment.md) for the release workflow and
 validation boundaries.
@@ -89,7 +97,7 @@ validation boundaries.
 ## Development and Verification
 
 Static checks, compilation, automated tests, runtime inspection, authenticated
-SMTP delivery, ad-hoc signing, update installation, and production release are
+SMTP delivery, release signing, update installation, and production release are
 separate validation claims. Build and test commands require explicit
 authorization under the repository workflow. The release workflow now requires
 the approved unit, UI, installer, and appcast contract suites before it can

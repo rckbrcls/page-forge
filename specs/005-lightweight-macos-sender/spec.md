@@ -102,7 +102,7 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **FR-003**: First launch MUST show `Delivery Setup` until all required delivery values have been saved successfully.
 - **FR-004**: `Delivery Setup` MUST include sender address, SMTP host, SMTP port, security mode, username, app password, and Kindle address.
 - **FR-005**: Setup validation MUST identify missing or invalid values at the relevant field before the configuration can be used for delivery.
-- **FR-006**: The app password and equivalent secrets MUST be stored in protected local credential storage and MUST never appear in plain text after entry, logs, reports, or user-visible errors.
+- **FR-006**: The app password and equivalent secrets MUST be stored only as generic-password items in the traditional file-based macOS Keychain and MUST never appear in plain text after entry, preferences, files, logs, reports, or user-visible errors.
 - **FR-007**: Saved non-secret setup values MUST be available for later sessions and editable from the auxiliary Settings window's `Delivery` tab using the same validation and credential-preservation rules as initial `Delivery Setup`.
 - **FR-008**: After setup is complete, normal launch MUST open `Send Book` as the primary screen.
 - **FR-009**: `Send Book` MUST accept one or more local EPUB and PDF books through either drag and drop or a Finder file chooser.
@@ -142,6 +142,9 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **FR-043**: The primary window MUST use a system behind-window material across its content and titlebar areas, while custom Liquid Glass remains limited to important functional controls.
 - **FR-044**: The macOS app MUST support manual and daily Sparkle update checks through the HTTPS Book Sender appcast, and every published update archive MUST carry the configured EdDSA signature.
 - **FR-045**: The public installer MUST select only the Book Sender universal ZIP, validate the app bundle name, bundle identifier, requested version, and code signature, and install only `BookSender.app`.
+- **FR-046**: Every distributed version and nested executable MUST use the same pinned self-signed release certificate; the main app MUST retain the explicit designated requirement anchored to that certificate and `com.rckbrcls.BookSender`.
+- **FR-047**: Release automation MUST fail before packaging when signing secrets are missing or invalid, the certificate or designated requirement diverges, an ad-hoc signature appears, or a nested signature is invalid; no signing fallback is permitted.
+- **FR-048**: The installer MUST reject unsigned, ad-hoc, differently signed, or designated-requirement-divergent archives before replacing the installed application, while Sparkle EdDSA remains independently mandatory.
 
 ### Non-Functional Requirements
 
@@ -161,11 +164,11 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **CC-002**: EPUB safety checking, structural audit, deterministic cleanup or restoration, separate-copy writing, and revalidation MUST remain an automatic local background pipeline.
 - **CC-003**: The default interface MUST expose concise derived states and reveal detailed evidence inline only when it supports an action, failure, applied restoration, or user decision.
 - **CC-004**: The feature MUST process a stable batch sequentially, isolate outcomes per book, preserve completed work, and cooperatively cancel pending and active work.
-- **CC-005**: Originals and existing files MUST remain immutable, credentials MUST use protected local storage, and SMTP transmission MUST require explicit confirmation.
+- **CC-005**: Originals and existing files MUST remain immutable, credentials MUST use the traditional macOS Keychain without file or preference fallback, and SMTP transmission MUST require explicit confirmation.
 - **CC-006**: Expected pipeline states and failures MUST be typed, domain rules MUST remain outside the interface, and every automatic cleanup or restoration rule MUST have focused fixture-backed tests.
 - **CC-007**: The feature MUST NOT introduce Raycast, an external ebook engine, processing helper, conversion, DRM removal, library, history, cloud, account, AI, third primary screen, or parallel product. Sparkle's embedded installer service is permitted only for application updates.
 - **CC-008**: The app MUST target macOS 26.0 or later, use an adaptive system material for the complete window background, and reserve Liquid Glass for the functional control layer.
-- **CC-009**: Distribution MUST use the approved GitHub Release, GitHub Pages, Sparkle EdDSA, ad-hoc signing, and reviewable installer channel, and MUST disclose that Developer ID and notarization are not present.
+- **CC-009**: Distribution MUST use the approved GitHub Release, GitHub Pages, Sparkle EdDSA, pinned self-signed signing identity, exact designated requirement, and reviewable installer channel, and MUST disclose that Developer ID and notarization are not present.
 
 ### Key Entities
 
@@ -195,6 +198,7 @@ As a Kindle user, I want failures to be concise and recoverable so that a malfor
 - **SC-012**: A mixed batch of 20 supported, unsupported, repairable, unsafe, failed, and submitted books produces exactly 20 independent final results, and no single-item failure prevents a later eligible item from being attempted.
 - **SC-013**: In default-state interface review, 100% of healthy and successfully prepared books show only a concise state and no expanded technical report, while 100% of blocked or failed items provide an actionable inline explanation.
 - **SC-014**: Visual acceptance on macOS 26 confirms that the desktop remains visible through the complete window, all content remains readable across supported appearance and accessibility settings, and standard window controls and dragging remain functional.
+- **SC-015**: The first corrected version requests the inaccessible legacy credential once, and a later update signed with the same pinned identity reads the replacement credential without another prompt.
 
 ## Assumptions
 

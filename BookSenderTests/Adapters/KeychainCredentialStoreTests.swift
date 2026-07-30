@@ -5,36 +5,33 @@ import Testing
 
 struct KeychainCredentialStoreTests {
     @Test
-    func createsReadsChecksAndDeletesDeviceOnlyCredential() async throws {
-        let store = KeychainCredentialStore()
+    func createsRereadsChecksAndDeletesTraditionalKeychainCredential() async throws {
+        let writer = KeychainCredentialStore()
         let service = "com.rckbrcls.BookSenderTests.\(UUID().uuidString)"
-        let reference = try await store.save(
+        let reference = try await writer.save(
             secret: "test-secret",
             service: service,
             account: "revision-1",
             revision: 1
         )
         defer {
-            Task { try? await store.delete(reference) }
+            Task { try? await writer.delete(reference) }
         }
 
-        #expect(await store.exists(reference))
-        #expect(try await store.read(reference) == "test-secret")
+        let reader = KeychainCredentialStore()
+        #expect(await reader.exists(reference))
+        #expect(try await reader.read(reference) == "test-secret")
         let attributes = try attributes(for: reference)
-        #expect(
-            attributes[kSecAttrAccessible as String] as? String
-                == kSecAttrAccessibleWhenUnlockedThisDeviceOnly as String
-        )
         #expect(
             (attributes[kSecAttrSynchronizable as String] as? Bool) != true
         )
 
-        try await store.delete(reference)
-        #expect(await store.exists(reference) == false)
+        try await reader.delete(reference)
+        #expect(await writer.exists(reference) == false)
     }
 
     @Test
-    func replacementUsesDistinctRevisionScopedIdentity() async throws {
+    func replacementPreservesPreviousRevisionUntilExplicitDeletion() async throws {
         let store = KeychainCredentialStore()
         let service = "com.rckbrcls.BookSenderTests.\(UUID().uuidString)"
         let first = try await store.save(
@@ -59,6 +56,10 @@ struct KeychainCredentialStoreTests {
         #expect(first != second)
         #expect(try await store.read(first) == "first")
         #expect(try await store.read(second) == "second")
+
+        try await store.delete(second)
+        #expect(try await store.read(first) == "first")
+        #expect(await store.exists(second) == false)
     }
 
     @Test
@@ -90,7 +91,6 @@ struct KeychainCredentialStoreTests {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: reference.service,
             kSecAttrAccount as String: reference.account,
-            kSecUseDataProtectionKeychain as String: true,
             kSecReturnAttributes as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
@@ -108,4 +108,3 @@ struct KeychainCredentialStoreTests {
 private enum KeychainTestError: Error {
     case attributesUnavailable
 }
-

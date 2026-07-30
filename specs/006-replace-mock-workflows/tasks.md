@@ -14,6 +14,12 @@ accessibility, and performance coverage.
 **Organization**: Tasks are dependency-ordered and grouped by independently
 testable user story. Tests precede the implementation they accept.
 
+**Security amendment (2026-07-30)**: Completed task wording that names Data
+Protection Keychain or ad-hoc distribution is historical evidence of the former
+6.0.0 contract. Constitution 7.0.0 and
+`specs/007-native-quality-baseline/tasks.md` supersede those requirements with
+traditional Keychain storage and the pinned self-signed release identity.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: May run in parallel after its listed prerequisites because it touches

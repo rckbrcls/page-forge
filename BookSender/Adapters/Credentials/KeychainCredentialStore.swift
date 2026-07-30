@@ -22,9 +22,6 @@ actor KeychainCredentialStore: CredentialStoring {
         )
         var query = identityQuery(reference)
         query[kSecValueData as String] = data
-        query[kSecUseDataProtectionKeychain as String] = true
-        query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-        query[kSecAttrSynchronizable as String] = false
 
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess else {
@@ -35,8 +32,6 @@ actor KeychainCredentialStore: CredentialStoring {
 
     func read(_ reference: CredentialReference) throws -> String {
         var query = identityQuery(reference)
-        query[kSecUseDataProtectionKeychain as String] = true
-        query[kSecAttrSynchronizable as String] = false
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
 
@@ -54,17 +49,13 @@ actor KeychainCredentialStore: CredentialStoring {
 
     func exists(_ reference: CredentialReference) -> Bool {
         var query = identityQuery(reference)
-        query[kSecUseDataProtectionKeychain as String] = true
-        query[kSecAttrSynchronizable as String] = false
         query[kSecReturnData as String] = false
         query[kSecMatchLimit as String] = kSecMatchLimitOne
         return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
     }
 
     func delete(_ reference: CredentialReference) throws {
-        var query = identityQuery(reference)
-        query[kSecUseDataProtectionKeychain as String] = true
-        query[kSecAttrSynchronizable as String] = false
+        let query = identityQuery(reference)
         let status = SecItemDelete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw failure("credential.delete")

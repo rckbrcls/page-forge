@@ -36,7 +36,8 @@ ZIPFoundation `0.9.x` pinned to an exact compatible release,
 KeyboardShortcuts `3.0.1`, swift-nio and swift-nio-ssl pinned to exact mutually
 compatible releases
 
-**Storage**: Data Protection Keychain for the SMTP app password; `UserDefaults`
+**Storage**: Traditional file-based macOS Keychain for the SMTP app password;
+`UserDefaults`
 for non-secret setup and shortcut preferences; security-scoped user-selected
 inputs copied by streaming into UUID-named temporary batch workspaces; no
 persistent queue, history, source bookmarks, or prepared-book cache
@@ -101,7 +102,7 @@ or SMTP attempt at a time; per-book failure isolation
   domain to adapters. Every automatic rule requires a focused fixture.
 - **Migration and distribution**: Obsolete products are deleted only after the
   native replacement passes independent static, compilation, test, runtime,
-  ad-hoc signing, update, and release gates.
+  pinned release signing, credential continuity, update, and release gates.
 
 ### Post-design gate
 
@@ -224,7 +225,9 @@ adapters only report typed observations and failures.
 - A narrow SMTP state machine over SwiftNIO and NIOSSL supports implicit TLS and
   STARTTLS, TLS-only authentication, multiline replies, MIME streaming,
   dot-stuffing, timeouts, cancellation, and `delivery_unknown`.
-- Security.framework stores the app password in the Data Protection Keychain.
+- Security.framework stores the app password as a traditional file-based
+  Keychain generic-password item whose access survives releases carrying the
+  same pinned designated requirement.
 
 ## Migration and Removal Sequence
 
@@ -266,7 +269,7 @@ adapters only report typed observations and failures.
      the removed PageForge channel.
 10. **Final absence scan and release verification**: confirm one app product,
     no stale project references or forbidden runtimes, then separately verify
-    the ad-hoc signed archive, Sparkle signature, package contents, public
+    the pinned self-signed archive, Sparkle signature, package contents, public
     release artifact, and installation on a clean supported macOS account.
 
 Existing unrelated worktree changes, including current `.pi` and
@@ -283,8 +286,9 @@ Verification remains divided into independent claims:
 4. Runtime behavior for setup, intake, batch, cancellation, SMTP, shortcut, and
    the two-screen boundary.
 5. Performance, accessibility, memory, and hostile-input checks.
-6. Ad-hoc code signing, sandbox entitlement, Sparkle EdDSA, archive-content,
-   installation, and release verification.
+6. Pinned self-signed code signing, exact designated requirement, sandbox
+   entitlement, Sparkle EdDSA, archive-content, installation, credential
+   continuity, and release verification.
 
 Passing an earlier gate never implies a later gate. The exact future commands and
 manual acceptance scenarios are documented in [quickstart.md](./quickstart.md);

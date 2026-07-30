@@ -2,16 +2,24 @@
 
 ## Secret storage
 
-The SMTP app password is one generic-password Data Protection Keychain item
-scoped by Book Sender service and username:
-
-- `kSecUseDataProtectionKeychain = true`
-- `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`
-- `kSecAttrSynchronizable = false`
+The SMTP app password is one generic-password item in the traditional file-based
+macOS Keychain, scoped by Book Sender service and revision account. Queries do
+not include `kSecUseDataProtectionKeychain`, `kSecAttrAccessible`, or
+`kSecAttrSynchronizable`.
 
 Create, read, update, and delete operations use Security.framework. Keychain work
 does not block the main actor. A successful setup save requires successful secret
-storage. Presentation receives only an opaque credential reference.
+storage. Presentation receives only an opaque credential reference. There is no
+file, preference, remote, or custom-encryption fallback.
+
+Credential replacement remains transactional: save a new revision, persist the
+non-secret reference, then remove the prior revision. Failure before preference
+commit removes only the new revision and preserves the previous credential.
+
+If the prior Data Protection item is inaccessible, only non-secret values may be
+prefilled and the user enters the password once. No unsafe migration is attempted.
+Normal updates signed with the pinned certificate and exact designated
+requirement retain access to the replacement item.
 
 ## Non-secret preferences
 

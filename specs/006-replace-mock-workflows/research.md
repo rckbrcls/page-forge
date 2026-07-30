@@ -56,6 +56,24 @@ rollback one-directional and preserve the last valid setup.
 to a missing secret; testing SMTP during Save conflates local configuration with
 network/provider availability; storing the secret in preferences is prohibited.
 
+## Decision 3A: Bind credential continuity to stable release signing
+
+**Decision**: Use traditional file-based Keychain generic-password queries
+without Data Protection, accessibility, or synchronization attributes. Sign
+every distributed version with one pinned self-signed certificate and an
+explicit main-app designated requirement.
+
+**Rationale**: The traditional Keychain uses the designated requirement to
+recognize normal updates and avoids the missing access-group entitlement that
+blocked Data Protection Keychain access in the free distribution model. Stable
+self-signed signing preserves continuity without pretending to provide
+Developer ID or notarization.
+
+**Alternatives considered**: Re-entering the password on every launch is poor
+product behavior; file storage or embedded-key encryption weakens the secret
+boundary; ad-hoc signing changes identity across builds; rotating certificates
+without migration can require one-time credential re-entry.
+
 ## Decision 4: Keep one actor-owned batch source of truth
 
 **Decision**: `PipelineActor` owns intake, preparation scheduling, confirmed

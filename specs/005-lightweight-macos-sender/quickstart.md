@@ -89,7 +89,8 @@ Treat these as separate checks:
 
 1. archive the Release configuration;
 2. inspect sandbox entitlements and linked dependencies;
-3. validate the main app and nested ad-hoc code signatures;
+3. validate the pinned certificate, exact main-app designated requirement, and
+   all main and nested signatures without ad-hoc fallback;
 4. validate the Sparkle EdDSA signature and appcast item;
 5. inspect the packaged archive contents;
 6. install and launch on a clean supported account;
@@ -97,6 +98,8 @@ Treat these as separate checks:
 8. download the public artifact and verify size, signature, app identity,
    two-screen behavior, update configuration, and absence of legacy runtime
    files.
+9. save the corrected traditional-Keychain credential, then verify that an
+   N-to-N+1 update signed with the same identity reads it without another prompt.
 
 No local build alone proves signing, update installation, clean-account
 behavior, or public release correctness.

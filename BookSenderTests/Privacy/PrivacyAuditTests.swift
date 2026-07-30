@@ -38,6 +38,28 @@ struct PrivacyAuditTests {
     }
 
     @Test
+    func credentialStoreUsesOnlyTraditionalKeychainQueries() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let sourceURL = root.appending(
+            path: "BookSender/Adapters/Credentials/KeychainCredentialStore.swift"
+        )
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+
+        for forbidden in [
+            "kSecUseDataProtectionKeychain",
+            "kSecAttrAccessible",
+            "kSecAttrSynchronizable",
+            "UserDefaults",
+        ] {
+            #expect(source.contains(forbidden) == false)
+        }
+        #expect(source.contains("kSecClassGenericPassword"))
+    }
+
+    @Test
     func presentationAndPreferencesExcludeCredentialAndFilesystemPayloads() async throws {
         let stores = try TestStores.make()
         defer { stores.cleanup() }

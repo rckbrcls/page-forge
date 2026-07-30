@@ -5,6 +5,8 @@ set -euo pipefail
 APP_DISPLAY_NAME="Book Sender"
 APP_BUNDLE_NAME="BookSender.app"
 BUNDLE_IDENTIFIER="com.rckbrcls.BookSender"
+SIGNING_CERTIFICATE_SHA1="51F0C83093408095C09F3CF5359EB7C83B7F6B38"
+PINNED_DESIGNATED_REQUIREMENT='certificate root = H"51f0c83093408095c09f3cf5359eb7c83b7f6b38" and identifier "com.rckbrcls.BookSender"'
 ASSET_PREFIX="BookSender-macos-universal-v"
 REPO="rckbrcls/page-forge"
 GITHUB_API="https://api.github.com/repos/${REPO}/releases"
@@ -131,7 +133,43 @@ if [ -n "$VERSION" ]; then
   fi
 fi
 
-codesign --verify --deep --strict "$APP_PATH"
+DESIGNATED_REQUIREMENT="anchor H\"$SIGNING_CERTIFICATE_SHA1\" and identifier \"$BUNDLE_IDENTIFIER\""
+codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+codesign --verify -R="$DESIGNATED_REQUIREMENT" "$APP_PATH"
+
+if codesign -dvvv "$APP_PATH" 2>&1 | grep -Fq "Signature=adhoc"; then
+  echo "The downloaded app uses a forbidden ad-hoc signature."
+  exit 1
+fi
+
+ACTUAL_REQUIREMENT=$(codesign -d -r- "$APP_PATH" 2>&1 \
+  | sed -n 's/^designated => //p')
+if [ "$ACTUAL_REQUIREMENT" != "$PINNED_DESIGNATED_REQUIREMENT" ]; then
+  echo "The downloaded app has an unexpected designated requirement."
+  exit 1
+fi
+
+SPARKLE_FRAMEWORK="$APP_PATH/Contents/Frameworks/Sparkle.framework"
+verify_pinned_component() {
+  local component="$1"
+  if [ -e "$component" ]; then
+    codesign --verify --strict --verbose=2 "$component"
+    codesign \
+      --verify \
+      -R="anchor H\"$SIGNING_CERTIFICATE_SHA1\"" \
+      "$component"
+    if codesign -dvvv "$component" 2>&1 | grep -Fq "Signature=adhoc"; then
+      echo "A nested app component uses a forbidden ad-hoc signature."
+      exit 1
+    fi
+  fi
+}
+
+verify_pinned_component "$SPARKLE_FRAMEWORK/Versions/B/XPCServices/Installer.xpc"
+verify_pinned_component "$SPARKLE_FRAMEWORK/Versions/B/XPCServices/Downloader.xpc"
+verify_pinned_component "$SPARKLE_FRAMEWORK/Versions/B/Autoupdate"
+verify_pinned_component "$SPARKLE_FRAMEWORK/Versions/B/Updater.app"
+verify_pinned_component "$SPARKLE_FRAMEWORK"
 
 TARGET_DIR="/Applications"
 if [ ! -w "$TARGET_DIR" ]; then

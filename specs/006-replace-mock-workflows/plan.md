@@ -29,7 +29,8 @@ Security.framework, CryptoKit, UniformTypeIdentifiers; exact package versions
 already resolved in the project: KeyboardShortcuts 3.0.1, ZIPFoundation 0.9.19,
 swift-nio 2.86.0, swift-nio-ssl 2.35.0, and Sparkle 2.9.2
 
-**Storage**: Data Protection Keychain for the SMTP credential; `UserDefaults`
+**Storage**: Traditional file-based macOS Keychain for the SMTP credential;
+`UserDefaults`
 for non-secret setup and shortcut preferences only; app-owned UUID temporary
 workspaces for staged inputs, partial writes, and revalidated EPUB copies; no
 persistent batch, book path, or delivery history
@@ -305,8 +306,10 @@ README and release notes retain the current experimental/unavailable statement
 until compilation, automated contracts, controlled SMTP integration, manual
 authorized provider delivery, accessibility, performance, and privacy gates pass.
 The release workflow must run the approved test suite before publishing a version
-that claims real delivery. Ad-hoc signing, Sparkle EdDSA, appcast, clean-account
-installation, and public artifact verification remain separate release gates.
+that claims real delivery. Pinned self-signed signing, exact designated
+requirement verification, Sparkle EdDSA, appcast, clean-account installation,
+credential continuity, and public artifact verification remain separate release
+gates.
 
 ## Implementation Sequence
 
@@ -345,8 +348,9 @@ Verification is deliberately split into:
 5. Manual runtime acceptance for setup, intake, EPUB/PDF preparation, batch
    recovery, shortcut, performance, and original preservation.
 6. Separately authorized real-provider SMTP delivery with redacted evidence.
-7. Ad-hoc signing, Sparkle signature/appcast, archive inspection, clean-account
-   installation, update, publication, and public artifact verification.
+7. Pinned self-signed signing, designated requirement verification, Sparkle
+   signature/appcast, archive inspection, clean-account installation, credential
+   continuity, update, publication, and public artifact verification.
 
 Passing one gate never implies a later gate. This planning command executes none
 of the build, test, runtime, provider, signing, or release commands listed in

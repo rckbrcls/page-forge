@@ -39,9 +39,16 @@ contract.
 shortcut preference. It must not contain credential bytes, batch state, book
 paths, findings, prepared files, delivery attempts, or history.
 
-The Keychain item uses Data Protection, device-only accessibility while unlocked,
-and no synchronization. Diagnostic and UI output contain only sanitized failure
-codes and actions.
+The credential is a generic-password item in the traditional file-based macOS
+Keychain. Queries do not set `kSecUseDataProtectionKeychain`,
+`kSecAttrAccessible`, or `kSecAttrSynchronizable`. There is no file,
+`UserDefaults`, remote, or custom-encryption fallback. Diagnostic and UI output
+contain only sanitized failure codes and actions.
+
+If an obsolete credential is inaccessible, load preserves only non-secret draft
+values and requests one password entry. Normal releases signed by the pinned
+self-signed certificate and exact designated requirement retain access after
+that first corrected save.
 
 ## Required evidence
 
@@ -49,5 +56,7 @@ codes and actions.
 - Preference failure after credential creation.
 - Credential failure before preference persistence.
 - Missing credential on launch.
+- Reread through a recreated store and across a same-identity app update.
+- One-time re-entry for an inaccessible pre-migration credential.
 - No secret in setup descriptions, preferences, events, errors, or reports.
 - Route and field behavior for complete and incomplete setup.

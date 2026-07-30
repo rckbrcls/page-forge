@@ -163,8 +163,9 @@ sending the current batch.
   username, credential, and Kindle destination at the relevant field before it
   becomes usable.
 - **FR-005**: Non-secret setup values MUST persist locally across launches, while
-  credentials MUST remain in protected local storage and MUST never be displayed,
-  logged, or included in reports after entry.
+  credentials MUST remain only in traditional file-based macOS Keychain
+  generic-password items and MUST never be displayed, written to files or
+  preferences, logged, or included in reports after entry.
 - **FR-006**: Normal launch and shortcut routing MUST derive from the actual
   completeness of saved setup rather than a preview or in-memory demonstration
   state.
@@ -235,6 +236,18 @@ sending the current batch.
 - **FR-031**: All preview-only data models, routes, conditions, accessibility
   identifiers, copy, tests, and documentation MUST be removed or replaced by
   acceptance coverage for the real behavior.
+- **FR-032**: If an obsolete or inaccessible credential cannot be read, setup
+  MUST preserve only non-secret draft values and request the password once
+  without attempting an unsafe migration.
+- **FR-033**: Every distributed app and nested executable MUST use the pinned
+  self-signed release certificate, and the main app MUST retain the exact
+  designated requirement anchored to it and `com.rckbrcls.BookSender`.
+- **FR-034**: Missing or invalid signing secrets, certificate drift, designated
+  requirement drift, ad-hoc signing, or invalid nested signatures MUST fail
+  release before packaging with no fallback.
+- **FR-035**: The installer MUST enforce the pinned certificate and designated
+  requirement before replacing an installation; Sparkle EdDSA remains a
+  separate required update signature.
 
 ### Constitution Constraints _(mandatory)_
 
@@ -250,7 +263,8 @@ sending the current batch.
   outcomes per book, preserve completed work, and support cooperative
   cancellation.
 - **CC-005**: Originals and existing files MUST remain immutable, credentials
-  MUST remain protected locally, and SMTP transmission MUST require explicit
+  MUST remain protected only by the traditional macOS Keychain without a file
+  or preference fallback, and SMTP transmission MUST require explicit
   confirmation.
 - **CC-006**: Every automatic safety, audit, cleanup, restoration, revalidation,
   and delivery rule MUST have focused evidence-backed acceptance coverage.
@@ -258,6 +272,9 @@ sending the current batch.
   ebook engine, helper processes, executable downloads, a library, history,
   persistent queue, cloud account, AI, browser automation, or a parallel product
   surface.
+- **CC-008**: Distributed artifacts MUST use the stable pinned signing identity
+  and exact designated requirement; ad-hoc signing is permitted only for
+  non-distributed test hosts.
 
 ### Key Entities
 
@@ -310,6 +327,8 @@ sending the current batch.
 - **SC-010**: Acceptance review confirms exactly two primary screens and no mock
   route, third workflow surface, library, history, persistent queue, account,
   reader, editor, conversion, or automated website interaction.
+- **SC-011**: A credential saved by the first corrected version remains readable
+  after an N-to-N+1 update signed with the same pinned identity.
 
 ## Assumptions
 

@@ -53,5 +53,5 @@ migration.
   or stale PageForge target/reference. Sparkle is limited to the Book Sender
   update path.
 - Exactly two primary screens and one shared intake path.
-- Release archive contains only the ad-hoc signed app; appcast and installer
-  remain separate distribution files.
+- Release archive contains only the app signed by the pinned self-signed
+  identity; appcast and installer remain separate distribution files.

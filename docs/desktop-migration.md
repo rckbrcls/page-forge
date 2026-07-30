@@ -61,6 +61,6 @@ exist only as the approved application-update and distribution path.
 ## Validation Boundary
 
 Static checks do not prove compilation, automated tests, runtime behavior,
-authenticated SMTP delivery, ad-hoc signing, update installation, or production
-release. Each gate must be executed and reported independently when the
-repository workflow allows it.
+authenticated SMTP delivery, pinned release signing, credential continuity,
+update installation, or production release. Each gate must be executed and
+reported independently when the repository workflow allows it.

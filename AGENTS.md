@@ -119,12 +119,33 @@
   `delivery_unknown`.
 - Tests: Swift Testing for domain, pipeline, adapter, and fixture contracts;
   XCTest/XCUITest for UI, accessibility, and performance.
-- Secrets: Data Protection Keychain; never ordinary preferences, project files,
-  logs, reports, presentation models, or remote storage.
+- Secrets: traditional file-based macOS Keychain generic-password items; never
+  Data Protection Keychain selectors, ordinary preferences, project files,
+  logs, reports, presentation models, remote storage, or custom encrypted files.
 - Forbidden: processing helpers, executable downloads, Calibre, installed
   EPUBCheck, Raycast, Python or Java runtime requirements, Docker, local
   services, and user-installed processing tools. The Python appcast script runs
   only in GitHub Actions and is never bundled as an app runtime dependency.
+
+## Credential And Release Signing Law
+
+- SMTP passwords MUST use only the traditional file-based macOS Keychain.
+- Never persist credentials in plaintext, `UserDefaults`, project files, custom
+  files, or encryption protected by a key embedded in the application.
+- Every distributed version and nested executable MUST use the stable
+  `Book Sender Release Signing` identity and the pinned certificate in
+  `scripts/signing/BookSenderReleaseSigning.cer`.
+- The main app MUST retain the exact designated requirement anchored to the
+  pinned certificate and `com.rckbrcls.BookSender`.
+- Ad-hoc and unsigned signatures are prohibited for distributed artifacts.
+  Ad-hoc signing remains permitted only for non-distributed test hosts.
+- Missing, invalid, or divergent private signing material MUST block release;
+  never add an ad-hoc, alternate-identity, or unsigned fallback.
+- Identity rotation requires Erick's explicit authorization, a written migration
+  plan, and a user notice that the SMTP password may require one-time re-entry.
+- Sparkle EdDSA remains independent and mandatory. The self-signed identity is
+  not Developer ID, provides no Apple notarization, and does not remove
+  Gatekeeper friction from manual installation.
 
 ## Repository Layout
 
