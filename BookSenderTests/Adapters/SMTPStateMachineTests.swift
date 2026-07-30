@@ -106,6 +106,121 @@ struct SMTPStateMachineTests {
         #expect(machine.receive(reply(235, "ok")) == [write("MAIL FROM:<sender@example.com>")])
     }
 
+    @Test(arguments: [
+        (530, "5.7.0"),
+        (534, "5.7.9"),
+        (535, "5.7.8"),
+    ])
+    func mapsAuthenticationRejectionsToAuthenticationEvidence(
+        code: Int,
+        enhanced: String
+    ) throws {
+        var machine = SMTPStateMachine(
+            setup: try setup(mode: .implicitTLS),
+            credential: "secret"
+        )
+        _ = machine.receive(reply(220, "ready"))
+        _ = machine.receive(reply(250, "AUTH PLAIN"))
+
+        let failure = try #require(
+            failure(
+                in: machine.receive(
+                    SMTPReply(
+                        code: code,
+                        lines: ["\(enhanced) private provider prose"],
+                        providerStatus: ProviderStatus(
+                            replyCode: code,
+                            enhancedStatus: EnhancedStatusCode(parsing: enhanced)
+                        )
+                    )
+                )
+            )
+        )
+
+        #expect(failure.code == .smtpAuthenticationRejected)
+        #expect(failure.evidence.phase == .smtpAuthenticating)
+        #expect(failure.evidence.retryDisposition == .editSetup)
+        #expect(failure.evidence.providerStatus?.replyCode == code)
+        #expect(failure.message.contains("private provider prose") == false)
+    }
+
+    @Test
+    func distinguishesSenderRecipientDataAndFinalAcceptanceRejections() throws {
+        let scenarios: [(SMTPFailurePoint, DiagnosticCode, DiagnosticPhase)] = [
+            (.sender, .smtpSenderRejected, .smtpSender),
+            (.recipient, .smtpRecipientRejected, .smtpRecipient),
+            (.data, .smtpDataRejected, .smtpData),
+            (
+                .finalAcceptance,
+                .smtpFinalAcceptanceRejected,
+                .smtpFinalAcceptance
+            ),
+        ]
+
+        for scenario in scenarios {
+            for replyCode in [450, 550] {
+                var machine = SMTPStateMachine(
+                    setup: try setup(mode: .implicitTLS),
+                    credential: "secret"
+                )
+                advance(&machine, to: scenario.0)
+                let failure = try #require(
+                    failure(
+                        in: machine.receive(
+                            reply(
+                                replyCode,
+                                replyCode == 450
+                                    ? "4.0.0 rejected"
+                                    : "5.0.0 rejected"
+                            )
+                        )
+                    )
+                )
+                #expect(failure.code == scenario.1)
+                #expect(failure.evidence.phase == scenario.2)
+                #expect(
+                    failure.evidence.providerStatus?.replyCode == replyCode
+                )
+                if replyCode == 450 {
+                    #expect(failure.evidence.retryDisposition == .retrySafe)
+                    #expect(failure.recoveryAction == .retryFailed)
+                } else if scenario.0 == .data
+                            || scenario.0 == .finalAcceptance {
+                    #expect(
+                        failure.evidence.retryDisposition == .reviewBook
+                    )
+                    #expect(failure.recoveryAction == .reviewBook)
+                }
+            }
+        }
+    }
+
+    @Test
+    func mapsGreetingAndTLSFailuresBeforeAuthentication() throws {
+        var greeting = SMTPStateMachine(
+            setup: try setup(mode: .implicitTLS),
+            credential: "secret"
+        )
+        let greetingFailure = try #require(
+            failure(in: greeting.receive(reply(421, "4.3.2 unavailable")))
+        )
+        #expect(greetingFailure.code == .smtpGreeting)
+        #expect(greetingFailure.evidence.phase == .smtpSecuring)
+        #expect(greetingFailure.evidence.retryDisposition == .retrySafe)
+
+        var startTLS = SMTPStateMachine(
+            setup: try setup(mode: .startTLS),
+            credential: "secret"
+        )
+        _ = startTLS.receive(reply(220, "ready"))
+        _ = startTLS.receive(reply(250, "STARTTLS"))
+        let tlsFailure = try #require(
+            failure(in: startTLS.receive(reply(454, "4.7.0 unavailable")))
+        )
+        #expect(tlsFailure.code == .smtpStartTLS)
+        #expect(tlsFailure.evidence.phase == .smtpSecuring)
+    }
+
     private func setup(mode: SecurityMode) throws -> DeliverySetup {
         try DeliverySetupValidator().makeSetup(
             from: DeliverySetupDraft(
@@ -130,6 +245,28 @@ struct SMTPStateMachineTests {
         SMTPReply(code: code, lines: [line])
     }
 
+    private func advance(
+        _ machine: inout SMTPStateMachine,
+        to point: SMTPFailurePoint
+    ) {
+        _ = machine.receive(reply(220, "ready"))
+        _ = machine.receive(reply(250, "AUTH PLAIN"))
+        _ = machine.receive(reply(235, "ok"))
+        guard point != .sender else { return }
+        _ = machine.receive(reply(250, "ok"))
+        guard point != .recipient else { return }
+        _ = machine.receive(reply(250, "ok"))
+        guard point != .data else { return }
+        _ = machine.receive(reply(354, "continue"))
+    }
+
+    private func failure(in actions: [SMTPAction]) -> SanitizedFailure? {
+        actions.compactMap {
+            guard case .failed(let failure) = $0 else { return nil }
+            return failure
+        }.first
+    }
+
     private func write(_ line: String) -> SMTPAction {
         .write(line: "\(line)\r\n", containsSecret: false)
     }
@@ -142,4 +279,11 @@ struct SMTPStateMachineTests {
         }
         return containsSecret
     }
+}
+
+private enum SMTPFailurePoint {
+    case sender
+    case recipient
+    case data
+    case finalAcceptance
 }

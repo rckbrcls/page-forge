@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct BookFileImporter: ViewModifier {
     @Binding var isPresented: Bool
     let add: ([URL]) -> Void
+    let failed: () -> Void
 
     func body(content: Content) -> some View {
         content.fileImporter(
@@ -16,6 +17,8 @@ struct BookFileImporter: ViewModifier {
         ) { result in
             if case .success(let urls) = result {
                 add(urls)
+            } else {
+                failed()
             }
         }
     }

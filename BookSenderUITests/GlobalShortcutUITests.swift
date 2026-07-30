@@ -18,6 +18,7 @@ final class GlobalShortcutUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Ready"].exists)
+        XCTAssertTrue(app.staticTexts["Book Sender opened."].exists)
         XCTAssertFalse(app.staticTexts["Send Books?"].exists)
         XCTAssertEqual(app.windows.count, 1)
     }

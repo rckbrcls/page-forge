@@ -11,7 +11,8 @@ data-model.md, contracts/
 
 **Tests**: Tests are REQUIRED for every EPUB audit, cleanup, restoration, and
 revalidation rule. Include focused tests for archive safety, batch isolation,
-cancellation, credential redaction, and delivery uncertainty where relevant.
+cancellation, credential redaction, delivery uncertainty, and bounded local
+send-history behavior where relevant.
 
 **Organization**: Group tasks by independently testable user story while keeping
 shared pipeline foundations explicit.
@@ -36,8 +37,9 @@ shared pipeline foundations explicit.
 
 - Foundational work MUST establish typed domain, pipeline, and adapter contracts
   before SwiftUI screen integration
-- UI tasks MUST preserve exactly `Delivery Setup` and `Send Book`, concise default
-  states, progressive disclosure, keyboard use, and accessibility
+- UI tasks MUST preserve exactly `Delivery Setup` and `Send Book`, keep `Send`
+  and `History` as local tabs within `Send Book` when history is in scope, and
+  retain concise states, progressive disclosure, keyboard use, and accessibility
 - Pipeline tasks MUST cover safety check, audit, deterministic
   cleanup/restoration, separate working copy, revalidation, and readiness
 - Archive tasks MUST bound traversal, paths, ZIP bombs, entries, expansion,
@@ -47,11 +49,14 @@ shared pipeline foundations explicit.
   `delivery_unknown`
 - Delivery tasks MUST require explicit confirmation, use independent SMTP
   attempts, protect credentials, and sanitize all errors and diagnostics
+- History tasks MUST record only definitive SMTP acceptance, retain at most 500
+  local identifier/name/timestamp records, provide confirmed clearing, and test
+  record-once, ordering, relaunch persistence, retention, and privacy
 - Migration tasks MUST remove obsolete Raycast code and documentation rather than
   preserve a fallback
 - Do not schedule conversion, DRM removal, external engines, executable
-  downloads, library, history, cloud, account, AI, reader, editor, or third-screen
-  work
+  downloads, library, persistent queue, unbounded or remote history,
+  history-driven resend, cloud, account, AI, reader, editor, or third-screen work
 
 <!--
   The sample tasks below MUST be replaced with tasks derived from the active spec,
@@ -75,9 +80,9 @@ shared pipeline foundations explicit.
 
 **⚠️ CRITICAL**: No user-story UI work begins until this phase is complete
 
-- [ ] T005 Create typed batch, finding, health, preparation, cancellation, and delivery models in BookSender/Domain/Models/
+- [ ] T005 Create typed batch, finding, health, preparation, cancellation, delivery, and applicable submission-record models in BookSender/Domain/Models/
 - [ ] T006 [P] Define audit, repair, restoration, and comparison contracts in BookSender/Domain/
-- [ ] T007 [P] Define bounded archive, XML, filesystem, SMTP, and credential adapters in BookSender/Adapters/
+- [ ] T007 [P] Define bounded archive, XML, filesystem, SMTP, credential, and applicable local-history adapters in BookSender/Adapters/
 - [ ] T008 Define the sequential application pipeline in BookSender/Application/Pipeline/
 - [ ] T009 Create deterministic valid, malformed, ambiguous, and malicious fixtures in BookSenderTests/Fixtures/
 - [ ] T010 Add contract tests for original preservation, typed failures, limits, and revalidation in BookSenderTests/
@@ -161,6 +166,7 @@ shared pipeline foundations explicit.
 - [ ] TXXX Verify concise default states and no invented progress
 - [ ] TXXX [P] Complete fixture coverage for audit, cleanup, restoration, revalidation, and malicious inputs
 - [ ] TXXX Verify batch capacity, failure isolation, cancellation, and `delivery_unknown`
+- [ ] TXXX Verify history record-once behavior, retention, persistence, clearing, and privacy when applicable
 - [ ] TXXX Review protected credentials and redacted diagnostics
 - [ ] TXXX Review keyboard operation, focus, and accessibility
 - [ ] TXXX Run constitution compliance review against `.specify/memory/constitution.md`
@@ -209,7 +215,8 @@ shared pipeline foundations explicit.
 2. `Delivery Setup`
 3. `Send Book` intake and concise background preparation
 4. Batch confirmation, delivery, cancellation, and per-item results
-5. Shortcut, accessibility, performance, and distribution readiness
+5. Bounded local submission history when required by the active specification
+6. Shortcut, accessibility, performance, and distribution readiness
 
 ## Notes
 

@@ -19,11 +19,15 @@ struct BatchConfirmationView: View {
             HStack {
                 Button("Cancel", action: cancel)
                     .keyboardShortcut(.cancelAction)
+                    .accessibilityHint("Returns to the editable batch without sending.")
                 Spacer()
                 Button("Send", action: confirm)
                     .buttonStyle(.glassProminent)
                     .keyboardShortcut(.defaultAction)
                     .accessibilityIdentifier("sendBook.confirm")
+                    .accessibilityHint(
+                        "Starts sequential delivery for \(eligibleCount) eligible books."
+                    )
             }
         }
         .padding(24)

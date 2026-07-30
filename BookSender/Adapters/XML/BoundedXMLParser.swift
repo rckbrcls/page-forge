@@ -7,14 +7,14 @@ struct BoundedXMLParser: BoundedXMLParsing {
     ) async throws -> XMLDocumentProjection {
         try Task.checkCancellation()
         guard limits.permitsXMLBytes(data.count) else {
-            throw failure("xml.byte-limit")
+            throw failure(.xmlByteLimit)
         }
 
         let lowercase = String(decoding: data, as: UTF8.self).lowercased()
         guard !lowercase.contains("<!doctype"),
               !lowercase.contains("<!entity")
         else {
-            throw failure("xml.external-entity")
+            throw failure(.xmlExternalEntity)
         }
 
         return try await withThrowingTaskGroup(
@@ -28,7 +28,7 @@ struct BoundedXMLParser: BoundedXMLParsing {
                 parser.shouldResolveExternalEntities = false
                 parser.delegate = delegate
                 guard parser.parse(), let rootName = delegate.rootName else {
-                    throw delegate.failure ?? self.failure("xml.invalid")
+                    throw delegate.failure ?? self.failure(.xmlInvalid)
                 }
                 return XMLDocumentProjection(
                     rootName: rootName,
@@ -38,17 +38,17 @@ struct BoundedXMLParser: BoundedXMLParsing {
             }
             group.addTask {
                 try await Task.sleep(for: limits.operationTimeout)
-                throw self.failure("xml.timeout")
+                throw self.failure(.xmlTimeout)
             }
             guard let projection = try await group.next() else {
-                throw self.failure("xml.invalid")
+                throw self.failure(.xmlInvalid)
             }
             group.cancelAll()
             return projection
         }
     }
 
-    private nonisolated func failure(_ code: String) -> SanitizedFailure {
+    private nonisolated func failure(_ code: DiagnosticCode) -> SanitizedFailure {
         SanitizedFailure(
             family: .xml,
             code: code,
@@ -97,7 +97,7 @@ private final class ProjectionDelegate: NSObject, XMLParserDelegate, @unchecked 
     ) {
         guard failure == nil else { return }
         guard !Task.isCancelled else {
-            reject(parser, code: "xml.cancelled")
+            reject(parser, code: .xmlCancelled)
             return
         }
 
@@ -108,7 +108,7 @@ private final class ProjectionDelegate: NSObject, XMLParserDelegate, @unchecked 
               limits.permitsXMLElementCount(elementCount),
               limits.permitsXMLAttributeCount(attributeDict.count)
         else {
-            reject(parser, code: "xml.structure-limit")
+            reject(parser, code: .xmlStructureLimit)
             return
         }
         rootName = rootName ?? name
@@ -125,7 +125,7 @@ private final class ProjectionDelegate: NSObject, XMLParserDelegate, @unchecked 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
         guard failure == nil, !stack.isEmpty else { return }
         guard !Task.isCancelled else {
-            reject(parser, code: "xml.cancelled")
+            reject(parser, code: .xmlCancelled)
             return
         }
         let bytes = string.utf8.count
@@ -133,7 +133,7 @@ private final class ProjectionDelegate: NSObject, XMLParserDelegate, @unchecked 
         guard !overflow,
               limits.permitsXMLTextBytes(newTotal)
         else {
-            reject(parser, code: "xml.text-limit")
+            reject(parser, code: .xmlTextLimit)
             return
         }
         totalTextBytes = newTotal
@@ -162,7 +162,7 @@ private final class ProjectionDelegate: NSObject, XMLParserDelegate, @unchecked 
         resolveExternalEntityName name: String,
         systemID: String?
     ) -> Data? {
-        reject(parser, code: "xml.external-entity")
+        reject(parser, code: .xmlExternalEntity)
         return nil
     }
 
@@ -171,16 +171,16 @@ private final class ProjectionDelegate: NSObject, XMLParserDelegate, @unchecked 
         parseErrorOccurred parseError: Error
     ) {
         if failure == nil {
-            failure = sanitizedFailure("xml.invalid")
+            failure = sanitizedFailure(.xmlInvalid)
         }
     }
 
-    private func reject(_ parser: XMLParser, code: String) {
+    private func reject(_ parser: XMLParser, code: DiagnosticCode) {
         failure = sanitizedFailure(code)
         parser.abortParsing()
     }
 
-    private func sanitizedFailure(_ code: String) -> SanitizedFailure {
+    private func sanitizedFailure(_ code: DiagnosticCode) -> SanitizedFailure {
         SanitizedFailure(
             family: .xml,
             code: code,

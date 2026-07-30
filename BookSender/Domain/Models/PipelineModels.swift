@@ -13,10 +13,10 @@ enum TerminalOutcome: Equatable, Sendable {
     case submitted
     case failed(SanitizedFailure)
     case cancelled
-    case deliveryUnknown
+    case deliveryUnknown(SanitizedFailure)
 }
 
-enum FailureFamily: String, Codable, Sendable {
+enum FailureFamily: String, Codable, CaseIterable, Hashable, Sendable {
     case intake
     case archive
     case xml
@@ -28,20 +28,45 @@ enum FailureFamily: String, Codable, Sendable {
     case shortcut
 }
 
-struct SanitizedFailure: Error, Codable, Equatable, Sendable {
+struct SanitizedFailure: Error, Codable, Equatable, Hashable, Sendable {
     let family: FailureFamily
-    let code: String
+    let code: DiagnosticCode
     let message: String
     let recoveryAction: RecoveryAction?
+    let evidence: DiagnosticEvidence
+
+    init(
+        family: FailureFamily,
+        code: DiagnosticCode,
+        message: String,
+        recoveryAction: RecoveryAction?,
+        evidence: DiagnosticEvidence? = nil
+    ) {
+        precondition(
+            family == code.expectedFamily,
+            "Diagnostic code must match its failure family."
+        )
+        self.family = family
+        self.code = code
+        self.message = message
+        self.recoveryAction = recoveryAction
+        self.evidence = evidence ?? DiagnosticEvidence.inferred(
+            family: family,
+            code: code,
+            recoveryAction: recoveryAction
+        )
+    }
 }
 
-enum RecoveryAction: String, Codable, Sendable {
+enum RecoveryAction: String, Codable, CaseIterable, Equatable, Hashable, Sendable {
     case editSetup
     case chooseAnotherFile
     case reviewBook
     case retryFailed
     case confirmUnknownRetry
     case chooseAnotherShortcut
+    case retryHistoryLoad
+    case retryHistoryClear
 }
 
 struct DeliveryAttempt: Identifiable, Sendable {
@@ -61,18 +86,24 @@ struct DeliveryProgress: Sendable {
     let dataTransmissionStarted: Bool
 }
 
-enum PipelineEvent: Sendable {
-    case batchChanged
-    case intakeOutcome(UUID)
-    case checking(UUID)
-    case preparing(UUID)
-    case ready(UUID)
-    case needsAttention(UUID, SanitizedFailure)
-    case sending(UUID, DeliveryProgress)
-    case submitted(UUID)
-    case failed(UUID, SanitizedFailure)
-    case cancelled(UUID)
-    case deliveryUnknown(UUID)
-    case batchProgress(completed: Int, total: Int)
-    case batchCompleted(UUID)
+struct PipelineEvent: Sendable {
+    enum Kind: Sendable {
+        case batchChanged
+        case intakeOutcome(UUID)
+        case checking(UUID)
+        case preparing(UUID)
+        case ready(UUID)
+        case needsAttention(UUID, SanitizedFailure)
+        case sending(UUID, DeliveryProgress)
+        case submitted(SubmissionReceipt)
+        case historyPersistenceFailed(SubmissionReceipt, HistoryFailure)
+        case failed(UUID, SanitizedFailure)
+        case cancelled(UUID)
+        case deliveryUnknown(UUID, SanitizedFailure)
+        case batchProgress(completed: Int, total: Int)
+        case batchCompleted(UUID)
+    }
+
+    let batchID: UUID
+    let kind: Kind
 }

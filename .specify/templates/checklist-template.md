@@ -21,18 +21,19 @@ the feature, plan, and constitution.
 - [ ] CHK008 Credentials use protected macOS storage and remain redacted from interface, logs, reports, and repository files
 - [ ] CHK009 SwiftUI views contain no archive, repair, restoration, filesystem, credential, or SMTP rules
 - [ ] CHK010 Every automatic pipeline rule has a focused deterministic fixture-backed test
-- [ ] CHK011 No Raycast, external engine, helper process, conversion, DRM removal, library, history, cloud, account, AI, or parallel product is introduced
-- [ ] CHK012 Validation distinguishes static checks, compilation, automated tests, runtime inspection, signing, notarization, and release evidence
+- [ ] CHK011 No Raycast, external engine, helper process, conversion, DRM removal, library, persistent queue, unbounded or remote history, history-driven resend, cloud, account, AI, or parallel product is introduced
+- [ ] CHK012 Any send history remains inside `Send Book`, local, limited to 500 identifier/name/timestamp records, clearable, and restricted to definitive SMTP submissions
+- [ ] CHK013 Validation distinguishes static checks, compilation, automated tests, runtime inspection, signing, notarization, and release evidence
 
 ## [Category 1]
 
-- [ ] CHK013 First feature-specific item
-- [ ] CHK014 Second feature-specific item
+- [ ] CHK014 First feature-specific item
+- [ ] CHK015 Second feature-specific item
 
 ## [Category 2]
 
-- [ ] CHK015 Third feature-specific item
-- [ ] CHK016 Fourth feature-specific item
+- [ ] CHK016 Third feature-specific item
+- [ ] CHK017 Fourth feature-specific item
 
 ## Notes
 

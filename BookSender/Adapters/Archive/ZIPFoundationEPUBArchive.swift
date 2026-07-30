@@ -16,7 +16,7 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
         indexedPaths.removeAll(keepingCapacity: true)
         try Task.checkCancellation()
         guard file == source else {
-            throw failure("archive.open")
+            throw failure(.archiveOpen)
         }
         let source = self.source
 
@@ -27,7 +27,7 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
                     maximumBytes: limits.maximumCompressedBytes
                 )
             guard limits.permitsArchiveEntryCount(metadata.count) else {
-                throw self.failure("archive.entry-limit")
+                throw self.failure(.archiveEntryLimit)
             }
 
             var descriptors: [ArchiveEntryDescriptor] = []
@@ -46,16 +46,16 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
                     .precomposedStringWithCanonicalMapping
                     .lowercased()
                 guard normalizedPaths.insert(collisionKey).inserted else {
-                    throw self.failure("archive.duplicate-path")
+                    throw self.failure(.archiveDuplicatePath)
                 }
                 guard !metadataEntry.isLink,
                       metadataEntry.compressionMethod == 0
                         || metadataEntry.compressionMethod == 8
                 else {
-                    throw self.failure("archive.unsupported-entry")
+                    throw self.failure(.archiveUnsupportedEntry)
                 }
                 guard !metadataEntry.isEncrypted else {
-                    throw self.failure("archive.encrypted")
+                    throw self.failure(.archiveEncrypted)
                 }
 
                 compressedTotal = try self.checkedAdd(
@@ -70,17 +70,17 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
                       limits.permitsExpandedBytes(expandedTotal),
                       limits.permitsEntryBytes(metadataEntry.uncompressedSize)
                 else {
-                    throw self.failure("archive.size-limit")
+                    throw self.failure(.archiveSizeLimit)
                 }
                 if metadataEntry.compressedSize == 0 {
                     guard metadataEntry.uncompressedSize == 0 else {
-                        throw self.failure("archive.expansion-ratio")
+                        throw self.failure(.archiveExpansionRatio)
                     }
                 } else {
                     let ratio = Double(metadataEntry.uncompressedSize)
                         / Double(metadataEntry.compressedSize)
                     guard limits.permitsExpansionRatio(ratio) else {
-                        throw self.failure("archive.expansion-ratio")
+                        throw self.failure(.archiveExpansionRatio)
                     }
                 }
 
@@ -102,7 +102,7 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
                 do {
                     archive = try Archive(url: source.url, accessMode: .read)
                 } catch {
-                    throw self.failure("archive.open")
+                    throw self.failure(.archiveOpen)
                 }
                 let archiveEntries = Dictionary(
                     archive.map { ($0.path, $0) },
@@ -114,7 +114,7 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
                     guard let entry = archiveEntries[metadataEntry.path],
                           entry.type == .file
                     else {
-                        throw self.failure("archive.entry-unavailable")
+                        throw self.failure(.archiveEntryUnavailable)
                     }
                     paths.insert(normalized)
                 }
@@ -128,7 +128,7 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
         } catch let sanitized as SanitizedFailure {
             throw sanitized
         } catch {
-            throw failure("archive.open")
+            throw failure(.archiveOpen)
         }
     }
 
@@ -137,20 +137,20 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
         guard maximumBytes >= 0,
               indexedPaths.contains(path)
         else {
-            throw failure("archive.entry-unavailable")
+            throw failure(.archiveEntryUnavailable)
         }
 
         let archive: Archive
         do {
             archive = try Archive(url: source.url, accessMode: .read)
         } catch {
-            throw failure("archive.open")
+            throw failure(.archiveOpen)
         }
         guard let entry = archive[path],
               entry.type == .file,
               entry.uncompressedSize <= UInt64(maximumBytes)
         else {
-            throw failure("archive.entry-unavailable")
+            throw failure(.archiveEntryUnavailable)
         }
 
         var result = Data()
@@ -160,7 +160,7 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
                     throw CancellationError()
                 }
                 guard result.count <= maximumBytes - chunk.count else {
-                    throw self.failure("archive.entry-limit")
+                    throw self.failure(.archiveEntryLimit)
                 }
                 result.append(chunk)
             }
@@ -170,7 +170,7 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
         } catch let sanitized as SanitizedFailure {
             throw sanitized
         } catch {
-            throw failure("archive.extract")
+            throw failure(.archiveExtract)
         }
     }
 
@@ -193,7 +193,7 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
                   CharacterSet.controlCharacters.contains($0)
               })
         else {
-            throw failure("archive.unsafe-path")
+            throw failure(.archiveUnsafePath)
         }
 
         let path = isDirectory && rawPath.hasSuffix("/")
@@ -208,7 +208,7 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
                   !$0.isEmpty && $0 != "." && $0 != ".."
               })
         else {
-            throw failure("archive.unsafe-path")
+            throw failure(.archiveUnsafePath)
         }
         return components.joined(separator: "/")
     }
@@ -216,7 +216,7 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
     private nonisolated func checkedAdd(_ lhs: Int64, _ rhs: Int64) throws -> Int64 {
         let (result, overflow) = lhs.addingReportingOverflow(rhs)
         guard !overflow else {
-            throw failure("archive.size-limit")
+            throw failure(.archiveSizeLimit)
         }
         return result
     }
@@ -229,17 +229,17 @@ actor ZIPFoundationEPUBArchive: EPUBArchiveReading {
             group.addTask(operation: operation)
             group.addTask {
                 try await Task.sleep(for: duration)
-                throw self.failure("archive.timeout")
+                throw self.failure(.archiveTimeout)
             }
             guard let result = try await group.next() else {
-                throw self.failure("archive.open")
+                throw self.failure(.archiveOpen)
             }
             group.cancelAll()
             return result
         }
     }
 
-    private nonisolated func failure(_ code: String) -> SanitizedFailure {
+    private nonisolated func failure(_ code: DiagnosticCode) -> SanitizedFailure {
         SanitizedFailure(
             family: .archive,
             code: code,
@@ -264,7 +264,7 @@ private enum ZIPMetadataScanner {
         let values = try url.resourceValues(forKeys: [.fileSizeKey])
         let byteCount = Int64(values.fileSize ?? 0)
         guard byteCount > 0, byteCount <= maximumBytes else {
-            throw scanFailure("archive.size-limit")
+            throw scanFailure(.archiveSizeLimit)
         }
 
         let handle = try FileHandle(forReadingFrom: url)
@@ -275,7 +275,7 @@ private enum ZIPMetadataScanner {
         guard let endOffset = lastSignature(0x0605_4B50, in: tail),
               endOffset + 22 <= tail.count
         else {
-            throw scanFailure("archive.open")
+            throw scanFailure(.archiveOpen)
         }
 
         let entryCount = Int(tail.uint16LE(at: endOffset + 10))
@@ -287,13 +287,13 @@ private enum ZIPMetadataScanner {
               centralSize <= byteCount - centralOffset,
               centralSize <= maximumBytes
         else {
-            throw scanFailure("archive.size-limit")
+            throw scanFailure(.archiveSizeLimit)
         }
 
         try handle.seek(toOffset: UInt64(centralOffset))
         let central = try handle.read(upToCount: Int(centralSize)) ?? Data()
         guard central.count == Int(centralSize) else {
-            throw scanFailure("archive.open")
+            throw scanFailure(.archiveOpen)
         }
 
         var cursor = 0
@@ -304,7 +304,7 @@ private enum ZIPMetadataScanner {
             guard cursor + 46 <= central.count,
                   central.uint32LE(at: cursor) == 0x0201_4B50
             else {
-                throw scanFailure("archive.open")
+                throw scanFailure(.archiveOpen)
             }
             let versionMadeBy = central.uint16LE(at: cursor + 4)
             let flags = central.uint16LE(at: cursor + 8)
@@ -321,13 +321,13 @@ private enum ZIPMetadataScanner {
                   compressed != UInt32.max,
                   uncompressed != UInt32.max
             else {
-                throw scanFailure("archive.unsupported-entry")
+                throw scanFailure(.archiveUnsupportedEntry)
             }
             let nameData = central.subdata(
                 in: (cursor + 46)..<(cursor + 46 + nameLength)
             )
             guard let path = String(data: nameData, encoding: .utf8) else {
-                throw scanFailure("archive.unsafe-path")
+                throw scanFailure(.archiveUnsafePath)
             }
 
             let osType = versionMadeBy >> 8
@@ -350,7 +350,7 @@ private enum ZIPMetadataScanner {
         }
 
         guard result.count == entryCount else {
-            throw scanFailure("archive.open")
+            throw scanFailure(.archiveOpen)
         }
         return result
     }
@@ -368,7 +368,7 @@ private enum ZIPMetadataScanner {
         return nil
     }
 
-    private static func scanFailure(_ code: String) -> SanitizedFailure {
+    private static func scanFailure(_ code: DiagnosticCode) -> SanitizedFailure {
         SanitizedFailure(
             family: .archive,
             code: code,

@@ -8,7 +8,7 @@ struct MIMEMessageEncoder: Sendable {
               !name.contains(where: { $0.isNewline || $0 == ":" || $0.isControl }),
               !value.contains(where: { $0.isNewline || $0.isControl })
         else {
-            throw failure("mime.header-injection")
+            throw failure(.mimeHeaderInjection)
         }
         return Data("\(name): \(value)\r\n".utf8)
     }
@@ -124,7 +124,7 @@ struct MIMEMessageEncoder: Sendable {
         }
     }
 
-    private func failure(_ code: String) -> SanitizedFailure {
+    private func failure(_ code: DiagnosticCode) -> SanitizedFailure {
         SanitizedFailure(
             family: .delivery,
             code: code,

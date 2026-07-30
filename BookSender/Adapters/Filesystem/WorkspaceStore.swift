@@ -28,17 +28,23 @@ actor WorkspaceStore: WorkspaceStoring {
             .appending(component: itemID.uuidString, directoryHint: .isDirectory)
             .standardizedFileURL
         guard isDirectChild(workspaceRoot, ofBatch: batchID, itemID: itemID) else {
-            throw failure("workspace.invalid-path")
+            throw failure(.workspaceInvalidPath)
         }
-        try fileManager.createDirectory(
-            at: workspaceRoot,
-            withIntermediateDirectories: true
-        )
-        let marker = workspaceRoot.appending(component: markerName)
-        if !fileManager.fileExists(atPath: marker.path) {
-            guard fileManager.createFile(atPath: marker.path, contents: Data()) else {
-                throw failure("workspace.marker")
+        do {
+            try fileManager.createDirectory(
+                at: workspaceRoot,
+                withIntermediateDirectories: true
+            )
+            let marker = workspaceRoot.appending(component: markerName)
+            if !fileManager.fileExists(atPath: marker.path) {
+                guard fileManager.createFile(atPath: marker.path, contents: Data()) else {
+                    throw failure(.workspaceMarker)
+                }
             }
+        } catch let sanitized as SanitizedFailure {
+            throw sanitized
+        } catch {
+            throw unexpectedFailure(phase: .workspaceStaging)
         }
         return WorkspaceReference(
             batchID: batchID,
@@ -65,7 +71,7 @@ actor WorkspaceStore: WorkspaceStoring {
         let destination = try containedURL("source.partial", in: workspace)
         let finalURL = try containedURL("source.snapshot", in: workspace)
         guard !fileManager.fileExists(atPath: finalURL.path) else {
-            throw failure("workspace.collision")
+            throw failure(.workspaceCollision)
         }
 
         do {
@@ -90,7 +96,7 @@ actor WorkspaceStore: WorkspaceStoring {
             if let failure = error as? SanitizedFailure {
                 throw failure
             }
-            throw failure("workspace.copy")
+            throw failure(.workspaceCopy)
         }
     }
 
@@ -105,7 +111,7 @@ actor WorkspaceStore: WorkspaceStoring {
         guard fileManager.fileExists(atPath: source.path),
               !fileManager.fileExists(atPath: destination.path)
         else {
-            throw failure("workspace.collision")
+            throw failure(.workspaceCollision)
         }
         do {
             try fileManager.moveItem(at: source, to: destination)
@@ -118,22 +124,30 @@ actor WorkspaceStore: WorkspaceStoring {
             if let sanitized = error as? SanitizedFailure {
                 throw sanitized
             }
-            throw failure("workspace.promote")
+            throw failure(.workspacePromote)
         }
         return StagedFileReference(identifier: UUID(), url: destination)
     }
 
     func digest(of file: StagedFileReference) async throws -> String {
-        let handle = try FileHandle(forReadingFrom: file.url)
-        defer { try? handle.close() }
-        var hasher = SHA256()
-        while true {
-            try Task.checkCancellation()
-            let chunk = try handle.read(upToCount: 64 * 1_024) ?? Data()
-            guard !chunk.isEmpty else { break }
-            hasher.update(data: chunk)
+        do {
+            let handle = try FileHandle(forReadingFrom: file.url)
+            defer { try? handle.close() }
+            var hasher = SHA256()
+            while true {
+                try Task.checkCancellation()
+                let chunk = try handle.read(upToCount: 64 * 1_024) ?? Data()
+                guard !chunk.isEmpty else { break }
+                hasher.update(data: chunk)
+            }
+            return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let sanitized as SanitizedFailure {
+            throw sanitized
+        } catch {
+            throw unexpectedFailure(phase: .workingCopyWrite)
         }
-        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
     func cleanupPartialFiles(in workspace: WorkspaceReference) {
@@ -153,22 +167,33 @@ actor WorkspaceStore: WorkspaceStoring {
         }
     }
 
-    func clearBatch(_ batchID: UUID) {
+    func clearBatch(_ batchID: UUID) -> Bool {
         let batchRoot = rootURL
             .appending(component: batchID.uuidString, directoryHint: .isDirectory)
             .standardizedFileURL
         guard batchRoot.deletingLastPathComponent().standardizedFileURL.path
-                == rootURL.path,
-              let children = try? fileManager.contentsOfDirectory(
+                == rootURL.path
+        else {
+            return false
+        }
+        guard fileManager.fileExists(atPath: batchRoot.path) else {
+            return true
+        }
+        guard let children = try? fileManager.contentsOfDirectory(
                 at: batchRoot,
                 includingPropertiesForKeys: nil,
                 options: []
               ),
               children.allSatisfy(isMarkedWorkspace)
         else {
-            return
+            return false
         }
-        try? fileManager.removeItem(at: batchRoot)
+        do {
+            try fileManager.removeItem(at: batchRoot)
+            return !fileManager.fileExists(atPath: batchRoot.path)
+        } catch {
+            return false
+        }
     }
 
     func sweepOrphans(olderThan cutoff: Date) {
@@ -220,7 +245,7 @@ actor WorkspaceStore: WorkspaceStoring {
         guard !fileManager.fileExists(atPath: destination.path),
               fileManager.createFile(atPath: destination.path, contents: nil)
         else {
-            throw failure("workspace.partial-create")
+            throw failure(.workspacePartialCreate)
         }
 
         let reader = try FileHandle(forReadingFrom: source)
@@ -235,13 +260,13 @@ actor WorkspaceStore: WorkspaceStoring {
         while true {
             try Task.checkCancellation()
             guard ContinuousClock.now < deadline else {
-                throw failure("workspace.timeout")
+                throw failure(.workspaceTimeout)
             }
             let chunk = try reader.read(upToCount: 64 * 1_024) ?? Data()
             guard !chunk.isEmpty else { break }
             copied += Int64(chunk.count)
             guard copied <= maximumBytes else {
-                throw failure("workspace.size-limit")
+                throw failure(.workspaceSizeLimit)
             }
             try writer.write(contentsOf: chunk)
         }
@@ -258,12 +283,12 @@ actor WorkspaceStore: WorkspaceStoring {
               !relativePath.split(separator: "/", omittingEmptySubsequences: false)
                   .contains(where: { $0.isEmpty || $0 == "." || $0 == ".." })
         else {
-            throw failure("workspace.invalid-path")
+            throw failure(.workspaceInvalidPath)
         }
         let url = workspace.rootURL.appending(path: relativePath).standardizedFileURL
         let root = workspace.rootURL.standardizedFileURL.path + "/"
         guard url.path.hasPrefix(root) else {
-            throw failure("workspace.invalid-path")
+            throw failure(.workspaceInvalidPath)
         }
         return url
     }
@@ -276,7 +301,7 @@ actor WorkspaceStore: WorkspaceStoring {
         ),
         isMarkedWorkspace(workspace.rootURL)
         else {
-            throw failure("workspace.invalid-marker")
+            throw failure(.workspaceInvalidMarker)
         }
     }
 
@@ -298,12 +323,27 @@ actor WorkspaceStore: WorkspaceStoring {
         )
     }
 
-    private func failure(_ code: String) -> SanitizedFailure {
+    private func failure(_ code: DiagnosticCode) -> SanitizedFailure {
         SanitizedFailure(
             family: .filesystem,
             code: code,
             message: "The temporary book workspace could not be updated.",
             recoveryAction: .chooseAnotherFile
+        )
+    }
+
+    private func unexpectedFailure(
+        phase: DiagnosticPhase
+    ) -> SanitizedFailure {
+        SanitizedFailure(
+            family: .filesystem,
+            code: .unexpectedFilesystem,
+            message: "An unexpected workspace operation failed.",
+            recoveryAction: .chooseAnotherFile,
+            evidence: DiagnosticEvidence(
+                phase: phase,
+                retryDisposition: .chooseAnotherFile
+            )
         )
     }
 }

@@ -14,7 +14,22 @@ Send Book
 
 `Delivery Setup` stores SMTP and Kindle delivery settings locally. `Send Book`
 accepts one or more books through drag and drop or Finder and shows concise
-per-book readiness and delivery states.
+per-book readiness and delivery states. Inside `Send Book`, the `Send` tab owns
+the active batch and the `History` tab shows a simple newest-first record of
+definitive SMTP submissions.
+
+Successful and informational acknowledgements disappear after four seconds.
+Active work, failures, cancellations, mixed results, and
+`Delivery Unknown` remain visible until replaced or deliberately cleared. A
+terminal batch exposes `Send More Books`, which clears only its temporary
+books and presentation state before the next intake.
+
+Send history remains local, retains at most 500 records, and stores only a local
+identifier, the original book display name, and the provider-acceptance
+timestamp. It can be cleared explicitly and cannot resend, retry, open, locate,
+preview, export, or manage books. A history row means the SMTP provider
+definitively accepted the submission; it does not claim Kindle receipt,
+processing, availability, or library presence.
 
 ## Background Pipeline
 
@@ -46,6 +61,8 @@ The active implementation specification is
 [`specs/006-replace-mock-workflows/spec.md`](specs/006-replace-mock-workflows/spec.md),
 built on the product baseline in
 [`specs/005-lightweight-macos-sender/spec.md`](specs/005-lightweight-macos-sender/spec.md),
+with transient feedback, repeated sends, and bounded local history defined by
+[`specs/009-transient-feedback-history/spec.md`](specs/009-transient-feedback-history/spec.md),
 and governed by
 [`.specify/memory/constitution.md`](.specify/memory/constitution.md).
 
@@ -105,7 +122,9 @@ version using this corrected storage contract asks for the password once;
 updates signed with the same pinned identity retain access without asking again.
 
 See [`docs/deployment.md`](docs/deployment.md) for the release workflow and
-validation boundaries.
+validation boundaries. For safe current-error copying, local macOS diagnostic
+lookup, privacy guarantees, and support guidance, see
+[`docs/troubleshooting.md`](docs/troubleshooting.md).
 
 ## Development and Verification
 

@@ -16,18 +16,21 @@ struct PrivacyAuditTests {
                 includingPropertiesForKeys: [.isRegularFileKey]
             )
         )
-        var source = ""
+        var productionSources: [(URL, String)] = []
         for case let url as URL in enumerator
             where url.pathExtension == "swift" {
-            source.append(try String(contentsOf: url, encoding: .utf8))
+            productionSources.append(
+                (url, try String(contentsOf: url, encoding: .utf8))
+            )
         }
+
+        let source = productionSources.map(\.1).joined()
 
         for forbidden in [
             ["Preview", "Book"].joined(),
             ["Preview", " Send Book"].joined(),
             ["SMTP delivery", " is not available"].joined(),
             "os_log(",
-            "Logger(",
             "Analytics",
             "Telemetry",
         ] {
@@ -35,6 +38,22 @@ struct PrivacyAuditTests {
         }
         #expect(source.contains("URLSession.shared") == false)
         #expect(source.contains("Process(") == false)
+
+        let loggerFiles = productionSources.filter {
+            $0.1.contains("Logger(")
+                || $0.1.contains("import OSLog")
+        }
+        #expect(loggerFiles.count == 1)
+        #expect(
+            loggerFiles.first?.0.lastPathComponent
+                == "UnifiedDiagnosticRecorder.swift"
+        )
+        for (url, contents) in productionSources
+            where url.lastPathComponent != "UnifiedDiagnosticRecorder.swift" {
+            #expect(!contents.contains("os_log("))
+            #expect(!contents.contains("Logger("))
+            #expect(!contents.contains("import OSLog"))
+        }
     }
 
     @Test

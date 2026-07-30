@@ -10,56 +10,106 @@ struct DeliverySetupView: View {
     let presentation: DeliverySetupPresentation
     @FocusState private var focusedField: DeliveryField?
 
+    @ViewBuilder
     var body: some View {
-        Form {
-            if presentation == .onboarding {
+        if presentation == .settings {
+            ScrollView(.vertical) {
+                LazyVStack(alignment: .leading, spacing: 18) {
+                    setupFields
+                    feedbackContent
+                    actionButtons
+                }
+                .frame(maxWidth: 560)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 32)
+            }
+            .scrollIndicators(.visible)
+            .accessibilityIdentifier("settings.delivery.scroll")
+        } else {
+            Form {
                 Section {
                     setupFields
                 } header: {
                     Text("Delivery Setup")
                         .font(.largeTitle.weight(.bold))
                 }
-            } else {
-                Section {
-                    setupFields
-                }
-            }
 
-            if let setupMessage = model.setupMessage {
-                Section {
-                    Label(setupMessage, systemImage: "exclamationmark.circle")
-                        .foregroundStyle(.red)
-                        .accessibilityIdentifier("deliverySetup.error")
-                }
-            }
-
-            Section {
-                Button {
-                    model.saveSetup()
-                } label: {
-                    Group {
-                        if model.isSavingSetup {
-                            ProgressView()
-                                .controlSize(.small)
-                                .accessibilityLabel("Saving setup")
-                        } else {
-                            Text("Save Setup")
-                        }
+                if model.feedback(for: .deliverySetup) != nil
+                    || model.setupMessage != nil {
+                    Section {
+                        feedbackContent
                     }
-                    .font(.system(size: 16, weight: .semibold))
-                    .frame(maxWidth: .infinity, minHeight: 44)
                 }
-                .buttonStyle(.glassProminent)
-                .buttonBorderShape(.capsule)
-                .padding(.top, 20)
-                .keyboardShortcut(.defaultAction)
-                .disabled(!model.canSaveSetup)
-                .accessibilityIdentifier("deliverySetup.save")
+
+                Section {
+                    actionButtons
+                }
             }
+            .scrollContentBackground(.hidden)
+            .frame(maxWidth: 560)
+            .padding(32)
         }
-        .scrollContentBackground(.hidden)
-        .frame(maxWidth: 560)
-        .padding(presentation == .onboarding ? 32 : 20)
+    }
+
+    @ViewBuilder
+    private var feedbackContent: some View {
+        if let feedback = model.feedback(for: .deliverySetup) {
+            ActionFeedbackView(feedback: feedback)
+            if let failure = feedback.failure {
+                FailureDetailView(
+                    presentation: failure,
+                    diagnosticEvent: model.currentDiagnosticEvent,
+                    copyFeedback: model.currentCopyFeedback,
+                    copyErrorDetails: model.copyCurrentErrorDetails,
+                    performRecovery: handleRecovery
+                )
+            }
+        } else if let setupMessage = model.setupMessage {
+            Label(setupMessage, systemImage: "exclamationmark.circle")
+                .foregroundStyle(.red)
+                .accessibilityIdentifier("deliverySetup.error")
+        }
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        Button {
+            model.saveSetup()
+        } label: {
+            Group {
+                if model.isSavingSetup {
+                    ProgressView()
+                        .controlSize(.small)
+                        .accessibilityLabel("Saving setup")
+                } else {
+                    Text("Save Setup")
+                }
+            }
+            .font(.system(size: 16, weight: .semibold))
+            .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.glassProminent)
+        .buttonBorderShape(.capsule)
+        .padding(.top, 20)
+        .keyboardShortcut(.defaultAction)
+        .disabled(!model.canSaveSetup)
+        .accessibilityIdentifier("deliverySetup.save")
+
+        if presentation == .settings, model.setup != nil {
+            Button("Delete Delivery Setup", role: .destructive) {
+                model.deleteSetup()
+            }
+            .buttonStyle(.glassProminent)
+            .buttonBorderShape(.capsule)
+            .tint(.red)
+            .disabled(!model.canSaveSetup)
+            .accessibilityHint(
+                model.canSaveSetup
+                    ? "Deletes saved delivery settings and the stored app password."
+                    : "Wait for the current operation to finish."
+            )
+            .accessibilityIdentifier("deliverySetup.delete")
+        }
     }
 
     @ViewBuilder
@@ -161,6 +211,7 @@ struct DeliverySetupView: View {
             Text(message(for: error))
                 .font(.caption)
                 .foregroundStyle(.red)
+                .accessibilityLabel("Error: \(message(for: error))")
         }
     }
 
@@ -182,6 +233,12 @@ struct DeliverySetupView: View {
         case .invalidPort: "Enter a port from 1 through 65535."
         case .invalidUsername: "Enter a valid username."
         case .kindleDomainRequired: "Enter an address ending in @kindle.com."
+        }
+    }
+
+    private func handleRecovery(_ action: RecoveryAction) {
+        if action == .editSetup {
+            focusedField = .appPassword
         }
     }
 }

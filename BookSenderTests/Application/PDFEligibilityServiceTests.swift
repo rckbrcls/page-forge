@@ -75,7 +75,8 @@ struct PDFEligibilityServiceTests {
         )
 
         #expect(result.preparedBook == nil)
-        #expect(result.failure?.code == "pdf.signature")
+        #expect(result.failure?.code == .pdfSignature)
+        #expect(result.failure?.evidence.phase == .intake)
     }
 
     @Test
@@ -110,6 +111,7 @@ struct PDFEligibilityServiceTests {
         )
 
         #expect(result.preparedBook == nil)
-        #expect(result.failure?.code == "pdf.size")
+        #expect(result.failure?.code == .pdfSize)
+        #expect(result.failure?.evidence.context.safetyLimit == .bookBytes)
     }
 }

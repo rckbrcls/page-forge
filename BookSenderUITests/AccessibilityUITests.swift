@@ -13,9 +13,15 @@ final class AccessibilityUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
+        let feedback = app.descendants(matching: .any)["feedback.batch"]
+        XCTAssertTrue(feedback.exists)
+        XCTAssertEqual(feedback.value as? String, "Succeeded")
         XCTAssertTrue(app.buttons["sendBook.dropTarget"].isHittable)
         XCTAssertTrue(app.buttons["sendBook.send"].isHittable)
         XCTAssertTrue(app.buttons["sendBook.editSetup"].isHittable)
+        XCTAssertTrue(
+            app.descendants(matching: .any)["sendBook.batch.card"].exists
+        )
         XCTAssertTrue(app.descendants(matching: .any)["sendBook.batch"].exists)
         let row = app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier BEGINSWITH 'sendBook.item.'"))
@@ -50,6 +56,11 @@ final class AccessibilityUITests: XCTestCase {
         app.buttons["deliverySetup.save"].click()
 
         XCTAssertTrue(app.staticTexts["This field is required."].exists)
+        let setupFeedback = app.descendants(matching: .any)[
+            "feedback.deliverySetup"
+        ]
+        XCTAssertTrue(setupFeedback.exists)
+        XCTAssertEqual(setupFeedback.value as? String, "Failed")
         XCTAssertTrue(
             app.textFields["deliverySetup.senderAddress"].isHittable
         )
@@ -106,5 +117,65 @@ final class AccessibilityUITests: XCTestCase {
                 "Kindle Address",
             ]
         )
+    }
+
+    func testTransientBatchSuccessAppearsOnceThenCollapses() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-uiTesting",
+            "-resetSetup",
+            "-configuredSetup",
+            "-uiTestPDFs",
+            "-resetHistory",
+        ]
+        app.launch()
+
+        let success = app.staticTexts["1 book ready."]
+        XCTAssertTrue(success.waitForExistence(timeout: 5))
+        XCTAssertEqual(
+            app.staticTexts.matching(
+                NSPredicate(format: "label == %@", "1 book ready.")
+            ).count,
+            1
+        )
+        XCTAssertTrue(success.waitForNonExistence(timeout: 6))
+        XCTAssertTrue(app.staticTexts["Ready"].exists)
+        XCTAssertTrue(app.buttons["sendBook.send"].isEnabled)
+        XCTAssertFalse(
+            app.descendants(matching: .any)["feedback.batch"].exists
+        )
+    }
+
+    func testCompletedResetIsLabeledKeyboardReachableAndConfirmsUncertainty() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-uiTesting",
+            "-resetSetup",
+            "-configuredSetup",
+            "-uiTestPDFs",
+            "-uiTestOutcomeUnknown",
+            "-resetHistory",
+        ]
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
+        app.buttons["sendBook.send"].click()
+        XCTAssertTrue(
+            app.buttons["sendBook.confirm"].waitForExistence(timeout: 2)
+        )
+        app.buttons["sendBook.confirm"].click()
+        let reset = app.buttons["sendBook.sendMore"]
+        XCTAssertTrue(reset.waitForExistence(timeout: 5))
+        XCTAssertEqual(reset.label, "Send More Books")
+        XCTAssertTrue(reset.isHittable)
+
+        app.typeKey(.return, modifierFlags: [])
+
+        XCTAssertTrue(app.staticTexts["Start Another Send?"].exists)
+        XCTAssertTrue(app.alerts.buttons["Keep Results"].isHittable)
+        XCTAssertTrue(app.alerts.buttons["Send More Books"].isHittable)
+        app.typeKey(.escape, modifierFlags: [])
+        XCTAssertTrue(reset.isHittable)
+        XCTAssertTrue(app.staticTexts["Delivery Unknown"].exists)
     }
 }

@@ -10,7 +10,7 @@ struct EPUBArchiveWriter: EPUBArchiveWriting {
     ) async throws -> StagedFileReference {
         try Task.checkCancellation()
         guard plan.decision == .writeEPUBWorkingCopy else {
-            throw failure("repair.invalid-plan")
+            throw failure(.repairInvalidPlan)
         }
         let supported = plan.actions.allSatisfy {
             switch $0 {
@@ -20,7 +20,7 @@ struct EPUBArchiveWriter: EPUBArchiveWriting {
             }
         }
         guard supported else {
-            throw failure("repair.unsupported-action")
+            throw failure(.repairUnsupportedAction)
         }
 
         let reader = ZIPFoundationEPUBArchive(source: source)
@@ -31,7 +31,7 @@ struct EPUBArchiveWriter: EPUBArchiveWriting {
         let partialURL = workspace.rootURL
             .appending(component: "prepared.partial.epub")
         guard !fileManager.fileExists(atPath: partialURL.path) else {
-            throw failure("repair.output-create")
+            throw failure(.repairOutputCreate)
         }
 
         let deadline = ContinuousClock.now.advanced(by: limits.operationTimeout)
@@ -57,7 +57,7 @@ struct EPUBArchiveWriter: EPUBArchiveWriting {
             for (index, descriptor) in descriptors.enumerated() {
                 try Task.checkCancellation()
                 guard ContinuousClock.now < deadline else {
-                    throw failure("repair.timeout")
+                    throw failure(.repairTimeout)
                 }
                 guard !descriptor.isDirectory,
                       descriptor.path != "mimetype",
@@ -69,7 +69,7 @@ struct EPUBArchiveWriter: EPUBArchiveWriting {
                 guard let entry = input[descriptor.path],
                       descriptor.uncompressedSize <= limits.maximumEntryBytes
                 else {
-                    throw failure("repair.entry-missing")
+                    throw failure(.repairEntryMissing)
                 }
 
                 let temporary = workspace.rootURL
@@ -78,7 +78,7 @@ struct EPUBArchiveWriter: EPUBArchiveWriting {
                     atPath: temporary.path,
                     contents: nil
                 ) else {
-                    throw failure("repair.entry-create")
+                    throw failure(.repairEntryCreate)
                 }
                 defer { try? fileManager.removeItem(at: temporary) }
 
@@ -89,7 +89,7 @@ struct EPUBArchiveWriter: EPUBArchiveWriting {
                             throw CancellationError()
                         }
                         guard ContinuousClock.now < deadline else {
-                            throw self.failure("repair.timeout")
+                            throw self.failure(.repairTimeout)
                         }
                         try writer.write(contentsOf: chunk)
                     }
@@ -126,7 +126,7 @@ struct EPUBArchiveWriter: EPUBArchiveWriting {
             throw sanitized
         } catch {
             try? fileManager.removeItem(at: partialURL)
-            throw failure("repair.write")
+            throw failure(.repairWrite)
         }
     }
 
@@ -140,7 +140,7 @@ struct EPUBArchiveWriter: EPUBArchiveWriting {
                   paths.contains(packagePath),
                   paths.filter({ $0.lowercased().hasSuffix(".opf") }).count == 1
             else {
-                throw failure("repair.precondition")
+                throw failure(.repairPrecondition)
             }
         }
     }
@@ -192,7 +192,7 @@ struct EPUBArchiveWriter: EPUBArchiveWriting {
         )
     }
 
-    private func failure(_ code: String) -> SanitizedFailure {
+    private func failure(_ code: DiagnosticCode) -> SanitizedFailure {
         SanitizedFailure(
             family: .repair,
             code: code,

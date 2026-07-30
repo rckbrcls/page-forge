@@ -38,37 +38,86 @@ struct SMTPStateMachine: Sendable {
         isTLSActive = setup.securityMode == .implicitTLS
     }
 
-    mutating func receive(_ reply: SMTPReply) -> [SMTPAction] {
-        guard reply.code < 400 else {
-            state = .completed
-            return [.failed(providerFailure(code: reply.code))]
-        }
-
+    var diagnosticPhase: DiagnosticPhase {
         switch state {
         case .greeting:
-            guard reply.code == 220 else { return fail("smtp.greeting") }
+            .smtpConnecting
+        case .ehloBeforeTLS, .startTLS, .ehloAfterTLS:
+            .smtpSecuring
+        case .authPlain, .authLoginUsername, .authLoginPassword, .authenticated:
+            .smtpAuthenticating
+        case .mailFrom:
+            .smtpSender
+        case .recipient:
+            .smtpRecipient
+        case .data:
+            .smtpData
+        case .finalAcceptance, .completed:
+            .smtpFinalAcceptance
+        }
+    }
+
+    mutating func receive(_ reply: SMTPReply) -> [SMTPAction] {
+        switch state {
+        case .greeting:
+            guard reply.code == 220 else {
+                return fail(
+                    .smtpGreeting,
+                    phase: .smtpSecuring,
+                    retryDisposition: .retrySafe,
+                    recoveryAction: .retryFailed,
+                    providerStatus: reply.providerStatus
+                )
+            }
             state = setup.securityMode == .startTLS
                 ? .ehloBeforeTLS
                 : .ehloAfterTLS
             return [command("EHLO localhost")]
 
         case .ehloBeforeTLS:
-            guard reply.code == 250 else { return fail("smtp.ehlo") }
+            guard reply.code == 250 else {
+                return fail(
+                    .smtpEHLO,
+                    phase: .smtpSecuring,
+                    retryDisposition: .editSetup,
+                    recoveryAction: .editSetup,
+                    providerStatus: reply.providerStatus
+                )
+            }
             capabilities = parseCapabilities(reply)
             guard capabilities.contains("STARTTLS") else {
-                return fail("smtp.starttls-unavailable")
+                return fail(
+                    .smtpStartTLSUnavailable,
+                    phase: .smtpSecuring,
+                    retryDisposition: .editSetup,
+                    recoveryAction: .editSetup
+                )
             }
             state = .startTLS
             return [command("STARTTLS")]
 
         case .startTLS:
-            guard reply.code == 220 else { return fail("smtp.starttls") }
+            guard reply.code == 220 else {
+                return fail(
+                    .smtpStartTLS,
+                    phase: .smtpSecuring,
+                    retryDisposition: .editSetup,
+                    recoveryAction: .editSetup,
+                    providerStatus: reply.providerStatus
+                )
+            }
             state = .ehloAfterTLS
             return [.upgradeTLS]
 
         case .ehloAfterTLS:
             guard reply.code == 250, isTLSActive else {
-                return fail("smtp.secure-ehlo")
+                return fail(
+                    .smtpSecureEHLO,
+                    phase: .smtpSecuring,
+                    retryDisposition: .editSetup,
+                    recoveryAction: .editSetup,
+                    providerStatus: reply.providerStatus
+                )
             }
             capabilities = parseCapabilities(reply)
             if capabilities.contains("AUTH PLAIN") || capabilities.contains("PLAIN") {
@@ -84,7 +133,12 @@ struct SMTPStateMachine: Sendable {
                 state = .authLoginUsername
                 return [command("AUTH LOGIN")]
             }
-            return fail("smtp.auth-unavailable")
+            return fail(
+                .smtpAuthenticationUnavailable,
+                phase: .smtpAuthenticating,
+                retryDisposition: .editSetup,
+                recoveryAction: .editSetup
+            )
 
         case .authPlain(let challengeResponseSent):
             if reply.code == 334, !challengeResponseSent {
@@ -96,12 +150,16 @@ struct SMTPStateMachine: Sendable {
                     ),
                 ]
             }
-            guard reply.code == 235 else { return fail("smtp.authentication") }
+            guard reply.code == 235 else {
+                return authenticationFailure(reply)
+            }
             state = .mailFrom
             return [command("MAIL FROM:<\(setup.senderAddress.value)>")]
 
         case .authLoginUsername:
-            guard reply.code == 334 else { return fail("smtp.authentication") }
+            guard reply.code == 334 else {
+                return authenticationFailure(reply)
+            }
             state = .authLoginPassword
             return [
                 command(
@@ -111,7 +169,9 @@ struct SMTPStateMachine: Sendable {
             ]
 
         case .authLoginPassword:
-            guard reply.code == 334 else { return fail("smtp.authentication") }
+            guard reply.code == 334 else {
+                return authenticationFailure(reply)
+            }
             state = .authenticated
             return [
                 command(
@@ -121,29 +181,73 @@ struct SMTPStateMachine: Sendable {
             ]
 
         case .authenticated:
-            guard reply.code == 235 else { return fail("smtp.authentication") }
+            guard reply.code == 235 else {
+                return authenticationFailure(reply)
+            }
             state = .mailFrom
             return [command("MAIL FROM:<\(setup.senderAddress.value)>")]
 
         case .mailFrom:
-            guard reply.code == 250 else { return fail("smtp.sender-rejected") }
+            guard reply.code == 250 else {
+                let transient = (400...499).contains(reply.code)
+                return fail(
+                    .smtpSenderRejected,
+                    phase: .smtpSender,
+                    retryDisposition: transient ? .retrySafe : .editSetup,
+                    recoveryAction: transient ? .retryFailed : .editSetup,
+                    providerStatus: reply.providerStatus
+                )
+            }
             state = .recipient
             return [command("RCPT TO:<\(setup.kindleAddress.value)>")]
 
         case .recipient:
             guard reply.code == 250 || reply.code == 251 else {
-                return fail("smtp.recipient-rejected")
+                let transient = (400...499).contains(reply.code)
+                return fail(
+                    .smtpRecipientRejected,
+                    phase: .smtpRecipient,
+                    retryDisposition: transient ? .retrySafe : .editSetup,
+                    recoveryAction: transient ? .retryFailed : .editSetup,
+                    providerStatus: reply.providerStatus
+                )
             }
             state = .data
             return [command("DATA")]
 
         case .data:
-            guard reply.code == 354 else { return fail("smtp.data-rejected") }
+            guard reply.code == 354 else {
+                let transient = (400...499).contains(reply.code)
+                return fail(
+                    .smtpDataRejected,
+                    phase: .smtpData,
+                    retryDisposition: transient
+                        ? .retrySafe
+                        : .reviewBook,
+                    recoveryAction: transient
+                        ? .retryFailed
+                        : .reviewBook,
+                    providerStatus: reply.providerStatus
+                )
+            }
             state = .finalAcceptance
             return [.beginMessageData]
 
         case .finalAcceptance:
-            guard reply.code == 250 else { return fail("smtp.message-rejected") }
+            guard reply.code == 250 else {
+                let transient = (400...499).contains(reply.code)
+                return fail(
+                    .smtpFinalAcceptanceRejected,
+                    phase: .smtpFinalAcceptance,
+                    retryDisposition: transient
+                        ? .retrySafe
+                        : .reviewBook,
+                    recoveryAction: transient
+                        ? .retryFailed
+                        : .reviewBook,
+                    providerStatus: reply.providerStatus
+                )
+            }
             state = .completed
             return [command("QUIT"), .accepted]
 
@@ -154,7 +258,12 @@ struct SMTPStateMachine: Sendable {
 
     mutating func didUpgradeTLS() -> [SMTPAction] {
         guard state == .ehloAfterTLS else {
-            return fail("smtp.starttls-state")
+            return fail(
+                .smtpStartTLSState,
+                phase: .smtpSecuring,
+                retryDisposition: .notRetryable,
+                recoveryAction: .editSetup
+            )
         }
         isTLSActive = true
         capabilities.removeAll(keepingCapacity: true)
@@ -192,7 +301,31 @@ struct SMTPStateMachine: Sendable {
             .base64EncodedString()
     }
 
-    private mutating func fail(_ code: String) -> [SMTPAction] {
+    private mutating func authenticationFailure(
+        _ reply: SMTPReply
+    ) -> [SMTPAction] {
+        let isCredentialRejection = [530, 534, 535].contains(reply.code)
+        let isTransient = (400...499).contains(reply.code)
+        return fail(
+            .smtpAuthenticationRejected,
+            phase: .smtpAuthenticating,
+            retryDisposition: isCredentialRejection || !isTransient
+                ? .editSetup
+                : .retrySafe,
+            recoveryAction: isCredentialRejection || !isTransient
+                ? .editSetup
+                : .retryFailed,
+            providerStatus: reply.providerStatus
+        )
+    }
+
+    private mutating func fail(
+        _ code: DiagnosticCode,
+        phase: DiagnosticPhase,
+        retryDisposition: RetryDisposition,
+        recoveryAction: RecoveryAction,
+        providerStatus: ProviderStatus? = nil
+    ) -> [SMTPAction] {
         state = .completed
         return [
             .failed(
@@ -200,18 +333,14 @@ struct SMTPStateMachine: Sendable {
                     family: .delivery,
                     code: code,
                     message: "The SMTP delivery could not be completed.",
-                    recoveryAction: .editSetup
+                    recoveryAction: recoveryAction,
+                    evidence: DiagnosticEvidence(
+                        phase: phase,
+                        retryDisposition: retryDisposition,
+                        providerStatus: providerStatus
+                    )
                 )
             ),
         ]
-    }
-
-    private func providerFailure(code: Int) -> SanitizedFailure {
-        SanitizedFailure(
-            family: .delivery,
-            code: "smtp.provider-\(code)",
-            message: "The SMTP provider rejected this delivery.",
-            recoveryAction: code == 535 ? .editSetup : .retryFailed
-        )
     }
 }

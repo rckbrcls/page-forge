@@ -3,6 +3,7 @@ import UniformTypeIdentifiers
 
 struct BookDropTarget: View {
     let isBusy: Bool
+    let disabledReason: String?
     let choose: () -> Void
     let add: ([URL]) -> Void
 
@@ -56,6 +57,10 @@ struct BookDropTarget: View {
         }
         .disabled(isBusy)
         .accessibilityLabel("Choose or drop EPUB or PDF books")
+        .accessibilityHint(
+            disabledReason ?? "Opens Finder. You can also drop supported books here."
+        )
+        .accessibilityValue(isBusy ? "Unavailable" : "Available")
         .accessibilityIdentifier("sendBook.dropTarget")
     }
 }

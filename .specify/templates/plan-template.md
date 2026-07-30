@@ -22,7 +22,7 @@
 
 **Primary Dependencies**: [SwiftUI, macOS system frameworks, and narrowly justified source packages]
 
-**Storage**: [protected credentials, local preferences, selected inputs, and collision-safe temporary/prepared copies]
+**Storage**: [protected credentials, local preferences, bounded send history when in scope, selected inputs, and collision-safe temporary/prepared copies]
 
 **Testing**: [Swift Testing or XCTest; deterministic EPUB, malicious-archive, pipeline, UI, and SMTP fixtures]
 
@@ -32,9 +32,9 @@
 
 **Performance Goals**: [fast launch, responsive minimal UI, bounded background preparation, responsive shortcut]
 
-**Constraints**: [two primary screens; local processing; immutable originals; no external engine, helper process, or executable download]
+**Constraints**: [two primary screens; local processing; immutable originals; bounded local history only; no external engine, helper process, or executable download]
 
-**Scale/Scope**: [temporary batches up to the specified acceptance capacity; sequential preparation and delivery]
+**Scale/Scope**: [temporary batches up to the specified acceptance capacity; sequential preparation and delivery; send history capped at 500 entries when in scope]
 
 ## Constitution Check
 
@@ -43,8 +43,8 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 Verify against `.specify/memory/constitution.md`:
 
 - **Mission and surface**: Feature directly supports SMTP setup, book intake,
-  background preparation, or explicit Kindle delivery and introduces no third
-  primary screen.
+  background preparation, explicit Kindle delivery, repeated sends, or bounded
+  local submission history and introduces no third primary screen.
 - **Native boundary**: Use one Swift and SwiftUI macOS application. Reject
   Raycast, parallel products, helper processes, executable downloads, Calibre,
   installed EPUBCheck, and user-installed processing tools.
@@ -62,6 +62,10 @@ Verify against `.specify/memory/constitution.md`:
   `delivery_unknown`.
 - **Delivery and privacy**: SMTP transmission is explicit; processing stays local;
   credentials use protected macOS storage and remain redacted.
+- **History boundary**: When history is in scope, record only definitive SMTP
+  acceptance, retain at most 500 local identifier/name/timestamp records, provide
+  explicit clearing, and expose no resend, file-management, analytics, or remote
+  synchronization behavior.
 - **Architecture and tests**: Keep SwiftUI separate from application, domain, and
   adapters. Use typed outcomes and fixture-backed tests for every automatic rule.
 - **Migration and distribution**: Plan removal of obsolete Raycast and legacy
@@ -96,7 +100,8 @@ BookSender/
 │   ├── DeliverySetup/
 │   └── SendBook/
 ├── Application/
-│   └── Pipeline/
+│   ├── Pipeline/
+│   └── History/
 ├── Domain/
 │   ├── Audit/
 │   ├── Repair/
@@ -106,7 +111,8 @@ BookSender/
 │   ├── XML/
 │   ├── Filesystem/
 │   ├── SMTP/
-│   └── Credentials/
+│   ├── Credentials/
+│   └── History/
 └── Resources/
 BookSenderTests/
 └── Fixtures/

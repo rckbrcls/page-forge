@@ -74,6 +74,11 @@ final class ShortcutService {
                     registrationState: .disabled
                 )
             )
+            model?.publishShortcutFeedback(
+                action: .clearShortcut,
+                state: .succeeded,
+                title: "Shortcut disabled."
+            )
             return
         }
         if let description = registrar.shortcutDescription() {
@@ -84,7 +89,22 @@ final class ShortcutService {
                     registrationState: .registered
                 )
             )
+            model?.publishShortcutFeedback(
+                action: .saveShortcut,
+                state: .succeeded,
+                title: "Shortcut registered."
+            )
         } else {
+            let failure = SanitizedFailure(
+                family: .shortcut,
+                code: .shortcutConflict,
+                message: "The selected shortcut is unavailable.",
+                recoveryAction: .chooseAnotherShortcut,
+                evidence: DiagnosticEvidence(
+                    phase: .shortcutRegistration,
+                    retryDisposition: .notRetryable
+                )
+            )
             model?.updateShortcutPreference(
                 ShortcutPreference(
                     isEnabled: true,
@@ -93,6 +113,12 @@ final class ShortcutService {
                         message: "Choose another shortcut."
                     )
                 )
+            )
+            model?.publishShortcutFeedback(
+                action: .saveShortcut,
+                state: .failed,
+                title: "Shortcut unavailable.",
+                failure: failure
             )
         }
     }

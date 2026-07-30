@@ -65,7 +65,7 @@ protocol WorkspaceStoring: Sendable {
     func digest(of file: StagedFileReference) async throws -> String
     func cleanupPartialFiles(in workspace: WorkspaceReference) async
     func cleanup(_ workspace: WorkspaceReference) async
-    func clearBatch(_ batchID: UUID) async
+    func clearBatch(_ batchID: UUID) async -> Bool
     func sweepOrphans(olderThan cutoff: Date) async
 }
 

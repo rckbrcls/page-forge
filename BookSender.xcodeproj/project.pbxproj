@@ -34,14 +34,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		BS0018010000000000000001 /* Exceptions for "BookSender" folder in "BookSender" target */ = {
+		BS0018010000000000000001 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = BS0006010000000000000001 /* BookSender */;
 		};
-		BS0018010000000000000002 /* Exceptions for "BookSenderTests" folder in "BookSenderTests" target */ = {
+		BS0018010000000000000002 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Fixtures/Books/README.md,
@@ -52,26 +52,8 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		BS0007010000000000000001 /* BookSender */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				BS0018010000000000000001 /* Exceptions for "BookSender" folder in "BookSender" target */,
-			);
-			explicitFileTypes = {};
-			explicitFolders = ();
-			path = BookSender;
-			sourceTree = "<group>";
-		};
-		BS0007010000000000000002 /* BookSenderTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				BS0018010000000000000002 /* Exceptions for "BookSenderTests" folder in "BookSenderTests" target */,
-			);
-			explicitFileTypes = {};
-			explicitFolders = ();
-			path = BookSenderTests;
-			sourceTree = "<group>";
-		};
+		BS0007010000000000000001 /* BookSender */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (BS0018010000000000000001 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = BookSender; sourceTree = "<group>"; };
+		BS0007010000000000000002 /* BookSenderTests */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (BS0018010000000000000002 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = BookSenderTests; sourceTree = "<group>"; };
 		BS0007010000000000000003 /* BookSenderUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BookSenderUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 

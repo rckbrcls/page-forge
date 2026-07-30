@@ -9,7 +9,7 @@ struct BatchCapacityTests {
         defer { stores.cleanup() }
         let outcomes: [TerminalOutcome] = (0..<20).map { index in
             index.isMultiple(of: 4)
-                ? .failed(sanitizedFailure("smtp.rejected-\(index)"))
+                ? .failed(sanitizedFailure(.smtpRecipientRejected))
                 : .submitted
         }
         let graph = TestDependencyGraph.make(stores: stores, outcomes: outcomes)
@@ -46,6 +46,10 @@ struct BatchCapacityTests {
         #expect(batch.completedCount == 20)
         #expect(batch.items.allSatisfy { $0.delivery.isTerminal })
         #expect((await pipeline.deliveryAttempts()).count == 20)
+        #expect(
+            try await graph.dependencies.historyService.snapshot().records
+                .count == 15
+        )
         #expect(SafetyLimits.standard.permitsBatchItemCount(20))
     }
 

@@ -5,36 +5,43 @@ struct ShortcutSettingsView: View {
     @Bindable var model: AppModel
     let setEnabled: @MainActor @Sendable (Bool) -> Void
     let shortcutChanged: @MainActor @Sendable () -> Void
+    @FocusState private var isShortcutFocused: Bool
 
     var body: some View {
-        Form {
-            Section {
-                HStack {
-                    KeyboardShortcuts.Recorder(for: .showBookSender) { _ in
-                        shortcutChanged()
-                    }
-                    .disabled(!model.shortcutPreference.isEnabled)
-                    .accessibilityIdentifier("settings.shortcut")
-                    Spacer()
-
-                    Toggle("", isOn: enabledBinding)
-                        .labelsHidden()
-                        .toggleStyle(.switch)
-                        .accessibilityLabel("Enable shortcut")
-                        .accessibilityIdentifier("settings.shortcut.enabled")
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                KeyboardShortcuts.Recorder(for: .showBookSender) { _ in
+                    shortcutChanged()
                 }
-            } footer: {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Reveal the existing Book Sender window from any app.")
-                    Text(registrationMessage)
-                        .foregroundStyle(registrationColor)
-                        .accessibilityIdentifier(
-                            "settings.shortcut.registrationState"
-                        )
+                .disabled(!model.shortcutPreference.isEnabled)
+                .focused($isShortcutFocused)
+                .accessibilityIdentifier("settings.shortcut")
+                Spacer()
+
+                Toggle("", isOn: enabledBinding)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .accessibilityLabel("Enable shortcut")
+                    .accessibilityIdentifier("settings.shortcut.enabled")
+            }
+
+            if let feedback = model.feedback(for: .shortcut) {
+                ActionFeedbackView(feedback: feedback)
+                if let failure = feedback.failure {
+                    FailureDetailView(
+                        presentation: failure,
+                        diagnosticEvent: model.currentDiagnosticEvent,
+                        copyFeedback: model.currentCopyFeedback,
+                        copyErrorDetails: model.copyCurrentErrorDetails,
+                        performRecovery: handleRecovery
+                    )
                 }
             }
+
+            Spacer(minLength: 0)
         }
         .padding(20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .accessibilityIdentifier("settings.shortcut.content")
     }
 
@@ -47,18 +54,9 @@ struct ShortcutSettingsView: View {
         )
     }
 
-    private var registrationMessage: String {
-        switch model.shortcutPreference.registrationState {
-        case .registered: "Shortcut registered."
-        case .disabled: "Shortcut disabled."
-        case .conflict(let message): message
+    private func handleRecovery(_ action: RecoveryAction) {
+        if action == .chooseAnotherShortcut {
+            isShortcutFocused = true
         }
-    }
-
-    private var registrationColor: Color {
-        if case .conflict = model.shortcutPreference.registrationState {
-            return .orange
-        }
-        return .secondary
     }
 }

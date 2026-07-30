@@ -20,7 +20,7 @@ struct EPUBRepairEngineTests {
         )
         let engine = EPUBRepairEngine(
             writer: FailingArchiveWriter(
-                failure: sanitizedFailure("unused", family: .repair)
+                failure: sanitizedFailure(.unexpectedRepair, family: .repair)
             ),
             workspaceStore: WorkspaceStore()
         )
@@ -50,7 +50,7 @@ struct EPUBRepairEngineTests {
         )
         let engine = EPUBRepairEngine(
             writer: FailingArchiveWriter(
-                failure: sanitizedFailure("unused", family: .repair)
+                failure: sanitizedFailure(.unexpectedRepair, family: .repair)
             ),
             workspaceStore: WorkspaceStore()
         )
@@ -82,7 +82,7 @@ struct EPUBRepairEngineTests {
         )
         let engine = EPUBRepairEngine(
             writer: FailingArchiveWriter(
-                failure: sanitizedFailure("unused", family: .repair)
+                failure: sanitizedFailure(.unexpectedRepair, family: .repair)
             ),
             workspaceStore: WorkspaceStore()
         )
@@ -103,6 +103,85 @@ struct EPUBRepairEngineTests {
         #expect(comparison.introducedFindingCodes == [.remoteReference])
     }
 
+    @Test
+    func forwardsTypedWorkingCopyFailureWithoutPathOrRawError() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let workspaceStore = WorkspaceStore(
+            rootURL: stores.rootURL.appending(component: "work")
+        )
+        let workspace = try await workspaceStore.createWorkspace(
+            batchID: UUID(),
+            itemID: UUID()
+        )
+        let original = try FixtureFactory.makeEPUB(
+            .missingMimetype,
+            in: stores.rootURL
+        )
+        let source = try await workspaceStore.stageReadOnlySource(
+            original,
+            in: workspace,
+            maximumBytes: SafetyLimits.standard.maximumBookBytes
+        )
+        let writerFailure = SanitizedFailure(
+            family: .repair,
+            code: .repairWrite,
+            message: "The working copy was not written.",
+            recoveryAction: .reviewBook
+        )
+        let engine = EPUBRepairEngine(
+            writer: FailingArchiveWriter(failure: writerFailure),
+            workspaceStore: workspaceStore
+        )
+
+        let result = await engine.prepare(
+            source: source,
+            workspace: workspace,
+            displayName: "Synthetic.epub"
+        )
+
+        #expect(result.failure?.code == .repairWrite)
+        #expect(result.failure?.evidence.phase == .workingCopyWrite)
+        #expect(String(describing: result.failure).contains(original.path) == false)
+    }
+
+    @Test
+    func translatesUnexpectedWorkingCopyFailureWithExactPhase() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let workspaceStore = WorkspaceStore(
+            rootURL: stores.rootURL.appending(component: "work")
+        )
+        let workspace = try await workspaceStore.createWorkspace(
+            batchID: UUID(),
+            itemID: UUID()
+        )
+        let original = try FixtureFactory.makeEPUB(
+            .validEPUB3,
+            in: stores.rootURL
+        )
+        let source = try await workspaceStore.stageReadOnlySource(
+            original,
+            in: workspace,
+            maximumBytes: SafetyLimits.standard.maximumBookBytes
+        )
+        let engine = EPUBRepairEngine(
+            writer: UnexpectedArchiveWriter(),
+            workspaceStore: workspaceStore
+        )
+
+        let result = await engine.prepare(
+            source: source,
+            workspace: workspace,
+            displayName: "Synthetic.epub"
+        )
+
+        #expect(result.failure?.family == .repair)
+        #expect(result.failure?.code == .unexpectedRepair)
+        #expect(result.failure?.evidence.phase == .workingCopyWrite)
+        #expect(String(describing: result.failure).contains("raw-writer") == false)
+    }
+
     private func finding(
         _ code: FindingCode,
         rule: String,
@@ -117,5 +196,18 @@ struct EPUBRepairEngineTests {
             repairability: .automatic(ruleID: rule),
             evidence: evidence
         )
+    }
+}
+
+private struct UnexpectedArchiveWriter: EPUBArchiveWriting {
+    private struct RawWriterError: Error {}
+
+    func write(
+        source: StagedFileReference,
+        plan: PreparationPlan,
+        workspace: WorkspaceReference,
+        limits: SafetyLimits
+    ) async throws -> StagedFileReference {
+        throw RawWriterError()
     }
 }

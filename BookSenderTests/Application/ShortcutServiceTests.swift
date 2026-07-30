@@ -22,9 +22,11 @@ struct ShortcutServiceTests {
         service.start()
         #expect(model.shortcutPreference.registrationState == .registered)
         #expect(model.shortcutPreference.keyCombinationDescription == "⌘⌥K")
+        #expect(model.feedback(for: .shortcut)?.state == .succeeded)
 
         service.setEnabled(false)
         #expect(model.shortcutPreference.registrationState == .disabled)
+        #expect(model.feedback(for: .shortcut)?.title == "Shortcut disabled.")
         #expect(registrar.disableCount == 1)
 
         registrar.description = nil
@@ -37,6 +39,17 @@ struct ShortcutServiceTests {
         #expect(
             model.shortcutPreference.registrationState
                 == .conflict(message: "Choose another shortcut.")
+        )
+        #expect(model.feedback(for: .shortcut)?.state == .failed)
+        #expect(
+            model.feedback(for: .shortcut)?.failure?.code == .shortcutConflict
+        )
+        for _ in 0..<200 where model.currentDiagnosticEvent == nil {
+            await Task.yield()
+        }
+        #expect(
+            model.currentDiagnosticEvent?.failure.evidence.phase
+                == .shortcutRegistration
         )
     }
 

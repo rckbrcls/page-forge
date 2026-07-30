@@ -23,12 +23,18 @@
 
 - Governance source: `.specify/memory/constitution.md`.
 - Base product specification: `specs/005-lightweight-macos-sender/`.
-- Active implementation specification:
+- Core implementation specification:
   `specs/006-replace-mock-workflows/`, which removes preview behavior and
   completes real setup, preparation, batch, SMTP, recovery, Settings, and
   shortcut workflows without expanding the two-screen product.
+- Active product-evolution specification:
+  `specs/009-transient-feedback-history/`, which adds bounded transient
+  acknowledgements, a deliberate completed-batch reset, and a local send history.
 - Book Sender is a lightweight, self-contained native macOS application with
   exactly two primary screens: `Delivery Setup` and `Send Book`.
+- `Send Book` contains `Send` and `History` as local tabs. `History` is not a
+  third primary screen and must remain a bounded submission record rather than a
+  library, queue, or management surface.
 - A native auxiliary Settings window contains only `Delivery` and `Shortcut`
   tabs; it is not a third primary workflow screen.
 - The final repository contains one Swift and SwiftUI macOS application plus its
@@ -43,22 +49,27 @@
 - Planned source areas:
   - `BookSender/App/`: application lifecycle and composition
   - `BookSender/Features/DeliverySetup/`: SMTP setup screen only
-  - `BookSender/Features/SendBook/`: batch intake, minimal feedback, and delivery screen
+  - `BookSender/Features/SendBook/`: batch intake, minimal feedback, delivery, and bounded history
   - `BookSender/Features/Settings/`: saved delivery edits and global shortcut preferences
   - `BookSender/Application/Pipeline/`: sequential background orchestration
+  - `BookSender/Application/History/`: typed local submission-history behavior
   - `BookSender/Domain/Audit/`: EPUB rules and health derivation
   - `BookSender/Domain/Repair/`: cleanup, restoration, planning, and comparison
   - `BookSender/Domain/Models/`: typed findings, failures, plans, results, and state
-  - `BookSender/Adapters/`: archive, XML, filesystem, SMTP, and credential boundaries
+  - `BookSender/Adapters/`: archive, XML, filesystem, SMTP, credential, and local-history boundaries
   - `BookSenderTests/Fixtures/`: valid, malformed, ambiguous, and malicious EPUB fixtures
 
 ## Product Positioning
 
-- Keep the visible product limited to SMTP setup and batch book sending.
+- Keep the visible product limited to SMTP setup, batch book sending, and a
+  simple bounded record of definitive submissions.
 - Keep the advanced pipeline internal:
   `Safety Check -> Structural Audit -> Cleanup/Restore -> Write Working Copy -> Revalidate -> Ready`.
 - Default feedback is concise: checking, preparing, ready, needs attention,
   sending, and a terminal result.
+- Successful and informational acknowledgements disappear automatically within
+  five seconds. Active, blocked, failed, cancelled, and delivery-unknown states
+  remain until changed or deliberately cleared.
 - Reveal detailed evidence inline only when it explains a blocked item, failure,
   applied restoration, or user decision.
 - Support EPUB background preparation and direct PDF delivery. Do not add
@@ -75,6 +86,14 @@
   one delivery attempt at a time; isolate failures per book.
 - Cancellation stops pending scheduling and cooperatively interrupts active
   streams; SMTP may become `delivery_unknown` after message data begins.
+- After every item becomes terminal, `Send More Books` clears the temporary
+  batch and its presentation state without changing setup, preferences, or
+  history.
+- Record history only after definitive SMTP acceptance. Keep at most 500 local
+  entries containing only a record identifier, original display name, and
+  acceptance timestamp.
+- History must not resend, retry, open, locate, preview, export, synchronize, or
+  otherwise manage books.
 - Never modify or overwrite an original. EPUB cleanup and restoration use a
   separate collision-safe copy and preserve the original display name for Kindle
   delivery.
@@ -122,6 +141,9 @@
 - Secrets: traditional file-based macOS Keychain generic-password items; never
   Data Protection Keychain selectors, ordinary preferences, project files,
   logs, reports, presentation models, remote storage, or custom encrypted files.
+- Send history is non-secret local data but must remain independently clearable,
+  bounded to 500 entries, and free of source paths, content, addresses,
+  credentials, provider replies, diagnostic evidence, and remote identifiers.
 - Forbidden: processing helpers, executable downloads, Calibre, installed
   EPUBCheck, Raycast, Python or Java runtime requirements, Docker, local
   services, and user-installed processing tools. The Python appcast script runs
@@ -174,6 +196,8 @@
   Sparkle, GitHub Release, GitHub Pages, and installer distribution surfaces.
 - `specs/005-lightweight-macos-sender/`: active product specification and
   validation records.
+- `specs/009-transient-feedback-history/`: active transient-feedback,
+  repeated-send, and bounded-history specification.
 - Do not recreate the removed Raycast, Node, PageForge, Calibre, conversion, or
   historical product trees.
 

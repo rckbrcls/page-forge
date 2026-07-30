@@ -2,10 +2,24 @@ import SwiftUI
 
 struct ItemDetailDisclosure: View {
     let item: BatchItemPresentation
+    let diagnosticEvent: DiagnosticEvent?
+    let copyFeedback: ActionFeedback?
+    let copyErrorDetails: () -> Void
+    let performRecovery: ((RecoveryAction) -> Void)?
     @State private var isExpanded: Bool
 
-    init(item: BatchItemPresentation) {
+    init(
+        item: BatchItemPresentation,
+        diagnosticEvent: DiagnosticEvent? = nil,
+        copyFeedback: ActionFeedback? = nil,
+        copyErrorDetails: @escaping () -> Void = {},
+        performRecovery: ((RecoveryAction) -> Void)? = nil
+    ) {
         self.item = item
+        self.diagnosticEvent = diagnosticEvent
+        self.copyFeedback = copyFeedback
+        self.copyErrorDetails = copyErrorDetails
+        self.performRecovery = performRecovery
         _isExpanded = State(initialValue: Self.startsExpanded(item))
     }
 
@@ -46,21 +60,36 @@ struct ItemDetailDisclosure: View {
                         )
                     }
                     if let failure = preparationFailure {
-                        Text(failure.message)
+                        failureDetails(failure)
                     }
                     if case .failed(let failure) = item.delivery {
-                        Text(failure.message)
+                        failureDetails(failure)
                     }
-                    if case .deliveryUnknown = item.delivery {
-                        Text(
-                            "The server may have accepted this book. Check Kindle before retrying."
-                        )
+                    if case .deliveryUnknown(let failure) = item.delivery {
+                        failureDetails(failure)
                     }
                 }
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .padding(.leading, 18)
             }
+        }
+    }
+
+    private func failureDetails(
+        _ failure: SanitizedFailure
+    ) -> some View {
+        let presentation = FailurePresentationService()
+            .presentation(for: failure)
+        return VStack(alignment: .leading, spacing: 6) {
+            Text(presentation.summary)
+            FailureDetailView(
+                presentation: presentation,
+                diagnosticEvent: diagnosticEvent,
+                copyFeedback: copyFeedback,
+                copyErrorDetails: copyErrorDetails,
+                performRecovery: performRecovery
+            )
         }
     }
 

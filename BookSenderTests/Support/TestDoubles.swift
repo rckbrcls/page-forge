@@ -1,6 +1,25 @@
 import Foundation
 @testable import BookSender
 
+actor DiagnosticRecorderSpy: DiagnosticRecording {
+    private(set) var events: [DiagnosticEvent] = []
+
+    func record(_ event: DiagnosticEvent) {
+        events.append(event)
+    }
+}
+
+final class DiagnosticClipboardSpy: DiagnosticClipboard, @unchecked Sendable {
+    private(set) var copies: [DiagnosticCopy] = []
+    var error: DiagnosticClipboardError?
+
+    @MainActor
+    func write(_ copy: DiagnosticCopy) throws {
+        if let error { throw error }
+        copies.append(copy)
+    }
+}
+
 actor MutableTestClock {
     private(set) var now: Date
 
@@ -10,6 +29,67 @@ actor MutableTestClock {
 
     func advance(by interval: TimeInterval) {
         now = now.addingTimeInterval(interval)
+    }
+}
+
+actor ControlledFeedbackSleeper {
+    private var continuations:
+        [UUID: CheckedContinuation<Void, any Error>] = [:]
+    private(set) var requestedDurations: [TimeInterval] = []
+
+    func sleep(for duration: TimeInterval) async throws {
+        let id = UUID()
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                if Task.isCancelled {
+                    continuation.resume(throwing: CancellationError())
+                    return
+                }
+                continuations[id] = continuation
+                requestedDurations.append(duration)
+            }
+        } onCancel: {
+            Task {
+                await self.cancel(id)
+            }
+        }
+    }
+
+    func resumeAll() {
+        let pending = continuations.values
+        continuations.removeAll()
+        for continuation in pending {
+            continuation.resume()
+        }
+    }
+
+    func pendingCount() -> Int {
+        continuations.count
+    }
+
+    private func cancel(_ id: UUID) {
+        continuations.removeValue(forKey: id)?.resume(
+            throwing: CancellationError()
+        )
+    }
+}
+
+actor UncancellableFeedbackGate {
+    private var continuations: [CheckedContinuation<Void, Never>] = []
+
+    func sleep() async {
+        await withCheckedContinuation { continuation in
+            continuations.append(continuation)
+        }
+    }
+
+    func resumeFirst() {
+        guard !continuations.isEmpty else { return }
+        continuations.removeFirst().resume()
+    }
+
+    func pendingCount() -> Int {
+        continuations.count
     }
 }
 
@@ -40,7 +120,7 @@ actor InMemoryCredentialStore: CredentialStoring {
     func read(_ reference: CredentialReference) throws -> String {
         if let readFailure { throw readFailure }
         guard let value = secrets[key(reference)] else {
-            throw sanitizedFailure("credential.missing")
+            throw sanitizedFailure(.credentialMissing, family: .credential)
         }
         return value
     }
@@ -99,6 +179,107 @@ actor InMemoryPreferencesStore: DeliveryPreferencesStoring {
     }
 }
 
+actor InMemorySendHistoryStore: SendHistoryStoring {
+    private var records: [SubmissionRecord]
+    private(set) var replaceCount = 0
+    private(set) var clearCount = 0
+    var loadFailure: HistoryFailure?
+    var replaceFailure: HistoryFailure?
+    var clearFailure: HistoryFailure?
+
+    init(records: [SubmissionRecord] = []) {
+        self.records = records
+    }
+
+    func load() throws -> [SubmissionRecord] {
+        if let loadFailure { throw loadFailure }
+        return records
+    }
+
+    func replace(with records: [SubmissionRecord]) throws {
+        if let replaceFailure { throw replaceFailure }
+        self.records = records
+        replaceCount += 1
+    }
+
+    func clear() throws {
+        if let clearFailure { throw clearFailure }
+        records = []
+        clearCount += 1
+    }
+
+    func setLoadFailure(_ failure: HistoryFailure?) {
+        loadFailure = failure
+    }
+
+    func setReplaceFailure(_ failure: HistoryFailure?) {
+        replaceFailure = failure
+    }
+
+    func setClearFailure(_ failure: HistoryFailure?) {
+        clearFailure = failure
+    }
+}
+
+actor RejectingBatchClearWorkspaceStore: WorkspaceStoring {
+    private let backing: WorkspaceStore
+
+    init(rootURL: URL) {
+        backing = WorkspaceStore(rootURL: rootURL)
+    }
+
+    func createWorkspace(
+        batchID: UUID,
+        itemID: UUID
+    ) async throws -> WorkspaceReference {
+        try await backing.createWorkspace(batchID: batchID, itemID: itemID)
+    }
+
+    func stageReadOnlySource(
+        _ source: URL,
+        in workspace: WorkspaceReference,
+        maximumBytes: Int64
+    ) async throws -> StagedFileReference {
+        try await backing.stageReadOnlySource(
+            source,
+            in: workspace,
+            maximumBytes: maximumBytes
+        )
+    }
+
+    func promotePartial(
+        _ relativePath: String,
+        to finalPath: String,
+        in workspace: WorkspaceReference
+    ) async throws -> StagedFileReference {
+        try await backing.promotePartial(
+            relativePath,
+            to: finalPath,
+            in: workspace
+        )
+    }
+
+    func digest(of file: StagedFileReference) async throws -> String {
+        try await backing.digest(of: file)
+    }
+
+    func cleanupPartialFiles(in workspace: WorkspaceReference) async {
+        await backing.cleanupPartialFiles(in: workspace)
+    }
+
+    func cleanup(_ workspace: WorkspaceReference) async {
+        await backing.cleanup(workspace)
+    }
+
+    func clearBatch(_ batchID: UUID) -> Bool {
+        false
+    }
+
+    func sweepOrphans(olderThan cutoff: Date) async {
+        await backing.sweepOrphans(olderThan: cutoff)
+    }
+}
+
 actor StubSMTPTransport: SMTPDelivering {
     var outcomes: [TerminalOutcome]
     var stages: [DeliveryProgress]
@@ -136,13 +317,13 @@ actor StubSMTPTransport: SMTPDelivering {
         for stage in stages {
             if Task.isCancelled {
                 return stage.dataTransmissionStarted
-                    ? .deliveryUnknown
+                    ? .deliveryUnknown(.deliveryUnknown())
                     : .cancelled
             }
             await progress(stage)
         }
         return outcomes.isEmpty
-            ? .failed(sanitizedFailure("smtp.no-outcome"))
+            ? .failed(sanitizedFailure(.smtpTransport))
             : outcomes.removeFirst()
     }
 
@@ -176,7 +357,7 @@ actor StubArchive: EPUBArchiveReading {
 
     func data(for path: String, maximumBytes: Int) throws -> Data {
         guard let data = contents[path], data.count <= maximumBytes else {
-            throw sanitizedFailure("archive.entry-unavailable", family: .archive)
+            throw sanitizedFailure(.archiveEntryUnavailable, family: .archive)
         }
         return data
     }
@@ -196,7 +377,7 @@ struct FailingArchiveWriter: EPUBArchiveWriting {
 }
 
 func sanitizedFailure(
-    _ code: String,
+    _ code: DiagnosticCode,
     family: FailureFamily = .delivery
 ) -> SanitizedFailure {
     SanitizedFailure(
@@ -258,14 +439,24 @@ struct TestDependencyGraph {
     let credentials: InMemoryCredentialStore
     let preferences: InMemoryPreferencesStore
     let transport: StubSMTPTransport
+    let historyStore: InMemorySendHistoryStore
+    let diagnosticRecorder: DiagnosticRecorderSpy
+    let diagnosticClipboard: DiagnosticClipboardSpy
 
     static func make(
         stores: TestStores,
-        outcomes: [TerminalOutcome] = [.submitted]
+        outcomes: [TerminalOutcome] = [.submitted],
+        historyStore suppliedHistoryStore: InMemorySendHistoryStore? = nil,
+        workspaceStore suppliedWorkspaceStore:
+            (any WorkspaceStoring)? = nil,
+        feedbackSleep: @escaping FeedbackSleep = { duration in
+            try await Task.sleep(for: .seconds(duration))
+        }
     ) -> TestDependencyGraph {
-        let workspace = WorkspaceStore(
-            rootURL: stores.rootURL.appending(component: "work")
-        )
+        let workspace: any WorkspaceStoring = suppliedWorkspaceStore
+            ?? WorkspaceStore(
+                rootURL: stores.rootURL.appending(component: "work")
+            )
         let credentials = InMemoryCredentialStore()
         let preferences = InMemoryPreferencesStore()
         let setupService = DeliverySetupService(
@@ -274,6 +465,10 @@ struct TestDependencyGraph {
             serviceName: stores.keychainServiceName
         )
         let transport = StubSMTPTransport(outcomes: outcomes)
+        let diagnosticRecorder = DiagnosticRecorderSpy()
+        let diagnosticClipboard = DiagnosticClipboardSpy()
+        let historyStore = suppliedHistoryStore ?? InMemorySendHistoryStore()
+        let historyService = SendHistoryService(store: historyStore)
         let delivery = BookDeliveryService(
             credentials: credentials,
             transport: transport
@@ -286,20 +481,33 @@ struct TestDependencyGraph {
             ),
             pdfPreparer: PDFEligibilityService(workspaceStore: workspace),
             deliveryService: delivery,
-            workspaceStore: workspace
+            workspaceStore: workspace,
+            historyService: historyService
         )
         return TestDependencyGraph(
             dependencies: AppDependencies(
                 workspaceStore: workspace,
                 setupService: setupService,
                 pipeline: pipeline,
+                historyService: historyService,
                 shortcutDefaults: stores.defaults,
+                diagnosticService: DiagnosticService(
+                    recorder: diagnosticRecorder,
+                    appVersion: DiagnosticTestFixtures.safeAppVersion
+                ),
+                diagnosticFormatter: DiagnosticFormatter(),
+                diagnosticClipboard: diagnosticClipboard,
+                feedbackSleep: feedbackSleep,
+                appVersion: DiagnosticTestFixtures.safeAppVersion,
                 bootstrapMode: .production,
                 bootstrapFixtureURLs: []
             ),
             credentials: credentials,
             preferences: preferences,
-            transport: transport
+            transport: transport,
+            historyStore: historyStore,
+            diagnosticRecorder: diagnosticRecorder,
+            diagnosticClipboard: diagnosticClipboard
         )
     }
 }

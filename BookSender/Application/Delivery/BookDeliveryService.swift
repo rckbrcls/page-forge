@@ -24,7 +24,7 @@ actor BookDeliveryService {
             ) else {
                 return .failed(
                     failure(
-                        "credential.missing",
+                        .credentialMissing,
                         message: "Delivery setup no longer has a usable credential.",
                         recoveryAction: .editSetup
                     )
@@ -57,7 +57,7 @@ actor BookDeliveryService {
         } catch let sanitized as SanitizedFailure {
             return .failed(sanitized)
         } catch {
-            return .failed(failure("delivery.failed"))
+            return .failed(failure(.deliveryFailed))
         }
     }
 
@@ -66,7 +66,7 @@ actor BookDeliveryService {
     }
 
     private func failure(
-        _ code: String,
+        _ code: DiagnosticCode,
         message: String = "This book could not be delivered.",
         recoveryAction: RecoveryAction = .retryFailed
     ) -> SanitizedFailure {

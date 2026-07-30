@@ -22,6 +22,9 @@ struct PipelineCancellationTests {
             firstOutcome: .submitted,
             blockedDataStarted: false
         )
+        let historyService = SendHistoryService(
+            store: InMemorySendHistoryStore()
+        )
         let pipeline = PipelineActor(
             intakeService: BookIntakeService(workspaceStore: workspace),
             epubPreparer: EPUBRepairEngine(
@@ -33,7 +36,8 @@ struct PipelineCancellationTests {
                 credentials: credentials,
                 transport: transport
             ),
-            workspaceStore: workspace
+            workspaceStore: workspace,
+            historyService: historyService
         )
         let first = stores.rootURL.appending(component: "First.pdf")
         let second = stores.rootURL.appending(component: "Second.pdf")
@@ -62,6 +66,7 @@ struct PipelineCancellationTests {
         #expect(batch.items[1].delivery == .cancelled)
         #expect(batch.items[2].delivery == .cancelled)
         #expect(batch.items.allSatisfy { $0.delivery.isTerminal })
+        #expect(try await historyService.snapshot().records.count == 1)
     }
 
     @Test
@@ -155,7 +160,9 @@ private actor GateSMTPTransport: SMTPDelivering {
             )
         )
         await withCheckedContinuation { continuation = $0 }
-        return blockedDataStarted ? .deliveryUnknown : .cancelled
+        return blockedDataStarted
+            ? .deliveryUnknown(.deliveryUnknown())
+            : .cancelled
     }
 
     func cancelActiveAttempt() {

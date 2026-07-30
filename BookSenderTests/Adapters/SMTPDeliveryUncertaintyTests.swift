@@ -13,22 +13,24 @@ struct SMTPDeliveryUncertaintyTests {
         let missing = startTLS.receive(
             SMTPReply(code: 250, lines: ["AUTH PLAIN"])
         )
-        #expect(failureCode(in: missing) == "smtp.starttls-unavailable")
+        #expect(failureCode(in: missing) == .smtpStartTLSUnavailable)
 
         var rejected = SMTPStateMachine(
             setup: try setup(mode: .implicitTLS),
             credential: "secret"
         )
+        _ = rejected.receive(SMTPReply(code: 220, lines: ["ready"]))
+        _ = rejected.receive(SMTPReply(code: 250, lines: ["AUTH PLAIN"]))
         let provider = rejected.receive(
-            SMTPReply(code: 535, lines: ["provider detail"])
+            SMTPReply(code: 535, lines: ["5.7.8 provider detail"])
         )
-        #expect(failureCode(in: provider) == "smtp.provider-535")
+        #expect(failureCode(in: provider) == .smtpAuthenticationRejected)
         #expect(String(describing: provider).contains("provider detail") == false)
     }
 
     @Test
     func classifiesCancellationAndLossAtDataBoundary() {
-        let failure = sanitizedFailure("smtp.connection-closed")
+        let failure = sanitizedFailure(.smtpConnectionClosed)
 
         #expect(
             SMTPUncertaintyClassifier.outcome(
@@ -36,24 +38,30 @@ struct SMTPDeliveryUncertaintyTests {
                 termination: .cancelled
             ) == .cancelled
         )
-        #expect(
-            SMTPUncertaintyClassifier.outcome(
-                dataTransmissionStarted: true,
-                termination: .cancelled
-            ) == .deliveryUnknown
+        let cancelledAfterData = SMTPUncertaintyClassifier.outcome(
+            dataTransmissionStarted: true,
+            termination: .cancelled
         )
+        guard case .deliveryUnknown(let cancelledFailure) = cancelledAfterData else {
+            Issue.record("Expected delivery uncertainty after cancellation")
+            return
+        }
+        #expect(cancelledFailure.code == .smtpDeliveryUnknown)
         #expect(
             SMTPUncertaintyClassifier.outcome(
                 dataTransmissionStarted: false,
                 termination: .failed(failure)
             ) == .failed(failure)
         )
-        #expect(
-            SMTPUncertaintyClassifier.outcome(
-                dataTransmissionStarted: true,
-                termination: .failed(failure)
-            ) == .deliveryUnknown
+        let failedAfterData = SMTPUncertaintyClassifier.outcome(
+            dataTransmissionStarted: true,
+            termination: .failed(failure)
         )
+        guard case .deliveryUnknown(let failedFailure) = failedAfterData else {
+            Issue.record("Expected delivery uncertainty after transport failure")
+            return
+        }
+        #expect(failedFailure.code == .smtpDeliveryUnknown)
     }
 
     @Test
@@ -87,7 +95,7 @@ struct SMTPDeliveryUncertaintyTests {
         )
     }
 
-    private func failureCode(in actions: [SMTPAction]) -> String? {
+    private func failureCode(in actions: [SMTPAction]) -> DiagnosticCode? {
         for action in actions {
             if case .failed(let failure) = action {
                 return failure.code

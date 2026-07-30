@@ -32,6 +32,14 @@ final class SettingsUITests: XCTestCase {
             XCTAssertTrue(app.staticTexts[label].exists)
         }
 
+        let deliveryScroll = app.scrollViews["settings.delivery.scroll"]
+        XCTAssertTrue(deliveryScroll.waitForExistence(timeout: 2))
+        deliveryScroll.swipeUp()
+
+        let deleteSetup = app.buttons["deliverySetup.delete"]
+        XCTAssertTrue(deleteSetup.waitForExistence(timeout: 2))
+        XCTAssertTrue(deleteSetup.isHittable)
+
         let shortcutTab = app.descendants(matching: .any)["settings.tab.shortcut"]
         XCTAssertTrue(shortcutTab.waitForExistence(timeout: 2))
         shortcutTab.click()
@@ -40,15 +48,25 @@ final class SettingsUITests: XCTestCase {
             app.descendants(matching: .any)["settings.shortcut"].waitForExistence(timeout: 2)
         )
         XCTAssertTrue(app.switches["settings.shortcut.enabled"].exists)
-        XCTAssertTrue(
-            app.staticTexts["Shortcut registered."]
-                .waitForExistence(timeout: 2)
+        XCTAssertFalse(
+            app.staticTexts[
+                "Reveal the existing Book Sender window from any app."
+            ].exists
         )
+        XCTAssertFalse(app.staticTexts["Shortcut registered."].exists)
         app.switches["settings.shortcut.enabled"].click()
         XCTAssertTrue(
             app.staticTexts["Shortcut disabled."]
                 .waitForExistence(timeout: 2)
         )
+        XCTAssertTrue(
+            app.descendants(matching: .any)["feedback.shortcut"].exists
+        )
+        XCTAssertTrue(
+            app.descendants(matching: .any)["feedback.shortcut"]
+                .waitForNonExistence(timeout: 6)
+        )
+        XCTAssertFalse(app.staticTexts["Shortcut disabled."].exists)
         XCTAssertFalse(app.buttons["settings.shortcut.disable"].exists)
         XCTAssertFalse(app.staticTexts["Quick Access"].exists)
         XCTAssertFalse(app.staticTexts["Shortcut:"].exists)

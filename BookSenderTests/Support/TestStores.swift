@@ -2,6 +2,7 @@ import Foundation
 
 struct TestStores {
     let rootURL: URL
+    let historyRootURL: URL
     let defaults: UserDefaults
     let defaultsSuiteName: String
     let keychainServiceName: String
@@ -21,6 +22,10 @@ struct TestStores {
         defaults.removePersistentDomain(forName: suite)
         return TestStores(
             rootURL: root,
+            historyRootURL: root.appending(
+                component: "history",
+                directoryHint: .isDirectory
+            ),
             defaults: defaults,
             defaultsSuiteName: suite,
             keychainServiceName: "com.rckbrcls.BookSenderTests.smtp.\(identifier)"
@@ -36,4 +41,3 @@ struct TestStores {
 enum TestStoreError: Error {
     case defaultsUnavailable
 }
-

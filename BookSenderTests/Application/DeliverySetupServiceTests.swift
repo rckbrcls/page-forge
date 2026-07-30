@@ -54,7 +54,7 @@ struct DeliverySetupServiceTests {
         )
         let first = try await service.save(validDraft(), replacing: nil)
         await preferences.setSaveFailure(
-            sanitizedFailure("preferences.save", family: .credential)
+            sanitizedFailure(.preferencesInvalidRevision, family: .credential)
         )
         var replacement = validDraft()
         replacement.appPassword = "replacement-secret"
@@ -96,7 +96,7 @@ struct DeliverySetupServiceTests {
             serviceName: "test.smtp"
         )
         await credentials.setSaveFailure(
-            sanitizedFailure("credential.save", family: .credential)
+            sanitizedFailure(.credentialSave, family: .credential)
         )
 
         await #expect(throws: SanitizedFailure.self) {
@@ -124,7 +124,8 @@ struct DeliverySetupServiceTests {
         }
         #expect(draft.senderAddress == setup.senderAddress.value)
         #expect(draft.appPassword.isEmpty)
-        #expect(failure?.code == "credential.missing")
+        #expect(failure?.code == .credentialMissing)
+        #expect(failure?.evidence.phase == .credentialRead)
     }
 
     private func validDraft() -> DeliverySetupDraft {

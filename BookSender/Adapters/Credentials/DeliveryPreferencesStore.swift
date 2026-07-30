@@ -29,13 +29,26 @@ actor DeliveryPreferencesStore: DeliveryPreferencesStoring {
         else {
             throw SanitizedFailure(
                 family: .credential,
-                code: "preferences.invalid-revision",
+                code: .preferencesInvalidRevision,
                 message: "Delivery settings could not be saved consistently.",
                 recoveryAction: .editSetup
             )
         }
-        let data = try JSONEncoder().encode(setup)
-        defaults.set(data, forKey: Self.storageKey)
+        do {
+            let data = try JSONEncoder().encode(setup)
+            defaults.set(data, forKey: Self.storageKey)
+        } catch {
+            throw SanitizedFailure(
+                family: .credential,
+                code: .unexpectedCredential,
+                message: "Delivery settings could not be encoded for storage.",
+                recoveryAction: .editSetup,
+                evidence: DiagnosticEvidence(
+                    phase: .preferenceWrite,
+                    retryDisposition: .editSetup
+                )
+            )
+        }
     }
 
     func clear() {

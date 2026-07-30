@@ -28,6 +28,59 @@ struct SettingsDeliveryTests {
         #expect(model.setup?.credentialReference.account == originalReference.account)
         #expect(model.batch.id == batchID)
         #expect(model.items.count == 1)
+        #expect(model.feedback(for: .deliverySetup)?.state == .succeeded)
+    }
+
+    @Test
+    func deleteClearsSavedSetupAndPublishesTerminalFeedback() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let graph = TestDependencyGraph.make(stores: stores)
+        let model = AppModel(dependencies: graph.dependencies)
+        model.setupDraft = validDraft()
+        model.saveSetup()
+        try await eventually { model.setup != nil }
+
+        model.deleteSetup()
+        try await eventually { model.setup == nil && !model.isSavingSetup }
+
+        #expect(model.route == .deliverySetup)
+        #expect(model.feedback(for: .deliverySetup)?.state == .succeeded)
+        #expect(model.feedback(for: .deliverySetup)?.title == "Delivery setup deleted.")
+    }
+
+    @Test
+    func failedPreferenceEditKeepsPreviousSetupAndExplainsRollback() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let graph = TestDependencyGraph.make(stores: stores)
+        let model = AppModel(dependencies: graph.dependencies)
+        model.setupDraft = validDraft()
+        model.saveSetup()
+        try await eventually { model.setup != nil }
+        let previous = try #require(model.setup)
+        await graph.preferences.setSaveFailure(
+            SanitizedFailure(
+                family: .credential,
+                code: .preferencesInvalidRevision,
+                message: "Delivery settings were not saved.",
+                recoveryAction: .editSetup
+            )
+        )
+
+        model.setupDraft.smtpPort = "587"
+        model.setupDraft.securityMode = .startTLS
+        model.saveSetup()
+        try await eventually {
+            model.feedback(for: .deliverySetup)?.state == .failed
+        }
+
+        #expect(model.setup == previous)
+        #expect(
+            model.feedback(for: .deliverySetup)?.failure?.code
+                == .preferencesInvalidRevision
+        )
+        #expect(model.setupDraft.smtpPort == "587")
     }
 
     @Test

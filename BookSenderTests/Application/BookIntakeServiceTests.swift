@@ -39,7 +39,8 @@ struct BookIntakeServiceTests {
                 Issue.record("Expected duplicate failure")
                 return
             }
-            #expect(failure.code == "intake.duplicate")
+            #expect(failure.code == .intakeDuplicate)
+            #expect(failure.evidence.phase == .intake)
         } else {
             Issue.record("Expected duplicate exclusion")
         }
@@ -79,7 +80,8 @@ struct BookIntakeServiceTests {
         }
         if case .excluded(let item) = outcomes[1],
            case .excluded(let failure) = item.preparation {
-            #expect(failure.code == "intake.capacity")
+            #expect(failure.code == .intakeCapacity)
+            #expect(failure.evidence.context.safetyLimit == .batchItems)
         } else {
             Issue.record("Expected capacity exclusion")
         }
@@ -107,7 +109,8 @@ struct BookIntakeServiceTests {
             Issue.record("Expected changed-file exclusion")
             return
         }
-        #expect(failure.code == "intake.changed")
+        #expect(failure.code == .intakeChanged)
+        #expect(failure.evidence.phase == .intake)
     }
 }
 
@@ -166,7 +169,7 @@ private actor MutatingWorkspaceStore: WorkspaceStoring {
         await backing.cleanup(workspace)
     }
 
-    func clearBatch(_ batchID: UUID) async {
+    func clearBatch(_ batchID: UUID) async -> Bool {
         await backing.clearBatch(batchID)
     }
 

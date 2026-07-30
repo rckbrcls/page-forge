@@ -109,4 +109,47 @@ struct EPUBAuditEngineTests {
             ).health == .needsReview
         )
     }
+
+    @Test
+    func translatesUnexpectedArchiveBoundaryIntoAuditEvidence() async {
+        let source = StagedFileReference(
+            identifier: UUID(),
+            url: URL(fileURLWithPath: "/synthetic/book.epub")
+        )
+
+        do {
+            _ = try await EPUBAuditEngine().audit(
+                UnexpectedAuditArchive(),
+                source: source
+            )
+            Issue.record("Expected an unexpected audit failure")
+        } catch let failure as SanitizedFailure {
+            #expect(failure.family == .audit)
+            #expect(failure.code == .unexpectedAudit)
+            #expect(failure.evidence.phase == .structuralAudit)
+            #expect(
+                String(describing: failure).contains("raw-audit") == false
+            )
+        } catch {
+            Issue.record("Expected a sanitized audit failure")
+        }
+    }
+}
+
+private struct UnexpectedAuditArchive: EPUBArchiveReading {
+    private struct RawAuditError: Error {}
+
+    func preflight(
+        _ file: StagedFileReference,
+        limits: SafetyLimits
+    ) async throws -> [ArchiveEntryDescriptor] {
+        throw RawAuditError()
+    }
+
+    func data(
+        for path: String,
+        maximumBytes: Int
+    ) async throws -> Data {
+        throw RawAuditError()
+    }
 }

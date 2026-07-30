@@ -53,6 +53,39 @@ struct DeliveryPreferencesStoreTests {
         }
     }
 
+    @Test
+    func rejectsRevisionMismatchWithPreferenceWriteEvidence() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let store = DeliveryPreferencesStore(
+            suiteName: stores.defaultsSuiteName
+        )
+        let valid = try makeSetup(revision: 2)
+        let mismatched = DeliverySetup(
+            senderAddress: valid.senderAddress,
+            smtpHost: valid.smtpHost,
+            smtpPort: valid.smtpPort,
+            securityMode: valid.securityMode,
+            username: valid.username,
+            credentialReference: CredentialReference(
+                service: "test",
+                account: "revision-1",
+                revision: 1
+            ),
+            kindleAddress: valid.kindleAddress,
+            revision: 2
+        )
+
+        do {
+            try await store.save(mismatched)
+            Issue.record("Expected revision mismatch")
+        } catch let failure as SanitizedFailure {
+            #expect(failure.code == .preferencesInvalidRevision)
+            #expect(failure.evidence.phase == .preferenceWrite)
+            #expect(failure.evidence.providerStatus == nil)
+        }
+    }
+
     private func makeSetup(revision: Int) throws -> DeliverySetup {
         try DeliverySetupValidator().makeSetup(
             from: DeliverySetupDraft(

@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 struct BatchItemRow: View {
@@ -21,6 +22,8 @@ struct BatchItemRow: View {
             status
                 .font(.callout)
                 .foregroundStyle(statusColor)
+                .accessibilityLabel(statusTitle)
+                .accessibilityValue(statusDetail)
             Button(action: remove) {
                 Image(systemName: "xmark")
             }
@@ -34,6 +37,7 @@ struct BatchItemRow: View {
         .padding(.vertical, 7)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("\(item.displayName), \(statusTitle)")
+        .accessibilityValue(statusDetail)
         .accessibilityIdentifier("sendBook.item.\(item.id.uuidString)")
     }
 
@@ -112,6 +116,47 @@ struct BatchItemRow: View {
         case .submitted: .green
         case .needsAttention, .failed, .deliveryUnknown: .orange
         default: .secondary
+        }
+    }
+
+    private var statusDetail: String {
+        let failure: SanitizedFailure?
+        switch item.delivery {
+        case .failed(let value), .deliveryUnknown(let value):
+            failure = value
+        case .notScheduled, .sending, .submitted, .cancelled:
+            switch item.preparation {
+            case .needsAttention(let value), .excluded(let value):
+                failure = value
+            case .waiting, .checking, .preparing, .ready, .cancelled:
+                failure = nil
+            }
+        }
+        guard let failure else { return statusTitle }
+        let provider = failure.evidence.providerStatus.map {
+            let enhanced = $0.enhancedStatus.map {
+                " \($0.description)"
+            } ?? ""
+            return " Provider status \($0.replyCode)\(enhanced)."
+        } ?? ""
+        return "\(statusTitle). Phase \(phaseTitle(failure.evidence.phase)).\(provider)"
+    }
+
+    private func phaseTitle(_ phase: DiagnosticPhase) -> String {
+        switch phase {
+        case .smtpConnecting: "Connecting"
+        case .smtpSecuring: "Securing"
+        case .smtpAuthenticating: "Authenticating"
+        case .smtpSender: "Sender envelope"
+        case .smtpRecipient: "Recipient envelope"
+        case .smtpData: "Message data"
+        case .smtpFinalAcceptance: "Final acceptance"
+        default:
+            phase.rawValue.replacingOccurrences(
+                of: "([a-z])([A-Z])",
+                with: "$1 $2",
+                options: .regularExpression
+            ).capitalized
         }
     }
 

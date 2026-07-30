@@ -47,4 +47,75 @@ struct EPUBPreparationJourneyTests {
         #expect(try FixtureFactory.digest(of: original) == originalDigest)
         #expect(prepared.file.url != original)
     }
+
+    @Test
+    func pipelineAddsTypedFailureWhenPreparerReturnsNoTerminalResult() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let workspaceStore = WorkspaceStore(
+            rootURL: stores.rootURL.appending(component: "work")
+        )
+        let pipeline = PipelineActor(
+            intakeService: BookIntakeService(
+                workspaceStore: workspaceStore
+            ),
+            epubPreparer: EmptyEPUBPreparer(),
+            pdfPreparer: PDFEligibilityService(
+                workspaceStore: workspaceStore
+            ),
+            deliveryService: BookDeliveryService(
+                credentials: InMemoryCredentialStore(),
+                transport: StubSMTPTransport(outcomes: [.submitted])
+            ),
+            workspaceStore: workspaceStore,
+            historyService: SendHistoryService(
+                store: InMemorySendHistoryStore()
+            )
+        )
+        let original = try FixtureFactory.makeEPUB(
+            .validEPUB3,
+            in: stores.rootURL
+        )
+
+        await pipeline.add([original])
+        for _ in 0..<2_000 {
+            let snapshot = await pipeline.snapshot()
+            if snapshot.items.first?.preparation.isTerminal == true {
+                break
+            }
+            await Task.yield()
+        }
+
+        let item = try #require(await pipeline.snapshot().items.first)
+        guard case .needsAttention(let failure) = item.preparation else {
+            Issue.record("Expected a typed preparation failure")
+            return
+        }
+        #expect(failure.family == .filesystem)
+        #expect(failure.code == .pipelinePreparationResult)
+        #expect(failure.evidence.phase == .revalidation)
+    }
+}
+
+private struct EmptyEPUBPreparer: EPUBPreparing {
+    func prepare(
+        source: StagedFileReference,
+        workspace: WorkspaceReference,
+        displayName: String
+    ) async -> PreparationResult {
+        PreparationResult(
+            originalReport: nil,
+            plan: PreparationPlan(
+                id: UUID(),
+                originalAuditIdentifier: UUID(),
+                actions: [],
+                decision: .blocked
+            ),
+            appliedActions: [],
+            preparedReport: nil,
+            comparison: nil,
+            preparedBook: nil,
+            failure: nil
+        )
+    }
 }

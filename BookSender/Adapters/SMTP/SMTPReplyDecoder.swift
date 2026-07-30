@@ -3,6 +3,37 @@ import Foundation
 struct SMTPReply: Equatable, Sendable {
     let code: Int
     let lines: [String]
+    let providerStatus: ProviderStatus?
+
+    init(
+        code: Int,
+        lines: [String],
+        providerStatus: ProviderStatus? = nil
+    ) {
+        self.code = code
+        self.lines = lines
+        self.providerStatus = providerStatus
+            ?? ProviderStatus(
+                replyCode: code,
+                enhancedStatus: Self.enhancedStatus(in: lines)
+            )
+    }
+
+    private static func enhancedStatus(
+        in lines: [String]
+    ) -> EnhancedStatusCode? {
+        for line in lines {
+            for token in line.split(whereSeparator: \.isWhitespace) {
+                let candidate = token.trimmingCharacters(
+                    in: CharacterSet(charactersIn: "[](),;:")
+                )
+                if let status = EnhancedStatusCode(parsing: candidate) {
+                    return status
+                }
+            }
+        }
+        return nil
+    }
 }
 
 struct SMTPReplyDecoder: Sendable {
@@ -28,23 +59,23 @@ struct SMTPReplyDecoder: Sendable {
                   let code = Int(line.prefix(3)),
                   (200...599).contains(code)
             else {
-                throw failure("smtp.reply-line")
+                throw failure(.smtpReplyLine)
             }
 
             let separator = line[line.index(line.startIndex, offsetBy: 3)]
             guard separator == " " || separator == "-" else {
-                throw failure("smtp.reply-format")
+                throw failure(.smtpReplyFormat)
             }
             if let pendingCode {
                 guard pendingCode == code else {
-                    throw failure("smtp.reply-code")
+                    throw failure(.smtpReplyCode)
                 }
             } else {
                 self.pendingCode = code
             }
             pendingLines.append(String(line.dropFirst(4)))
             guard limits.permitsSMTPReplyLines(pendingLines.count) else {
-                throw failure("smtp.reply-count")
+                throw failure(.smtpReplyCount)
             }
 
             if separator == " " {
@@ -57,12 +88,12 @@ struct SMTPReplyDecoder: Sendable {
         }
 
         guard buffered.count <= limits.maximumSMTPLineBytes else {
-            throw failure("smtp.reply-line")
+            throw failure(.smtpReplyLine)
         }
         return replies
     }
 
-    private func failure(_ code: String) -> SanitizedFailure {
+    private func failure(_ code: DiagnosticCode) -> SanitizedFailure {
         SanitizedFailure(
             family: .delivery,
             code: code,
@@ -71,4 +102,3 @@ struct SMTPReplyDecoder: Sendable {
         )
     }
 }
-

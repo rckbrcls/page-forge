@@ -15,6 +15,7 @@ actor PipelineActor: BatchPipelining {
     private let pdfPreparer: any PDFEligibilityChecking
     private let deliveryService: BookDeliveryService
     private let workspaceStore: any WorkspaceStoring
+    private let historyService: SendHistoryService
 
     nonisolated let events: AsyncStream<PipelineEvent>
 
@@ -23,13 +24,15 @@ actor PipelineActor: BatchPipelining {
         epubPreparer: any EPUBPreparing,
         pdfPreparer: any PDFEligibilityChecking,
         deliveryService: BookDeliveryService,
-        workspaceStore: any WorkspaceStoring
+        workspaceStore: any WorkspaceStoring,
+        historyService: SendHistoryService
     ) {
         self.intakeService = intakeService
         self.epubPreparer = epubPreparer
         self.pdfPreparer = pdfPreparer
         self.deliveryService = deliveryService
         self.workspaceStore = workspaceStore
+        self.historyService = historyService
 
         var continuation: AsyncStream<PipelineEvent>.Continuation?
         events = AsyncStream { continuation = $0 }
@@ -51,10 +54,6 @@ actor PipelineActor: BatchPipelining {
               batch.activeSnapshot == nil
         else {
             return
-        }
-        if batch.phase == .completed {
-            batch.activeSnapshot = nil
-            batch.completedCount = 0
         }
         batch.phase = .importing
         emit(.batchChanged)
@@ -89,13 +88,18 @@ actor PipelineActor: BatchPipelining {
 
     func clear() async {
         guard activeTask == nil,
-              batch.phase.permitsEditing,
+              (
+                  batch.phase.permitsEditing
+                      || batch.phase == .completed
+              ),
               batch.activeSnapshot == nil
         else {
             return
         }
         let oldBatchID = batch.id
-        await workspaceStore.clearBatch(oldBatchID)
+        guard await workspaceStore.clearBatch(oldBatchID) else {
+            return
+        }
         batch = CurrentBatch(id: UUID(), items: [], phase: .editing)
         attempts.removeAll()
         emit(.batchChanged)
@@ -210,6 +214,7 @@ actor PipelineActor: BatchPipelining {
         emit(.batchChanged)
         activeTask.cancel()
         await deliveryService.cancelActiveAttempt()
+        await activeTask.value
     }
 
     func canEditSetup() -> Bool {
@@ -250,7 +255,7 @@ actor PipelineActor: BatchPipelining {
                 item.id,
                 to: .needsAttention(
                     failure(
-                        "pipeline.missing-staged-source",
+                        .pipelineMissingStagedSource,
                         family: .filesystem
                     )
                 )
@@ -296,7 +301,9 @@ actor PipelineActor: BatchPipelining {
             emit(.ready(item.id))
             _ = preparedBook
         } else if let failure = result.failure {
-            if failure.code.hasSuffix(".cancelled") {
+            if failure.code == .repairCancelled
+                || failure.code == .pdfCancelled
+                || failure.code == .xmlCancelled {
                 batch.items[index].preparation = .cancelled
                 emit(.cancelled(item.id))
             } else {
@@ -305,7 +312,10 @@ actor PipelineActor: BatchPipelining {
                 emit(.needsAttention(item.id, failure))
             }
         } else {
-            let failure = failure("pipeline.preparation-result")
+            let failure = failure(
+                .pipelinePreparationResult,
+                family: .filesystem
+            )
             batch.items[index].preparation = .needsAttention(failure)
             emit(.needsAttention(item.id, failure))
         }
@@ -362,7 +372,11 @@ actor PipelineActor: BatchPipelining {
                     attemptID: attemptID
                 )
             }
-            apply(outcome, itemID: confirmedItem.id, attemptID: attemptID)
+            await apply(
+                outcome,
+                itemID: confirmedItem.id,
+                attemptID: attemptID
+            )
             completed += 1
             batch.completedCount = completed
             emit(
@@ -410,28 +424,49 @@ actor PipelineActor: BatchPipelining {
         _ outcome: TerminalOutcome,
         itemID: UUID,
         attemptID: UUID
-    ) {
+    ) async {
         guard let index = batch.items.firstIndex(where: { $0.id == itemID }),
               var attempt = attempts[attemptID]
         else {
             return
         }
-        attempt.completedAt = Date()
+        let completedAt = Date()
+        attempt.completedAt = completedAt
         attempt.outcome = outcome
         attempts[attemptID] = attempt
         switch outcome {
         case .submitted:
             batch.items[index].delivery = .submitted
-            emit(.submitted(itemID))
+            let receipt = SubmissionReceipt(
+                attemptID: attemptID,
+                batchID: batch.id,
+                snapshotID: attempt.snapshotID,
+                itemID: itemID,
+                displayName: batch.items[index].displayName,
+                acceptedAt: completedAt
+            )
+            do {
+                try await historyService.record(receipt)
+                emit(.submitted(receipt))
+            } catch let failure as HistoryFailure {
+                emit(.historyPersistenceFailed(receipt, failure))
+            } catch {
+                emit(
+                    .historyPersistenceFailed(
+                        receipt,
+                        HistoryFailure(operation: .record, code: .write)
+                    )
+                )
+            }
         case .failed(let failure):
             batch.items[index].delivery = .failed(failure)
             emit(.failed(itemID, failure))
         case .cancelled:
             batch.items[index].delivery = .cancelled
             emit(.cancelled(itemID))
-        case .deliveryUnknown:
-            batch.items[index].delivery = .deliveryUnknown
-            emit(.deliveryUnknown(itemID))
+        case .deliveryUnknown(let failure):
+            batch.items[index].delivery = .deliveryUnknown(failure)
+            emit(.deliveryUnknown(itemID, failure))
         }
     }
 
@@ -482,12 +517,14 @@ actor PipelineActor: BatchPipelining {
         }
     }
 
-    private func emit(_ event: PipelineEvent) {
-        eventContinuation?.yield(event)
+    private func emit(_ kind: PipelineEvent.Kind) {
+        eventContinuation?.yield(
+            PipelineEvent(batchID: batch.id, kind: kind)
+        )
     }
 
     private func failure(
-        _ code: String,
+        _ code: DiagnosticCode,
         family: FailureFamily = .repair
     ) -> SanitizedFailure {
         SanitizedFailure(

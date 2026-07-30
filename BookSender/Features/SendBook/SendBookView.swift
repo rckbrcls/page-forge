@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct SendBookView: View {
@@ -6,28 +7,33 @@ struct SendBookView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
-            HStack {
-                Text("Send Book")
-                    .font(.largeTitle.weight(.bold))
-                Spacer()
-                SettingsLink {
-                    Text("Edit Setup")
-                }
-                .simultaneousGesture(
-                    TapGesture().onEnded {
-                        model.settingsTab = .delivery
-                    }
-                )
-                .accessibilityIdentifier("sendBook.editSetup")
-            }
+            Text(screenTitle)
+                .font(.largeTitle.weight(.bold))
+                .accessibilityIdentifier("sendBook.title")
 
+            if model.sendBookTab == .send {
             BookDropTarget(
                 isBusy: model.isImporting
                     || model.isSending
-                    || model.isShowingConfirmation,
+                    || model.isShowingConfirmation
+                    || model.canStartAnotherSend,
+                disabledReason: intakeDisabledReason,
                 choose: { isShowingImporter = true },
                 add: model.addBooks
             )
+
+            if let feedback = sendFeedback {
+                ActionFeedbackView(feedback: feedback)
+                if let failure = feedback.failure {
+                    FailureDetailView(
+                        presentation: failure,
+                        diagnosticEvent: model.currentDiagnosticEvent,
+                        copyFeedback: model.currentCopyFeedback,
+                        copyErrorDetails: model.copyCurrentErrorDetails,
+                        performRecovery: handleRecovery
+                    )
+                }
+            }
 
             if model.isImporting || !model.items.isEmpty {
                 HStack {
@@ -43,7 +49,7 @@ struct SendBookView: View {
                         Button("Cancel", action: model.cancel)
                             .accessibilityIdentifier("sendBook.cancel")
                     }
-                    if !model.items.isEmpty {
+                    if !model.items.isEmpty, !model.canStartAnotherSend {
                         Button("Clear", action: model.clear)
                             .disabled(
                                 !model.canEditBatch
@@ -55,26 +61,41 @@ struct SendBookView: View {
             }
 
             if !model.items.isEmpty {
-                List {
-                    ForEach(model.items) { item in
-                        VStack(alignment: .leading, spacing: 6) {
-                            BatchItemRow(
-                                item: item,
-                                canRemove: model.canEditBatch
-                                    && !model.isShowingConfirmation
-                            ) {
-                                model.remove(item.id)
+                GroupBox {
+                    List {
+                        ForEach(model.items) { item in
+                            VStack(alignment: .leading, spacing: 6) {
+                                BatchItemRow(
+                                    item: item,
+                                    canRemove: model.canEditBatch
+                                        && !model.isShowingConfirmation
+                                ) {
+                                    model.remove(item.id)
+                                }
+                                if shouldShowDetails(for: item) {
+                                    let itemEvent = model.diagnosticEvent(
+                                        for: item.id
+                                    )
+                                    ItemDetailDisclosure(
+                                        item: item,
+                                        diagnosticEvent: itemEvent,
+                                        copyFeedback: model.currentCopyFeedback,
+                                        copyErrorDetails: {
+                                            model.copyErrorDetails(for: itemEvent)
+                                        },
+                                        performRecovery: handleRecovery
+                                    )
+                                }
                             }
-                            if shouldShowDetails(for: item) {
-                                ItemDetailDisclosure(item: item)
-                            }
+                            .listRowBackground(Color.clear)
                         }
-                        .listRowBackground(Color.clear)
                     }
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 156)
+                    .accessibilityIdentifier("sendBook.batch")
                 }
-                .scrollContentBackground(.hidden)
                 .frame(minHeight: 180)
-                .accessibilityIdentifier("sendBook.batch")
+                .accessibilityIdentifier("sendBook.batch.card")
             }
 
             if let aggregateMessage = model.aggregateMessage {
@@ -96,8 +117,8 @@ struct SendBookView: View {
                     .accessibilityIdentifier("sendBook.retryFailed")
             }
 
-            Button(action: model.requestSendConfirmation) {
-                Text(model.isSending ? "Sending…" : "Send")
+            Button(action: primaryAction) {
+                Text(primaryActionTitle)
                     .font(.system(size: 16, weight: .semibold))
                     .frame(maxWidth: .infinity, minHeight: 44)
             }
@@ -105,21 +126,62 @@ struct SendBookView: View {
             .buttonBorderShape(.capsule)
             .padding(.top, 8)
             .disabled(
-                model.setup == nil
-                    || model.initialEligibleCount == 0
-                    || model.isSending
-                    || model.isImporting
-                    || model.isShowingConfirmation
+                primaryActionDisabled
             )
+            .accessibilityHint(sendDisabledReason ?? "Reviews the eligible books before sending.")
             .keyboardShortcut(.defaultAction)
-            .accessibilityIdentifier("sendBook.send")
+            .accessibilityIdentifier(
+                model.canStartAnotherSend
+                    ? "sendBook.sendMore"
+                    : "sendBook.send"
+            )
+            } else {
+                SendHistoryView(model: model)
+            }
         }
         .padding(36)
-        .frame(minWidth: 620, minHeight: 620)
+        .frame(
+            minWidth: 620,
+            maxWidth: .infinity,
+            minHeight: 620,
+            maxHeight: .infinity
+        )
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Picker("Section", selection: $model.sendBookTab) {
+                    ForEach(SendBookTab.allCases, id: \.self) { tab in
+                        Text(tab.title)
+                            .tag(tab)
+                            .accessibilityIdentifier(
+                                "sendBook.tab.\(tab.rawValue)"
+                            )
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .fixedSize()
+                .accessibilityIdentifier("sendBook.tabs")
+            }
+
+            ToolbarItem(placement: .primaryAction) {
+                SettingsLink {
+                    Label("Edit Setup", systemImage: "gearshape")
+                        .labelStyle(.titleAndIcon)
+                }
+                .simultaneousGesture(
+                    TapGesture().onEnded {
+                        model.settingsTab = .delivery
+                    }
+                )
+                .buttonStyle(.glass)
+                .accessibilityIdentifier("sendBook.editSetup")
+            }
+        }
         .modifier(
             BookFileImporter(
                 isPresented: $isShowingImporter,
-                add: model.addBooks
+                add: model.addBooks,
+                failed: model.handleFileImporterFailure
             )
         )
         .sheet(isPresented: $model.isShowingConfirmation) {
@@ -132,6 +194,105 @@ struct SendBookView: View {
             )
             .interactiveDismissDisabled()
         }
+        .alert(
+            "Start Another Send?",
+            isPresented: $model.isShowingResetConfirmation
+        ) {
+            Button("Keep Results", role: .cancel) {
+                model.cancelStartAnotherSend()
+            }
+            Button("Send More Books", role: .destructive) {
+                model.confirmStartAnotherSend()
+            }
+        } message: {
+            Text(
+                "A Delivery Unknown item may already have been accepted by the provider. Starting another send clears the visible result without retrying it."
+            )
+        }
+    }
+
+    private var sendFeedback: ActionFeedback? {
+        model.feedback(for: .batch)
+            ?? model.feedback(for: .deliverySetup)
+            ?? model.feedback(for: .application)
+    }
+
+    private var screenTitle: String {
+        model.sendBookTab == .history ? "History" : "Send Book"
+    }
+
+    private var intakeDisabledReason: String? {
+        if model.isImporting { return "Book preparation is already in progress." }
+        if model.isSending { return "Wait for delivery to finish." }
+        if model.isShowingConfirmation { return "Close the confirmation first." }
+        if model.canStartAnotherSend {
+            return "Start another send before adding more books."
+        }
+        return nil
+    }
+
+    private var primaryActionTitle: String {
+        if model.canStartAnotherSend {
+            return "Send More Books"
+        }
+        return model.isSending ? "Sending…" : "Send"
+    }
+
+    private var primaryActionDisabled: Bool {
+        if model.canStartAnotherSend {
+            return false
+        }
+        return model.setup == nil
+            || model.initialEligibleCount == 0
+            || model.isSending
+            || model.isImporting
+            || model.isShowingConfirmation
+    }
+
+    private func primaryAction() {
+        if model.canStartAnotherSend {
+            model.requestStartAnotherSend()
+        } else {
+            model.requestSendConfirmation()
+        }
+    }
+
+    private var sendDisabledReason: String? {
+        if model.setup == nil { return "Complete delivery setup first." }
+        if model.initialEligibleCount == 0 { return "Add at least one ready book." }
+        if model.isSending { return "Delivery is already in progress." }
+        if model.isImporting { return "Wait for book preparation to finish." }
+        if model.isShowingConfirmation { return "Use the open confirmation." }
+        return nil
+    }
+
+    private func handleRecovery(_ action: RecoveryAction) {
+        switch action {
+        case .editSetup:
+            model.settingsTab = .delivery
+            showSettingsWindow()
+        case .chooseAnotherFile:
+            isShowingImporter = true
+        case .retryFailed:
+            model.requestRetryConfirmation()
+        case .chooseAnotherShortcut:
+            model.settingsTab = .shortcut
+            showSettingsWindow()
+        case .confirmUnknownRetry, .reviewBook:
+            break
+        case .retryHistoryLoad:
+            model.retryHistoryLoad()
+        case .retryHistoryClear:
+            model.requestClearHistory()
+        }
+    }
+
+    private func showSettingsWindow() {
+        NSApp.sendAction(
+            Selector(("showSettingsWindow:")),
+            to: nil,
+            from: nil
+        )
     }
 
     private func shouldShowDetails(for item: BatchItemPresentation) -> Bool {

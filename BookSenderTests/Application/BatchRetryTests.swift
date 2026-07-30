@@ -7,10 +7,15 @@ struct BatchRetryTests {
     func retrySnapshotIncludesOnlyDefinitiveFailuresInOriginalOrder() async throws {
         let stores = try TestStores.make()
         defer { stores.cleanup() }
-        let failed = sanitizedFailure("smtp.rejected")
+        let failed = sanitizedFailure(.smtpRecipientRejected)
         let graph = TestDependencyGraph.make(
             stores: stores,
-            outcomes: [.failed(failed), .deliveryUnknown, .submitted, .failed(failed)]
+            outcomes: [
+                .failed(failed),
+                .deliveryUnknown(.deliveryUnknown()),
+                .submitted,
+                .failed(failed),
+            ]
         )
         let pipeline = graph.dependencies.pipeline
         let setup = try await graph.dependencies.setupService.save(
@@ -71,6 +76,10 @@ struct BatchRetryTests {
                 .isDisjoint(with: unknownIDs)
         )
         #expect(retry.id != initial.id)
+        #expect(
+            try await graph.dependencies.historyService.snapshot().records
+                .count == 1
+        )
     }
 
     private func eventually(

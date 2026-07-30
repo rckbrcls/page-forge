@@ -2,6 +2,28 @@ import XCTest
 
 @MainActor
 final class FirstBookJourneyUITests: XCTestCase {
+    func testConfiguredLaunchShowsNoPrimaryScreenUntilSetupResolves() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-uiTesting",
+            "-configuredSetup",
+            "-uiTestSlowSetupLoad",
+        ]
+        app.launch()
+
+        XCTAssertTrue(
+            app.progressIndicators["app.bootstrap.progress"]
+                .waitForExistence(timeout: 2)
+        )
+        XCTAssertFalse(app.staticTexts["Delivery Setup"].exists)
+        XCTAssertFalse(app.staticTexts["Send Book"].exists)
+
+        XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Delivery Setup"].exists)
+        XCTAssertFalse(app.progressIndicators["app.bootstrap.progress"].exists)
+        XCTAssertFalse(app.staticTexts["ui-test-secret"].exists)
+    }
+
     func testFirstLaunchValidatesSavesAndRelaunchesWithoutBypass() {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTesting", "-resetSetup"]
@@ -57,8 +79,25 @@ final class FirstBookJourneyUITests: XCTestCase {
 
         app.buttons["deliverySetup.save"].click()
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            app.staticTexts[
+                "Setup saved. App password stored securely."
+            ].waitForExistence(timeout: 2)
+        )
+        XCTAssertTrue(
+            app.staticTexts[
+                "Setup saved. App password stored securely."
+            ].waitForNonExistence(timeout: 6)
+        )
         XCTAssertFalse(app.staticTexts["Delivery Setup"].exists)
         XCTAssertFalse(app.staticTexts["ui-test-secret"].exists)
+        app.buttons["sendBook.editSetup"].click()
+        app.typeKey(",", modifierFlags: .command)
+        let clearedPassword = app.secureTextFields[
+            "deliverySetup.appPassword"
+        ]
+        XCTAssertTrue(clearedPassword.waitForExistence(timeout: 2))
+        XCTAssertEqual(clearedPassword.value as? String, "")
 
         app.terminate()
         let relaunched = XCUIApplication()

@@ -21,12 +21,26 @@ struct EPUBAuditEngine: EPUBAuditing {
             entries = try await archive.preflight(source, limits: limits)
         } catch let failure as SanitizedFailure {
             return report([archiveFinding(for: failure)])
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            throw unexpectedAuditFailure()
         }
 
         var findings: [HealthFinding] = []
         let files = entries.filter { !$0.isDirectory }
         let paths = Set(files.map(\.path))
-        findings.append(contentsOf: try await auditMimetype(files, archive: archive))
+        do {
+            findings.append(
+                contentsOf: try await auditMimetype(files, archive: archive)
+            )
+        } catch let failure as SanitizedFailure {
+            return report([archiveFinding(for: failure)])
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            throw unexpectedAuditFailure()
+        }
 
         let packagePath: String
         if !paths.contains("META-INF/container.xml") {
@@ -537,10 +551,10 @@ struct EPUBAuditEngine: EPUBAuditing {
     private func archiveFinding(for failure: SanitizedFailure) -> HealthFinding {
         let code: FindingCode
         switch failure.code {
-        case "archive.unsafe-path": code = .archiveUnsafePath
-        case "archive.duplicate-path": code = .archiveDuplicatePath
-        case "archive.encrypted": code = .archiveEncrypted
-        case "archive.unsupported-entry": code = .archiveUnsupportedEntry
+        case .archiveUnsafePath: code = .archiveUnsafePath
+        case .archiveDuplicatePath: code = .archiveDuplicatePath
+        case .archiveEncrypted: code = .archiveEncrypted
+        case .archiveUnsupportedEntry: code = .archiveUnsupportedEntry
         default: code = .archiveLimitExceeded
         }
         return finding(code, .critical, .forbidden)
@@ -551,13 +565,13 @@ struct EPUBAuditEngine: EPUBAuditing {
         fallback: FindingCode,
         location: String
     ) -> HealthFinding {
-        let unsafeCodes: Set<String> = [
-            "xml.byte-limit",
-            "xml.external-entity",
-            "xml.structure-limit",
-            "xml.text-limit",
-            "xml.timeout",
-            "xml.cancelled",
+        let unsafeCodes: Set<DiagnosticCode> = [
+            .xmlByteLimit,
+            .xmlExternalEntity,
+            .xmlStructureLimit,
+            .xmlTextLimit,
+            .xmlTimeout,
+            .xmlCancelled,
         ]
         if unsafeCodes.contains(failure.code) {
             return finding(
@@ -588,6 +602,19 @@ struct EPUBAuditEngine: EPUBAuditing {
 
     private func report(_ findings: [HealthFinding]) -> AuditReport {
         AuditReport(id: UUID(), findings: findings, inspectedAt: Date())
+    }
+
+    private func unexpectedAuditFailure() -> SanitizedFailure {
+        SanitizedFailure(
+            family: .audit,
+            code: .unexpectedAudit,
+            message: "The EPUB structural audit stopped unexpectedly.",
+            recoveryAction: .reviewBook,
+            evidence: DiagnosticEvidence(
+                phase: .structuralAudit,
+                retryDisposition: .reviewBook
+            )
+        )
     }
 
     private func finding(

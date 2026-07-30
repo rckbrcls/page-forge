@@ -11,7 +11,7 @@ struct FirstBookJourneyTests {
             stores: stores,
             outcomes: [
                 .submitted,
-                .failed(sanitizedFailure("smtp.provider-550")),
+                .failed(sanitizedFailure(.smtpRecipientRejected)),
             ]
         )
         let pipeline = graph.dependencies.pipeline
@@ -96,12 +96,14 @@ struct FirstBookJourneyTests {
             model.items.count == 1
                 && model.items.first?.preparation == .ready
         }
+        #expect(model.feedback(for: .batch)?.state == .succeeded)
 
         #expect(model.items.first?.displayName == "valid.pdf")
         #expect(String(describing: model.batch).contains(pdf.path) == false)
         #expect(model.eligibleCount == 1)
         model.requestSendConfirmation()
         try await eventuallyMainActor { model.isShowingConfirmation }
+        #expect(model.feedback(for: .batch)?.title == "Confirmation ready.")
         #expect(model.confirmation?.eligibleCount == 1)
         model.confirmSend()
         try await eventuallyMainActor {
@@ -109,6 +111,100 @@ struct FirstBookJourneyTests {
                 && model.aggregateMessage == "1 submitted"
         }
         #expect(model.aggregateMessage == "1 submitted")
+        #expect(model.feedback(for: .batch)?.state == .succeeded)
+        #expect(model.feedback(for: .batch)?.title == "1 book submitted.")
+    }
+
+    @Test
+    @MainActor
+    func removeClearAndDismissExposeTerminalFeedback() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let graph = TestDependencyGraph.make(stores: stores)
+        let model = AppModel(dependencies: graph.dependencies)
+        model.setupDraft = validDraft()
+        model.saveSetup()
+        try await eventuallyMainActor { model.setup != nil }
+        let pdf = try FixtureFactory.makePDF(valid: true, in: stores.rootURL)
+        model.addBooks([pdf])
+        try await eventuallyMainActor { model.items.first?.preparation == .ready }
+        let id = try #require(model.items.first?.id)
+
+        model.remove(id)
+        try await eventuallyMainActor { model.items.isEmpty }
+        #expect(model.feedback(for: .batch)?.title == "Book removed.")
+
+        model.addBooks([pdf])
+        try await eventuallyMainActor { model.items.first?.preparation == .ready }
+        model.requestSendConfirmation()
+        try await eventuallyMainActor { model.isShowingConfirmation }
+        model.dismissConfirmation()
+        #expect(model.feedback(for: .batch)?.title == "Confirmation dismissed.")
+
+        model.clear()
+        try await eventuallyMainActor { model.items.isEmpty }
+        #expect(model.feedback(for: .batch)?.title == "Batch cleared.")
+    }
+
+    @Test
+    @MainActor
+    func emptyDropAttemptExplainsThatNoSupportedBookWasAdded() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let graph = TestDependencyGraph.make(stores: stores)
+        let model = AppModel(dependencies: graph.dependencies)
+
+        model.addBooks([])
+
+        #expect(model.feedback(for: .batch)?.state == .failed)
+        #expect(
+            model.feedback(for: .batch)?.title
+                == "No supported books were added."
+        )
+        #expect(
+            model.feedback(for: .batch)?.failure?.code
+                == .intakeUnsupported
+        )
+    }
+
+    @Test
+    @MainActor
+    func failedOnlyRetryStartsANewFeedbackLifecycle() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let graph = TestDependencyGraph.make(
+            stores: stores,
+            outcomes: [
+                .failed(sanitizedFailure(.smtpRecipientRejected)),
+                .submitted,
+            ]
+        )
+        let model = AppModel(dependencies: graph.dependencies)
+        model.setupDraft = validDraft()
+        model.saveSetup()
+        try await eventuallyMainActor { model.setup != nil }
+        let pdf = try FixtureFactory.makePDF(valid: true, in: stores.rootURL)
+        model.addBooks([pdf])
+        try await eventuallyMainActor { model.items.first?.preparation == .ready }
+        model.requestSendConfirmation()
+        try await eventuallyMainActor { model.isShowingConfirmation }
+        model.confirmSend()
+        try await eventuallyMainActor {
+            model.failedCount == 1
+                && model.feedback(for: .batch)?.state == .failed
+        }
+        let firstFeedback = try #require(model.feedback(for: .batch))
+        #expect(firstFeedback.state == .failed)
+
+        model.requestRetryConfirmation()
+        try await eventuallyMainActor { model.isShowingConfirmation }
+        model.confirmSend()
+        try await eventuallyMainActor {
+            model.items.first?.delivery == .submitted
+        }
+        let retryFeedback = try #require(model.feedback(for: .batch))
+        #expect(retryFeedback.id != firstFeedback.id)
+        #expect(retryFeedback.state == .succeeded)
     }
 
     private func eventually(
@@ -150,19 +246,20 @@ private actor PipelineEventRecorder {
 
     var batchCompletedCount: Int {
         events.filter {
-            if case .batchCompleted = $0 { return true }
+            if case .batchCompleted = $0.kind { return true }
             return false
         }.count
     }
 
     var terminalItemEventCount: Int {
         events.filter {
-            switch $0 {
+            switch $0.kind {
             case .submitted, .failed, .deliveryUnknown:
                 return true
             case .batchChanged, .intakeOutcome, .checking, .preparing,
                  .ready, .needsAttention, .sending, .cancelled,
-                 .batchProgress, .batchCompleted:
+                 .batchProgress, .batchCompleted,
+                 .historyPersistenceFailed:
                 return false
             }
         }.count

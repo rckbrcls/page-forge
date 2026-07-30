@@ -37,7 +37,7 @@ actor BookIntakeService {
                             for: url,
                             format: format(for: url),
                             failure: failure(
-                                "intake.capacity",
+                                .intakeCapacity,
                                 message: "The batch has reached its item limit."
                             )
                         )
@@ -65,7 +65,7 @@ actor BookIntakeService {
                                 for: url,
                                 format: item.format,
                                 failure: failure(
-                                    "intake.duplicate",
+                                    .intakeDuplicate,
                                     message: "This book is already in the batch."
                                 )
                             )
@@ -93,7 +93,7 @@ actor BookIntakeService {
                         excludedItem(
                             for: url,
                             format: format(for: url),
-                            failure: failure("intake.failed")
+                            failure: failure(.intakeFailed)
                         )
                     )
                 )
@@ -111,18 +111,18 @@ actor BookIntakeService {
         }
         let before = try sourceValues(for: url)
         guard before.isRegularFile == true, before.isReadable == true else {
-            throw failure("intake.unreadable")
+            throw failure(.intakeUnreadable)
         }
         let byteCount = Int64(before.fileSize ?? 0)
         guard limits.permitsBookBytes(byteCount) else {
             throw failure(
-                "intake.size",
+                .intakeSize,
                 message: "This file is outside the supported size limit."
             )
         }
         guard let format = format(for: url) else {
             throw failure(
-                "intake.unsupported",
+                .intakeUnsupported,
                 message: "Choose an EPUB or PDF file."
             )
         }
@@ -143,7 +143,7 @@ actor BookIntakeService {
                   before.contentModificationDate == after.contentModificationDate
             else {
                 throw failure(
-                    "intake.changed",
+                    .intakeChanged,
                     message: "The file changed while it was being added."
                 )
             }
@@ -238,7 +238,7 @@ actor BookIntakeService {
     }
 
     private func failure(
-        _ code: String,
+        _ code: DiagnosticCode,
         message: String = "This file could not be added."
     ) -> SanitizedFailure {
         SanitizedFailure(

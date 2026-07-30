@@ -35,7 +35,7 @@ struct PDFEligibilityService: PDFEligibilityChecking {
                   limits.permitsAttachmentBytes(byteCount)
             else {
                 throw failure(
-                    "pdf.size",
+                    .pdfSize,
                     message: "This PDF is outside the delivery size limit."
                 )
             }
@@ -49,7 +49,7 @@ struct PDFEligibilityService: PDFEligibilityChecking {
                     .allSatisfy({ $0.isNumber || $0 == "." })
             else {
                 throw failure(
-                    "pdf.signature",
+                    .pdfSignature,
                     message: "This file does not contain a valid PDF signature."
                 )
             }
@@ -58,7 +58,7 @@ struct PDFEligibilityService: PDFEligibilityChecking {
             let tail = try handle.read(upToCount: Int(tailLength)) ?? Data()
             guard String(decoding: tail, as: UTF8.self).contains("%%EOF") else {
                 throw failure(
-                    "pdf.structure",
+                    .pdfStructure,
                     message: "This PDF does not contain a complete file ending."
                 )
             }
@@ -88,7 +88,7 @@ struct PDFEligibilityService: PDFEligibilityChecking {
                 plan: plan,
                 failure: SanitizedFailure(
                     family: .intake,
-                    code: "pdf.cancelled",
+                    code: .pdfCancelled,
                     message: "PDF preparation was cancelled.",
                     recoveryAction: nil
                 )
@@ -96,7 +96,7 @@ struct PDFEligibilityService: PDFEligibilityChecking {
         } catch let sanitized as SanitizedFailure {
             return blocked(plan: plan, failure: sanitized)
         } catch {
-            return blocked(plan: plan, failure: failure("pdf.read"))
+            return blocked(plan: plan, failure: failure(.pdfRead))
         }
     }
 
@@ -116,7 +116,7 @@ struct PDFEligibilityService: PDFEligibilityChecking {
     }
 
     private func failure(
-        _ code: String,
+        _ code: DiagnosticCode,
         message: String = "This PDF could not be prepared safely."
     ) -> SanitizedFailure {
         SanitizedFailure(

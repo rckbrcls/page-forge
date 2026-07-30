@@ -1,30 +1,48 @@
 <!--
 Sync Impact Report
-- Version change: 7.1.0 -> 7.2.0
-- Bump rationale: a launch check on the runner that imported the private signing
-  identity does not prove that a clean consumer Mac can resolve the self-signed
-  certificate chain.
+- Version change: 7.2.0 -> 8.0.0
+- Bump rationale: this amendment reverses the explicit prohibition on delivery
+  history and redefines the product boundary to require one bounded local send
+  history inside the existing `Send Book` surface.
 - Modified principles:
-  - Simple, Reviewable Distribution
+  - Two-Surface Product
+  - Minimal Interface, Adaptive Materials
+  - Domain-First, Typed Architecture
+  - Fixture-Backed Pipeline Assurance
+  - Local Privacy and Protected Credentials
+- Added principle:
+  - Bounded Local Send History
 - Added obligations:
-  - The installer verifies the GitHub asset digest and pinned public certificate
-    before registering only that public certificate in the user Keychain.
-  - Registration is idempotent and must not import a private key or install an
-    explicit Always Trust override.
-  - A separate clean macOS runner receives only the packaged release candidate,
-    executes the installer bootstrap, verifies that no private identity exists,
-    and launches the installed app before publication.
+  - `Send Book` contains `Send` and `History` as local tabs without creating a
+    third primary screen.
+  - Successful and informational acknowledgements expire automatically within
+    five seconds; active, failed, blocked, cancelled, and uncertain states remain.
+  - History records exactly one definitive SMTP submission per book, retains at
+    most 500 entries, remains local, and can be cleared explicitly.
+  - History stores only a record identifier, original display name, and
+    definitive acceptance timestamp.
+  - History cannot resend, retry, open, locate, preview, or manage books and
+    cannot claim Kindle receipt or processing.
+- Removed sections: none.
+- Templates updated:
+  - ✅ `.specify/templates/plan-template.md`
+  - ✅ `.specify/templates/spec-template.md`
+  - ✅ `.specify/templates/tasks-template.md`
+  - ✅ `.specify/templates/checklist-template.md`
+  - No `.specify/templates/commands/*.md` files are present.
 - Runtime guidance updated:
   - ✅ AGENTS.md
-- Specifications and distribution guidance updated:
-  - ✅ specs/005-lightweight-macos-sender/
-  - ✅ specs/006-replace-mock-workflows/
-  - ✅ specs/007-native-quality-baseline/
   - ✅ README.md
-  - ✅ docs/deployment.md
-- Follow-up TODOs: v0.2.4 clean-consumer and installed-app acceptance, first
-  corrected-version credential acceptance, and the first
-  same-identity N-to-N+1 Sparkle update remain separate runtime gates.
+  - ✅ docs/desktop-migration.md
+  - ✅ docs/troubleshooting.md
+- Specifications updated:
+  - ✅ specs/008-app-feedback-diagnostics/
+  - ✅ specs/009-transient-feedback-history/
+- Historical feature scopes in specs/005, specs/006, and specs/007 remain as
+  recorded; this constitution and Feature 009 govern the new history capability.
+- Follow-up TODOs: Feature 009 planning, implementation, compilation, automated
+  tests, runtime accessibility, authenticated SMTP, and release validation remain
+  separate future gates.
 -->
 
 # Book Sender Constitution
@@ -34,24 +52,32 @@ Sync Impact Report
 ### I. Two-Surface Product
 
 Book Sender exists only to configure SMTP delivery and send local EPUB or PDF
-books to Kindle. The product MUST expose exactly two primary screens:
-`Delivery Setup` and `Send Book`.
+books to Kindle, plus review a bounded local record of definitive submissions.
+The product MUST expose exactly two primary screens: `Delivery Setup` and
+`Send Book`.
 
 The complete user-visible journey MUST remain:
 
 `Configure Delivery -> Select Books -> Wait for Readiness -> Confirm -> Send`
 
-System file pickers, confirmations, alerts, progress presentation, and inline
-disclosures do not count as additional primary screens. The product MUST NOT add
-a library, persistent queue, delivery history, reader, editor, account, cloud
-sync, analytics dashboard, or general ebook-management surface.
+`Send Book` MUST contain `Send` and `History` as local tabs. `Send` remains the
+default operational workflow. `History` is an auxiliary record within the same
+primary screen and MUST NOT become a third primary screen, a library, a queue,
+or a book-management destination.
+
+System file pickers, confirmations, alerts, progress presentation, inline
+disclosures, and the bounded `History` tab do not count as additional primary
+screens. The product MUST NOT add a library, persistent or scheduled queue,
+reader, editor, account, cloud sync, analytics dashboard, or general
+ebook-management surface.
 
 A native auxiliary Settings window MAY expose exactly two tabs: `Delivery` for
 editing saved SMTP configuration and `Shortcut` for changing or disabling the
 global shortcut. Settings MUST NOT host book intake, preparation, confirmation,
 delivery, queue, history, or another primary workflow.
 
-Rationale: Book Sender earns complexity in preparation quality, not in navigation.
+Rationale: a narrow local submission record improves confidence without turning
+Book Sender into a navigation-heavy ebook manager.
 
 ### II. Lightweight Native macOS Application
 
@@ -104,6 +130,16 @@ Progress feedback MUST remain honest. The app MUST NOT show invented percentages
 for work whose completion cannot be measured. Accessibility labels, keyboard
 focus, cancellation, errors, and terminal outcomes MUST remain clear even when
 the visual presentation is minimal.
+
+Successful and informational action acknowledgements MUST disappear
+automatically within five seconds. Active progress, validation guidance,
+blocked states, failures, cancellation outcomes, and `Delivery Unknown` MUST
+remain available until the state changes or the user deliberately resolves or
+clears it.
+
+The `History` tab MUST use a simple newest-first list with one row per definitive
+submission. It MUST NOT add thumbnails, analytics, charts, grouping, search,
+filters, exports, or book-management actions.
 
 Rationale: quiet feedback reduces cognitive load without hiding actionable risk.
 
@@ -236,11 +272,16 @@ The required dependency direction is:
 
 `SwiftUI Screens -> Application Pipeline -> Ebook Audit and Repair Domain -> Archive, XML, Filesystem, SMTP, and Credential Adapters`
 
+The history-specific dependency direction is:
+
+`SwiftUI History Presentation -> Application History Service -> Typed Submission Records -> Local History Adapter`
+
 SwiftUI views MUST compose the two screens and present state; they MUST NOT contain
 archive, audit, repair, restoration, filesystem, credential, or SMTP rules.
 Expected states and failures MUST use explicit models, including selected batch,
 finding, health, preparation plan, applied action, comparison, cancellation, and
-delivery result. Raw adapter exceptions MUST NOT reach the interface.
+delivery result. History views MUST NOT persist records directly or infer success
+from presentation state. Raw adapter exceptions MUST NOT reach the interface.
 
 Rationale: the minimal UI must remain replaceable and the advanced pipeline must
 remain independently testable.
@@ -257,7 +298,9 @@ delivery-unknown behavior.
 An automatic preparation rule without focused acceptance evidence MUST NOT ship.
 UI tests MUST verify the two-screen boundary, minimal default feedback, keyboard
 operation, accessibility labels, batch progress, failure disclosure, and explicit
-delivery confirmation.
+delivery confirmation. History tests MUST verify record-once semantics,
+definitive-success filtering, newest-first ordering, retention limits, clearing,
+relaunch persistence, privacy, tab switching, and accessibility.
 
 Rationale: invisible background sophistication requires unusually visible test
 evidence.
@@ -280,9 +323,15 @@ If a credential created under an obsolete or inaccessible security contract
 cannot be read, the application MAY prefill only non-secret values and MUST ask
 for the secret again once. It MUST NOT attempt an unsafe extraction or migration.
 
-Non-secret preferences MAY remain local. The application MUST collect no hidden
-usage data or telemetry. Diagnostic output MUST redact credentials, book
-excerpts, full source paths, and other unnecessary personal data.
+Non-secret preferences MAY remain local. The bounded send history MAY persist
+only a record identifier, original display name, and definitive SMTP acceptance
+timestamp. It MUST NOT persist source paths, book content, recipient or sender
+addresses, credentials, provider replies, diagnostic evidence, or remote
+identifiers.
+
+The application MUST collect no hidden usage data or telemetry. Diagnostic output
+MUST redact credentials, book excerpts, full source paths, and other unnecessary
+personal data. Diagnostic retention MUST remain separate from send history.
 
 Rationale: an email-delivery utility handles both personal documents and powerful
 credentials.
@@ -348,6 +397,32 @@ removed as explicit migration work, not retained as fallbacks.
 
 Rationale: operational simplicity is part of the product's lightweight promise.
 
+### XV. Bounded Local Send History
+
+Book Sender MUST provide a `History` tab inside `Send Book` containing one record
+for each book whose independent SMTP delivery receives definitive provider
+acceptance. Failed, cancelled, excluded, unattempted, and `Delivery Unknown`
+items MUST NOT be represented as successful submissions.
+
+Each submission record MUST contain only a locally generated record identifier,
+the original book display name, and the definitive acceptance timestamp. The
+history MUST remain local, persist across normal relaunches, display newest
+first using the user's current regional and time-zone conventions, retain at
+most 500 entries, and remove the oldest entries first when the limit is exceeded.
+
+The user MUST be able to clear all send-history records through an explicit
+confirmed action without changing setup, credentials, preferences, or the
+current batch. History persistence failure MUST NOT change or retry an already
+successful delivery and MUST be reported separately from the delivery outcome.
+
+History MUST NOT transmit data, synchronize across devices, drive automatic or
+manual resend, retry a delivery, open or locate source files, preview content,
+claim Kindle receipt or processing, or become a library, queue, analytics
+surface, or general activity log.
+
+Rationale: a small, privacy-bounded submission record answers what was sent and
+when without expanding Book Sender into document management.
+
 ## Product Surface and Interaction Contract
 
 ### Required Capabilities
@@ -360,13 +435,18 @@ Rationale: operational simplicity is part of the product's lightweight promise.
 - Reveal actionable detail inline when a book cannot safely become ready.
 - Confirm one stable eligible batch before sequential independent SMTP delivery.
 - Show per-book terminal results and allow explicit retry of failed items only.
+- Replace the completed primary action with `Send More Books`, which clears the
+  terminal current batch without changing durable setup or history.
+- Show a bounded local newest-first history of definitive SMTP submissions inside
+  the `History` tab and allow the user to clear that history explicitly.
 
 ### Prohibited Expansion
 
-No feature may introduce a third primary screen; library, persistent queue,
-history, reader, editor, cloud, account, analytics, AI, conversion, DRM removal,
-generic-document, mobile, web, Windows, Linux, or parallel legacy product scope
-without a constitutional amendment.
+No feature may introduce a third primary screen; library, persistent or scheduled
+queue, unbounded or remote history, history-driven resend, reader, editor, cloud,
+account, analytics, AI, conversion, DRM removal, generic-document, mobile, web,
+Windows, Linux, or parallel legacy product scope without a constitutional
+amendment.
 
 ## Background Ebook Preparation Policy
 
@@ -398,7 +478,8 @@ BookSender/
 │   ├── DeliverySetup/
 │   └── SendBook/
 ├── Application/
-│   └── Pipeline/
+│   ├── Pipeline/
+│   └── History/
 ├── Domain/
 │   ├── Audit/
 │   ├── Repair/
@@ -408,7 +489,8 @@ BookSender/
 │   ├── XML/
 │   ├── Filesystem/
 │   ├── SMTP/
-│   └── Credentials/
+│   ├── Credentials/
+│   └── History/
 └── Resources/
 BookSenderTests/
 └── Fixtures/
@@ -421,13 +503,16 @@ boundary remain explicit.
 
 - Feature specifications MUST state the two-screen surface, background pipeline,
   minimal feedback, batch behavior, safety, original preservation, and explicit
-  delivery boundaries.
+  delivery boundaries. Features that touch history MUST also state record
+  eligibility, retention, privacy, clearing, and non-management boundaries.
 - Plans MUST pass the Constitution Check before research and after design.
 - Tasks MUST include fixture-backed tests for every audit, cleanup, restoration,
-  and revalidation rule.
+  and revalidation rule, plus record-once, retention, persistence, and privacy
+  tests for history work.
 - Reviews MUST reject UI-embedded domain rules, raw expected failures, invented
   progress, unbounded archive work, automatic delivery, insecure credential
-  storage, untested preparation, and parallel product surfaces.
+  storage, untested preparation, unbounded or remote history, history-driven
+  sending, and parallel product surfaces.
 - Static validation, compilation, automated tests, runtime inspection, signing,
   and production distribution are distinct claims and MUST be reported
   separately.
@@ -456,4 +541,4 @@ constitutional rule or written amendment MUST be rejected. Compliance evidence
 MUST distinguish static checks, compilation, automated tests, runtime behavior,
 authenticated delivery, and production distribution.
 
-**Version**: 7.2.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-30
+**Version**: 8.0.0 | **Ratified**: 2026-07-17 | **Last Amended**: 2026-07-30

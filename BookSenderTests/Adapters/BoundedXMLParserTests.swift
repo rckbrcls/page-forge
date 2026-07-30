@@ -23,6 +23,22 @@ struct BoundedXMLParserTests {
     }
 
     @Test
+    func externalEntityFailureCarriesOnlyTypedXMLEvidence() async {
+        let canary = DiagnosticTestFixtures.sourcePath
+        let xml = #"<!DOCTYPE root [<!ENTITY x SYSTEM "\#(canary)">]><root>&x;</root>"#
+        do {
+            _ = try await parser.parse(Data(xml.utf8), limits: .standard)
+            Issue.record("Expected external entity rejection")
+        } catch let failure as SanitizedFailure {
+            #expect(failure.code == .xmlExternalEntity)
+            #expect(failure.evidence.phase == .xmlParsing)
+            #expect(String(describing: failure).contains(canary) == false)
+        } catch {
+            Issue.record("Expected sanitized XML failure")
+        }
+    }
+
+    @Test
     func preservesRemoteReferenceWithoutFetchingIt() async throws {
         let projection = try await parser.parse(
             Data(#"<root href="https://example.invalid/book"/>"#.utf8),

@@ -44,11 +44,13 @@ struct BookSenderApp: App {
             }
         }
         .windowStyle(.hiddenTitleBar)
+        .windowToolbarStyle(.unified(showsTitle: false))
         .windowResizability(.contentMinSize)
         .commands {
             CommandGroup(replacing: .newItem) { }
             CommandGroup(after: .appInfo) {
                 CheckForUpdatesView(updater: updaterController.updater) {
+                    model.acknowledgeUpdateCheck()
                     updaterController.checkForUpdates(nil)
                 }
             }
@@ -138,16 +140,47 @@ private struct MainWindowContent: View {
 
     var body: some View {
         Group {
-            switch model.route {
-            case .deliverySetup:
-                DeliverySetupView(model: model, presentation: .onboarding)
-            case .sendBook:
-                SendBookView(model: model)
+            if model.hasResolvedInitialSetup {
+                switch model.route {
+                case .deliverySetup:
+                    DeliverySetupView(model: model, presentation: .onboarding)
+                case .sendBook:
+                    SendBookView(model: model)
+                }
+            } else {
+                InitialSetupPlaceholder()
             }
         }
         .onAppear {
             model.windowCoordinator.registerOpenMainWindow {
                 openWindow(id: "main")
+            }
+        }
+    }
+}
+
+private struct InitialSetupPlaceholder: View {
+    @State private var isShowingProgress = false
+
+    var body: some View {
+        Group {
+            if isShowingProgress {
+                ProgressView("Opening Book Sender…")
+                    .controlSize(.small)
+                    .accessibilityIdentifier("app.bootstrap.progress")
+            } else {
+                Color.clear
+                    .accessibilityHidden(true)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .task {
+            do {
+                try await Task.sleep(for: .milliseconds(150))
+                guard !Task.isCancelled else { return }
+                isShowingProgress = true
+            } catch {
+                return
             }
         }
     }

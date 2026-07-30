@@ -89,8 +89,13 @@ _Use `[NEEDS CLARIFICATION: specific question]` only when no safe default exists
 - **CC-006**: Feature MUST use typed pipeline evidence and failures, keep domain
   rules outside SwiftUI views, and test every automatic rule with fixtures
 - **CC-007**: Feature MUST NOT introduce Raycast, external ebook engines, helper
-  processes, conversion, DRM removal, library, history, cloud, account, AI, or a
-  parallel product surface
+  processes, conversion, DRM removal, library, persistent queue, unbounded or
+  remote history, history-driven resend, cloud, account, AI, or a parallel
+  product surface
+- **CC-008**: Any send history introduced by the feature MUST stay inside
+  `Send Book`, record only definitive SMTP submissions, remain local and bounded
+  to 500 entries, expose explicit clearing, and store no source path, content,
+  credential, address, provider reply, diagnostic evidence, or remote identifier
 
 ### Key Entities _(include if feature involves data)_
 
@@ -99,6 +104,8 @@ _Use `[NEEDS CLARIFICATION: specific question]` only when no safe default exists
 - **Health Finding**: Stable evidence with severity, repairability, action, and revalidation result
 - **Prepared Book**: Eligible original PDF or validated EPUB working copy
 - **Delivery Attempt**: One explicit independent SMTP transmission and terminal outcome
+- **Submission Record**: Optional bounded local record of one definitive SMTP
+  acceptance containing only an identifier, original display name, and timestamp
 
 ## Success Criteria _(mandatory)_
 
@@ -108,7 +115,7 @@ _Use `[NEEDS CLARIFICATION: specific question]` only when no safe default exists
 - **SC-002**: [Launch, shortcut, or concise-feedback responsiveness metric]
 - **SC-003**: [Original-preservation and pipeline-correctness metric]
 - **SC-004**: [Batch isolation and capacity metric]
-- **SC-005**: [Two-screen, accessibility, privacy, or explicit-delivery metric]
+- **SC-005**: [Two-screen, accessibility, privacy, explicit-delivery, or bounded-history metric]
 
 ## Assumptions
 
@@ -116,7 +123,8 @@ _Use `[NEEDS CLARIFICATION: specific question]` only when no safe default exists
   credentials, and a Kindle personal-document address
 - The product exposes only delivery setup and sending; EPUB preparation remains
   an automatic background pipeline
-- A temporary batch is not a persistent queue or delivery history
+- A temporary batch is not a persistent queue; send history, when in scope, is a
+  separate bounded record of definitive submissions
 - Processing is local and SMTP transmission requires explicit confirmation
 - Cloud sync, accounts, conversion, DRM removal, external engines, and non-book
   inputs are out of scope

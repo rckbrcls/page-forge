@@ -109,6 +109,7 @@ struct EPUBRepairEngine: RepairPlanning, ReportComparing, EPUBPreparing {
         var preparedReport: AuditReport?
         var applied: [AppliedRepairAction] = []
         var comparison: RevalidationComparison?
+        var activePhase = DiagnosticPhase.structuralAudit
 
         do {
             try Task.checkCancellation()
@@ -120,12 +121,14 @@ struct EPUBRepairEngine: RepairPlanning, ReportComparing, EPUBPreparing {
             originalReport = original
             plan = self.plan(for: original)
             guard plan.decision == .writeEPUBWorkingCopy else {
+                activePhase = .repairPlanning
                 throw failure(
-                    "repair.blocked",
+                    .repairBlocked,
                     message: "This EPUB needs attention before it can be sent."
                 )
             }
 
+            activePhase = .workingCopyWrite
             let partial = try await writer.write(
                 source: source,
                 plan: plan,
@@ -133,6 +136,7 @@ struct EPUBRepairEngine: RepairPlanning, ReportComparing, EPUBPreparing {
                 limits: limits
             )
             let preparedArchive = ZIPFoundationEPUBArchive(source: partial)
+            activePhase = .revalidation
             let revalidated = try await auditor.audit(
                 preparedArchive,
                 source: partial
@@ -158,7 +162,7 @@ struct EPUBRepairEngine: RepairPlanning, ReportComparing, EPUBPreparing {
                       of: compared.resolvedFindingCodes
                   )
             else {
-                throw failure("repair.revalidation-failed")
+                throw failure(.repairRevalidationFailed)
             }
 
             let promoted = try await workspaceStore.promotePartial(
@@ -173,7 +177,7 @@ struct EPUBRepairEngine: RepairPlanning, ReportComparing, EPUBPreparing {
                   limits.permitsAttachmentBytes(byteCount)
             else {
                 throw failure(
-                    "repair.attachment-size",
+                    .repairAttachmentSize,
                     message: "The prepared EPUB exceeds the delivery size limit."
                 )
             }
@@ -207,7 +211,7 @@ struct EPUBRepairEngine: RepairPlanning, ReportComparing, EPUBPreparing {
                 comparison: comparison,
                 failure: SanitizedFailure(
                     family: .repair,
-                    code: "repair.cancelled",
+                    code: .repairCancelled,
                     message: "EPUB preparation was cancelled.",
                     recoveryAction: nil
                 )
@@ -224,13 +228,26 @@ struct EPUBRepairEngine: RepairPlanning, ReportComparing, EPUBPreparing {
             )
         } catch {
             await workspaceStore.cleanupPartialFiles(in: workspace)
+            let family: FailureFamily =
+                activePhase == .structuralAudit || activePhase == .revalidation
+                ? .audit
+                : .repair
             return result(
                 originalReport: originalReport,
                 plan: plan,
                 applied: applied,
                 preparedReport: preparedReport,
                 comparison: comparison,
-                failure: failure("repair.failed")
+                failure: SanitizedFailure(
+                    family: family,
+                    code: .unexpected(for: family),
+                    message: "An unexpected EPUB preparation step failed.",
+                    recoveryAction: .reviewBook,
+                    evidence: DiagnosticEvidence(
+                        phase: activePhase,
+                        retryDisposition: .reviewBook
+                    )
+                )
             )
         }
     }
@@ -282,7 +299,7 @@ struct EPUBRepairEngine: RepairPlanning, ReportComparing, EPUBPreparing {
     }
 
     private func failure(
-        _ code: String,
+        _ code: DiagnosticCode,
         message: String = "The prepared EPUB did not pass revalidation."
     ) -> SanitizedFailure {
         SanitizedFailure(

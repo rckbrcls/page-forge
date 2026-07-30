@@ -12,7 +12,7 @@ actor KeychainCredentialStore: CredentialStoring {
               revision > 0,
               let data = secret.data(using: .utf8)
         else {
-            throw failure("credential.empty")
+            throw failure(.credentialEmpty)
         }
 
         let reference = CredentialReference(
@@ -25,7 +25,7 @@ actor KeychainCredentialStore: CredentialStoring {
 
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess else {
-            throw failure("credential.save")
+            throw failure(.credentialSave)
         }
         return reference
     }
@@ -42,7 +42,7 @@ actor KeychainCredentialStore: CredentialStoring {
               let secret = String(data: data, encoding: .utf8),
               !secret.isEmpty
         else {
-            throw failure("credential.read")
+            throw failure(.credentialRead)
         }
         return secret
     }
@@ -58,7 +58,7 @@ actor KeychainCredentialStore: CredentialStoring {
         let query = identityQuery(reference)
         let status = SecItemDelete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw failure("credential.delete")
+            throw failure(.credentialDelete)
         }
     }
 
@@ -70,7 +70,7 @@ actor KeychainCredentialStore: CredentialStoring {
         ]
     }
 
-    private func failure(_ code: String) -> SanitizedFailure {
+    private func failure(_ code: DiagnosticCode) -> SanitizedFailure {
         SanitizedFailure(
             family: .credential,
             code: code,

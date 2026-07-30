@@ -40,7 +40,7 @@ enum DeliveryState: Equatable, Sendable {
     case submitted
     case failed(SanitizedFailure)
     case cancelled
-    case deliveryUnknown
+    case deliveryUnknown(SanitizedFailure)
 
     var isTerminal: Bool {
         switch self {
@@ -87,7 +87,7 @@ enum BatchPhase: String, Codable, Equatable, Sendable {
     case completed
 
     var permitsEditing: Bool {
-        self == .editing || self == .readyForConfirmation || self == .completed
+        self == .editing || self == .readyForConfirmation
     }
 
     var hasConfirmedSend: Bool {
@@ -149,6 +149,37 @@ struct CurrentBatch: Identifiable, Sendable {
     }
 }
 
+extension CurrentBatch {
+    var isFullyTerminal: Bool {
+        guard phase == .completed else { return false }
+        return items.allSatisfy { item in
+            item.delivery.isTerminal
+                || (
+                    item.delivery == .notScheduled
+                        && item.preparation.isTerminal
+                )
+        }
+    }
+
+    var hasDeliveryUnknown: Bool {
+        items.contains {
+            if case .deliveryUnknown = $0.delivery { return true }
+            return false
+        }
+    }
+
+    var hasRetryableFailure: Bool {
+        items.contains {
+            if case .failed = $0.delivery { return true }
+            return false
+        }
+    }
+
+    var canStartAnotherSend: Bool {
+        phase == .completed && isFullyTerminal
+    }
+}
+
 struct BatchItemPresentation: Identifiable, Sendable {
     let id: UUID
     let displayName: String
@@ -198,5 +229,16 @@ struct BatchPresentation: Identifiable, Sendable {
         BatchPresentation(
             CurrentBatch(id: UUID(), items: [], phase: .editing)
         )
+    }
+
+    var canStartAnotherSend: Bool {
+        phase == .completed
+            && items.allSatisfy { item in
+                item.delivery.isTerminal
+                    || (
+                        item.delivery == .notScheduled
+                            && item.preparation.isTerminal
+                    )
+            }
     }
 }

@@ -79,13 +79,18 @@ struct EPUBArchiveWriterTests {
             decision: .writeEPUBWorkingCopy
         )
 
-        await #expect(throws: SanitizedFailure.self) {
+        do {
             _ = try await EPUBArchiveWriter().write(
                 source: source,
                 plan: plan,
                 workspace: workspace,
                 limits: .standard
             )
+            Issue.record("Expected unsupported repair action")
+        } catch let failure as SanitizedFailure {
+            #expect(failure.code == .repairUnsupportedAction)
+            #expect(failure.evidence.phase == .workingCopyWrite)
+            #expect(String(describing: failure).contains(source.url.path) == false)
         }
         #expect(
             FileManager.default.fileExists(

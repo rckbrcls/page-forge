@@ -111,6 +111,33 @@ struct EPUBArchiveAdapterTests {
     }
 
     @Test
+    func archiveLimitFailureCarriesRuleAndLimitWithoutSourcePath() async throws {
+        let directory = try FixtureFactory.makeDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = try FixtureFactory.makeEPUB(
+            .archiveSizeBoundary,
+            in: directory
+        )
+        let source = StagedFileReference(identifier: UUID(), url: url)
+        let archive = ZIPFoundationEPUBArchive(source: source)
+
+        do {
+            _ = try await archive.preflight(
+                source,
+                limits: makeSafetyLimits(maximumArchiveEntries: 1)
+            )
+            Issue.record("Expected archive entry limit")
+        } catch let failure as SanitizedFailure {
+            #expect(failure.code == .archiveEntryLimit)
+            #expect(failure.evidence.phase == .archiveSafety)
+            #expect(
+                failure.evidence.context.safetyLimit == .archiveEntries
+            )
+            #expect(String(describing: failure).contains(url.path) == false)
+        }
+    }
+
+    @Test
     func honorsCancellationBeforeOpening() async throws {
         let directory = try FixtureFactory.makeDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }

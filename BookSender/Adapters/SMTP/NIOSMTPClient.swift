@@ -25,8 +25,12 @@ actor NIOSMTPClient: SMTPDelivering {
         guard limits.permitsAttachmentBytes(book.byteCount) else {
             return .failed(
                 failure(
-                    "smtp.attachment-size",
-                    message: "This attachment exceeds the delivery size limit."
+                    .smtpAttachmentSize,
+                    message: "This attachment exceeds the delivery size limit.",
+                    phase: .inputValidation,
+                    retryDisposition: .chooseAnotherFile,
+                    recoveryAction: .chooseAnotherFile,
+                    context: DiagnosticContext(safetyLimit: .attachmentBytes)
                 )
             )
         }
@@ -36,13 +40,21 @@ actor NIOSMTPClient: SMTPDelivering {
         ) else {
             return .failed(
                 failure(
-                    "smtp.command-size",
-                    message: "The SMTP credential is too large to send safely."
+                    .smtpCommandSize,
+                    message: "The SMTP credential is too large to send safely.",
+                    phase: .inputValidation,
+                    retryDisposition: .editSetup,
+                    recoveryAction: .editSetup,
+                    context: DiagnosticContext(safetyLimit: .smtpLine)
                 )
             )
         }
 
         let transmission = SMTPTransmissionTracker()
+        let usesImplicitTLS = setup.securityMode == .implicitTLS
+        if usesImplicitTLS {
+            await transmission.updatePhase(.smtpSecuring)
+        }
         await progress(
             DeliveryProgress(
                 stage: .connecting,
@@ -52,7 +64,6 @@ actor NIOSMTPClient: SMTPDelivering {
 
         do {
             let hostname = setup.smtpHost.value
-            let usesImplicitTLS = setup.securityMode == .implicitTLS
             let tlsContext = try makeTLSContext()
             let stageSeconds = max(
                 Int64(1),
@@ -116,7 +127,7 @@ actor NIOSMTPClient: SMTPDelivering {
                         await replyQueue.finish(failure: sanitized)
                     } catch {
                         await replyQueue.finish(
-                            failure: failure("smtp.connection-closed")
+                            failure: failure(.smtpConnectionClosed)
                         )
                     }
                 }
@@ -138,6 +149,12 @@ actor NIOSMTPClient: SMTPDelivering {
 
                 while true {
                     try Task.checkCancellation()
+                    let machinePhase = machine.diagnosticPhase
+                    await transmission.updatePhase(
+                        usesImplicitTLS && machinePhase == .smtpConnecting
+                            ? .smtpSecuring
+                            : machinePhase
+                    )
                     let reply = try await nextReply(from: replyQueue)
                     var actions = machine.receive(reply)
 
@@ -148,6 +165,9 @@ actor NIOSMTPClient: SMTPDelivering {
                             let stage = stage(forCommand: line)
                             if let stage {
                                 let started = await transmission.value
+                                await transmission.updatePhase(
+                                    diagnosticPhase(for: stage)
+                                )
                                 await progress(
                                     DeliveryProgress(
                                         stage: stage,
@@ -158,6 +178,7 @@ actor NIOSMTPClient: SMTPDelivering {
                             try await writeData(Data(line.utf8))
 
                         case .upgradeTLS:
+                            await transmission.updatePhase(.smtpSecuring)
                             await progress(
                                 DeliveryProgress(
                                     stage: .securing,
@@ -178,6 +199,7 @@ actor NIOSMTPClient: SMTPDelivering {
                             actions.append(contentsOf: machine.didUpgradeTLS())
 
                         case .beginMessageData:
+                            await transmission.updatePhase(.smtpData)
                             await progress(
                                 DeliveryProgress(
                                     stage: .transmitting,
@@ -212,31 +234,61 @@ actor NIOSMTPClient: SMTPDelivering {
                                     dataTransmissionStarted: true
                                 )
                             )
+                            await transmission.updatePhase(.smtpFinalAcceptance)
 
                         case .accepted:
                             return TerminalOutcome.submitted
 
                         case .failed(let failure):
-                            return TerminalOutcome.failed(failure)
+                            let snapshot = await transmission.snapshot
+                            return TerminalOutcome.failed(
+                                contextualized(
+                                    failure,
+                                    phase: failure.evidence.phase,
+                                    transmissionStarted: snapshot.started
+                                )
+                            )
                         }
                     }
                 }
             }
             return outcome
         } catch is CancellationError {
+            let snapshot = await transmission.snapshot
             return SMTPUncertaintyClassifier.outcome(
-                dataTransmissionStarted: await transmission.value,
+                dataTransmissionStarted: snapshot.started,
+                phase: snapshot.phase,
                 termination: .cancelled
             )
         } catch let sanitized as SanitizedFailure {
+            let snapshot = await transmission.snapshot
+            let enrichedFailure = contextualized(
+                sanitized,
+                phase: snapshot.phase,
+                transmissionStarted: snapshot.started
+            )
             return SMTPUncertaintyClassifier.outcome(
-                dataTransmissionStarted: await transmission.value,
-                termination: .failed(sanitized)
+                dataTransmissionStarted: snapshot.started,
+                phase: snapshot.phase,
+                termination: .failed(enrichedFailure)
             )
         } catch {
+            let snapshot = await transmission.snapshot
+            let transportFailure = failure(
+                snapshot.phase == .smtpSecuring
+                    ? .smtpSecureChannel
+                    : .smtpTransport,
+                phase: snapshot.phase,
+                retryDisposition: .retrySafe,
+                recoveryAction: .retryFailed,
+                context: DiagnosticContext(
+                    transmissionStarted: snapshot.started
+                )
+            )
             return SMTPUncertaintyClassifier.outcome(
-                dataTransmissionStarted: await transmission.value,
-                termination: .failed(failure("smtp.transport"))
+                dataTransmissionStarted: snapshot.started,
+                phase: snapshot.phase,
+                termination: .failed(transportFailure)
             )
         }
     }
@@ -253,16 +305,19 @@ actor NIOSMTPClient: SMTPDelivering {
         return try await withThrowingTaskGroup(of: SMTPReply.self) { group in
             group.addTask {
                 guard let reply = try await queue.next() else {
-                    throw self.failure("smtp.connection-closed")
+                    throw self.failure(.smtpConnectionClosed)
                 }
                 return reply
             }
             group.addTask {
                 try await Task.sleep(for: timeout)
-                throw self.failure("smtp.timeout")
+                throw self.failure(
+                    .smtpTimeout,
+                    context: DiagnosticContext(safetyLimit: .smtpTimeout)
+                )
             }
             guard let reply = try await group.next() else {
-                throw failure("smtp.connection-closed")
+                throw failure(.smtpConnectionClosed)
             }
             group.cancelAll()
             return reply
@@ -294,6 +349,25 @@ actor NIOSMTPClient: SMTPDelivering {
         return nil
     }
 
+    private nonisolated func diagnosticPhase(
+        for stage: DeliveryStage
+    ) -> DiagnosticPhase {
+        switch stage {
+        case .connecting:
+            .smtpConnecting
+        case .securing:
+            .smtpSecuring
+        case .authenticating:
+            .smtpAuthenticating
+        case .envelope:
+            .smtpSender
+        case .transmitting:
+            .smtpData
+        case .awaitingAcceptance:
+            .smtpFinalAcceptance
+        }
+    }
+
     private func permitsAuthenticationCommands(
         username: String,
         credential: String
@@ -313,14 +387,63 @@ actor NIOSMTPClient: SMTPDelivering {
     }
 
     private nonisolated func failure(
-        _ code: String,
-        message: String = "The SMTP delivery could not be completed."
+        _ code: DiagnosticCode,
+        message: String = "The SMTP delivery could not be completed.",
+        phase: DiagnosticPhase? = nil,
+        retryDisposition: RetryDisposition = .retrySafe,
+        recoveryAction: RecoveryAction = .retryFailed,
+        context: DiagnosticContext = DiagnosticContext()
     ) -> SanitizedFailure {
         SanitizedFailure(
             family: .delivery,
             code: code,
             message: message,
-            recoveryAction: .retryFailed
+            recoveryAction: recoveryAction,
+            evidence: phase.map {
+                DiagnosticEvidence(
+                    phase: $0,
+                    retryDisposition: retryDisposition,
+                    context: context
+                )
+            }
+        )
+    }
+
+    private nonisolated func contextualized(
+        _ failure: SanitizedFailure,
+        phase: DiagnosticPhase,
+        transmissionStarted: Bool
+    ) -> SanitizedFailure {
+        let existing = failure.evidence.context
+        let isSecureChannelClosure =
+            phase == .smtpSecuring
+            && failure.code == .smtpConnectionClosed
+        return SanitizedFailure(
+            family: failure.family,
+            code: isSecureChannelClosure
+                ? .smtpSecureChannel
+                : failure.code,
+            message: failure.message,
+            recoveryAction: isSecureChannelClosure
+                ? .editSetup
+                : failure.recoveryAction,
+            evidence: DiagnosticEvidence(
+                phase: phase,
+                severity: failure.evidence.severity,
+                retryDisposition: isSecureChannelClosure
+                    ? .editSetup
+                    : failure.evidence.retryDisposition,
+                providerStatus: failure.evidence.providerStatus,
+                context: DiagnosticContext(
+                    appVersion: existing.appVersion,
+                    operationID: existing.operationID,
+                    setupRevision: existing.setupRevision,
+                    batchTotal: existing.batchTotal,
+                    batchCompleted: existing.batchCompleted,
+                    transmissionStarted: transmissionStarted,
+                    safetyLimit: existing.safetyLimit
+                )
+            )
         )
     }
 }
@@ -333,10 +456,21 @@ enum SMTPTransportTermination: Sendable {
 struct SMTPUncertaintyClassifier: Sendable {
     static func outcome(
         dataTransmissionStarted: Bool,
+        phase: DiagnosticPhase = .smtpData,
         termination: SMTPTransportTermination
     ) -> TerminalOutcome {
         if dataTransmissionStarted {
-            return .deliveryUnknown
+            let sourceFailure: SanitizedFailure? = switch termination {
+            case .cancelled: nil
+            case .failed(let failure): failure
+            }
+            let providerStatus = sourceFailure?.evidence.providerStatus
+            return .deliveryUnknown(
+                .deliveryUnknown(
+                    phase: phase,
+                    providerStatus: providerStatus
+                )
+            )
         }
         switch termination {
         case .cancelled:
@@ -349,6 +483,15 @@ struct SMTPUncertaintyClassifier: Sendable {
 
 private actor SMTPTransmissionTracker {
     private(set) var value = false
+    private(set) var phase = DiagnosticPhase.smtpConnecting
+
+    var snapshot: (started: Bool, phase: DiagnosticPhase) {
+        (value, phase)
+    }
+
+    func updatePhase(_ phase: DiagnosticPhase) {
+        self.phase = phase
+    }
 
     func markStartedIfNeeded() -> Bool {
         guard !value else { return false }

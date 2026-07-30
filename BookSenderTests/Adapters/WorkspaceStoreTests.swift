@@ -48,12 +48,21 @@ struct WorkspaceStoreTests {
             itemID: UUID()
         )
 
-        await #expect(throws: SanitizedFailure.self) {
+        do {
             _ = try await store.promotePartial(
                 "../outside",
                 to: "prepared.epub",
                 in: workspace
             )
+            Issue.record("Expected unsafe workspace path")
+        } catch let failure as SanitizedFailure {
+            #expect(failure.code == .workspaceInvalidPath)
+            #expect(failure.evidence.phase == .workspaceStaging)
+            #expect(
+                String(describing: failure).contains(root.path) == false
+            )
+        } catch {
+            Issue.record("Expected sanitized workspace failure")
         }
 
         let fake = WorkspaceReference(
@@ -63,6 +72,44 @@ struct WorkspaceStoreTests {
         )
         await store.cleanup(fake)
         #expect(FileManager.default.fileExists(atPath: root.path))
+    }
+
+    @Test
+    func translatesUnexpectedWorkspaceAndDigestFailuresWithoutPaths() async throws {
+        let root = try FixtureFactory.makeDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let blockedRoot = root.appending(component: "blocked")
+        try Data("not-a-directory".utf8).write(to: blockedRoot)
+        let blockedStore = WorkspaceStore(rootURL: blockedRoot)
+        do {
+            _ = try await blockedStore.createWorkspace(
+                batchID: UUID(),
+                itemID: UUID()
+            )
+            Issue.record("Expected a sanitized workspace creation failure")
+        } catch let failure as SanitizedFailure {
+            #expect(failure.code == .unexpectedFilesystem)
+            #expect(failure.evidence.phase == .workspaceStaging)
+            #expect(String(describing: failure).contains(root.path) == false)
+        } catch {
+            Issue.record("Expected a sanitized workspace failure")
+        }
+
+        let missing = StagedFileReference(
+            identifier: UUID(),
+            url: root.appending(component: "missing.epub")
+        )
+        do {
+            _ = try await blockedStore.digest(of: missing)
+            Issue.record("Expected a sanitized digest failure")
+        } catch let failure as SanitizedFailure {
+            #expect(failure.code == .unexpectedFilesystem)
+            #expect(failure.evidence.phase == .workingCopyWrite)
+            #expect(String(describing: failure).contains(root.path) == false)
+        } catch {
+            Issue.record("Expected a sanitized workspace failure")
+        }
     }
 
     @Test
@@ -83,7 +130,7 @@ struct WorkspaceStoreTests {
         await store.cleanupPartialFiles(in: workspace)
         #expect(FileManager.default.fileExists(atPath: partial.path) == false)
 
-        await store.clearBatch(batchID)
+        #expect(await store.clearBatch(batchID))
         #expect(
             FileManager.default.fileExists(
                 atPath: storeRoot

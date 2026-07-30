@@ -26,7 +26,7 @@ actor DeliverySetupService {
             return .incomplete(
                 prefilledDraft: DeliverySetupDraft(),
                 failure: failure(
-                    "preferences.invalid",
+                    .preferencesInvalid,
                     message: "Saved delivery settings need to be entered again."
                 )
             )
@@ -35,7 +35,7 @@ actor DeliverySetupService {
                 return .incomplete(
                     prefilledDraft: DeliverySetupDraft(setup: setup),
                     failure: failure(
-                        "credential.missing",
+                        .credentialMissing,
                         message: "Enter the app password again to complete delivery setup."
                     )
                 )
@@ -61,7 +61,7 @@ actor DeliverySetupService {
         if let current, keepsExistingCredential,
            await credentials.exists(current.credentialReference) == false {
             throw failure(
-                "credential.missing",
+                .credentialMissing,
                 message: "Enter the app password again to save these settings."
             )
         }
@@ -109,14 +109,26 @@ actor DeliverySetupService {
         }
     }
 
-    func clear(_ setup: DeliverySetup?) async {
+    func clear(_ setup: DeliverySetup?) async -> SanitizedFailure? {
         await preferences.clear()
-        if let setup {
-            try? await credentials.delete(setup.credentialReference)
+        guard let setup else { return nil }
+        do {
+            try await credentials.delete(setup.credentialReference)
+            return nil
+        } catch let failure as SanitizedFailure {
+            return failure
+        } catch {
+            return failure(
+                .credentialDelete,
+                message: "The stored app password could not be removed."
+            )
         }
     }
 
-    private func failure(_ code: String, message: String) -> SanitizedFailure {
+    private func failure(
+        _ code: DiagnosticCode,
+        message: String
+    ) -> SanitizedFailure {
         SanitizedFailure(
             family: .credential,
             code: code,

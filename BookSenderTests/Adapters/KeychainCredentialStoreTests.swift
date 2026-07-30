@@ -65,15 +65,22 @@ struct KeychainCredentialStoreTests {
     @Test
     func returnsSanitizedFailuresForMissingOrEmptyCredentials() async {
         let store = KeychainCredentialStore()
-        await #expect(throws: SanitizedFailure.self) {
+        do {
             _ = try await store.save(
                 secret: "",
                 service: "test",
                 account: "empty",
                 revision: 1
             )
+            Issue.record("Expected empty credential failure")
+        } catch let failure as SanitizedFailure {
+            #expect(failure.code == .credentialEmpty)
+            #expect(failure.evidence.phase == .credentialWrite)
+            #expect(failure.evidence.providerStatus == nil)
+        } catch {
+            Issue.record("Expected sanitized credential failure")
         }
-        await #expect(throws: SanitizedFailure.self) {
+        do {
             _ = try await store.read(
                 CredentialReference(
                     service: "missing",
@@ -81,6 +88,16 @@ struct KeychainCredentialStoreTests {
                     revision: 1
                 )
             )
+            Issue.record("Expected missing credential failure")
+        } catch let failure as SanitizedFailure {
+            #expect(failure.code == .credentialRead)
+            #expect(failure.evidence.phase == .credentialRead)
+            #expect(
+                String(describing: failure)
+                    .contains(DiagnosticTestFixtures.password) == false
+            )
+        } catch {
+            Issue.record("Expected sanitized credential failure")
         }
     }
 

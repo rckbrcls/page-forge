@@ -11,12 +11,16 @@ struct SMTPActiveCancellationTests {
                     termination: .cancelled
                 ) == .cancelled
             )
-            #expect(
-                SMTPUncertaintyClassifier.outcome(
-                    dataTransmissionStarted: true,
-                    termination: .cancelled
-                ) == .deliveryUnknown
+            let uncertain = SMTPUncertaintyClassifier.outcome(
+                dataTransmissionStarted: true,
+                termination: .cancelled
             )
+            guard case .deliveryUnknown(let failure) = uncertain else {
+                Issue.record("Expected delivery uncertainty")
+                return
+            }
+            #expect(failure.code == .smtpDeliveryUnknown)
+            #expect(failure.evidence.context.transmissionStarted == true)
         }
     }
 
