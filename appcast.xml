@@ -6,6 +6,13 @@
         <description>Book Sender updates</description>
         <language>en</language>
         <item>
+            <title>Version 0.2.4</title>
+            <pubDate>Thu, 30 Jul 2026 15:53:07 +0000</pubDate>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/rckbrcls/page-forge/releases/download/v0.2.4/BookSender-macos-universal-v0.2.4.zip" sparkle:version="22" sparkle:shortVersionString="0.2.4" sparkle:edSignature="vCdzZESYKZ/azznpZAVg8RVXVyahfwGyBXxN+p3TkNDWs8iwvRc9irhIScX8E/s+P0mp34Nui9tmIQs1s12CCw==" sparkle:os="macos" length="10918947" type="application/zip" />
+            <description>Book Sender 0.2.4. SMTP delivery remains experimental in this release.</description>
+        </item>
+        <item>
             <title>Version 0.2.3</title>
             <pubDate>Thu, 30 Jul 2026 15:04:57 +0000</pubDate>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
