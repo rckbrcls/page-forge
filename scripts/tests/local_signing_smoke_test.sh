@@ -40,7 +40,21 @@ fi
 
 TEMP_DIRECTORY=$(mktemp -d)
 TEMP_KEYCHAIN="$TEMP_DIRECTORY/release-signing.keychain-db"
+ORIGINAL_USER_KEYCHAINS=()
+while IFS= read -r keychain_entry; do
+  keychain_entry="${keychain_entry#*\"}"
+  keychain_entry="${keychain_entry%\"*}"
+  if [ -n "$keychain_entry" ]; then
+    ORIGINAL_USER_KEYCHAINS+=("$keychain_entry")
+  fi
+done < <(security list-keychains -d user)
+
 cleanup() {
+  if [ "${#ORIGINAL_USER_KEYCHAINS[@]}" -gt 0 ]; then
+    security list-keychains \
+      -d user \
+      -s "${ORIGINAL_USER_KEYCHAINS[@]}" >/dev/null 2>&1 || true
+  fi
   security delete-keychain "$TEMP_KEYCHAIN" >/dev/null 2>&1 || true
   rm -f "$TEMP_KEYCHAIN"
   rm -f "$TEMP_DIRECTORY/signing-probe"
@@ -69,6 +83,9 @@ security set-key-partition-list \
   -s \
   -k "$KEYCHAIN_PASSWORD" \
   "$TEMP_KEYCHAIN" >/dev/null
+security list-keychains \
+  -d user \
+  -s "$TEMP_KEYCHAIN"
 
 security find-certificate \
   -c "$SIGNING_IDENTITY_NAME" \

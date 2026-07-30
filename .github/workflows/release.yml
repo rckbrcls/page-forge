@@ -188,8 +188,21 @@ jobs:
           IMPORTED_CERTIFICATE_PEM="$RUNNER_TEMP/booksender-release-signing.pem"
           IMPORTED_CERTIFICATE_DER="$RUNNER_TEMP/booksender-release-signing.cer"
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')
+          ORIGINAL_USER_KEYCHAINS=()
+          while IFS= read -r keychain_entry; do
+            keychain_entry="${keychain_entry#*\"}"
+            keychain_entry="${keychain_entry%\"*}"
+            if [ -n "$keychain_entry" ]; then
+              ORIGINAL_USER_KEYCHAINS+=("$keychain_entry")
+            fi
+          done < <(security list-keychains -d user)
 
           cleanup_signing_material() {
+            if [ "${#ORIGINAL_USER_KEYCHAINS[@]}" -gt 0 ]; then
+              security list-keychains \
+                -d user \
+                -s "${ORIGINAL_USER_KEYCHAINS[@]}" >/dev/null 2>&1 || true
+            fi
             security delete-keychain "$SIGNING_KEYCHAIN" >/dev/null 2>&1 || true
             rm -f \
               "$SIGNING_KEYCHAIN" \
@@ -216,6 +229,9 @@ jobs:
             -s \
             -k "$KEYCHAIN_PASSWORD" \
             "$SIGNING_KEYCHAIN" >/dev/null
+          security list-keychains \
+            -d user \
+            -s "$SIGNING_KEYCHAIN"
 
           security find-certificate \
             -c "$SIGNING_IDENTITY_NAME" \
