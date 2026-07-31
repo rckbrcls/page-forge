@@ -202,7 +202,7 @@ struct SMTPStateMachineTests {
             credential: "secret"
         )
         let greetingFailure = try #require(
-            failure(in: greeting.receive(reply(421, "4.3.2 unavailable")))
+            firstFailure(in: greeting.receive(reply(421, "4.3.2 unavailable")))
         )
         #expect(greetingFailure.code == .smtpGreeting)
         #expect(greetingFailure.evidence.phase == .smtpSecuring)
@@ -215,7 +215,7 @@ struct SMTPStateMachineTests {
         _ = startTLS.receive(reply(220, "ready"))
         _ = startTLS.receive(reply(250, "STARTTLS"))
         let tlsFailure = try #require(
-            failure(in: startTLS.receive(reply(454, "4.7.0 unavailable")))
+            firstFailure(in: startTLS.receive(reply(454, "4.7.0 unavailable")))
         )
         #expect(tlsFailure.code == .smtpStartTLS)
         #expect(tlsFailure.evidence.phase == .smtpSecuring)
