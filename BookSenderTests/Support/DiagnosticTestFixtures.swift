@@ -1,4 +1,5 @@
 import Foundation
+@testable import BookSender
 
 enum DiagnosticTestFixtures {
     static let password = "canary-app-password-7T!z"
