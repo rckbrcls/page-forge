@@ -1,16 +1,16 @@
 # Troubleshooting Book Sender
 
-Book Sender shows concise action feedback in floating notifications at the top
-trailing edge of the owning window. Successful and informational
-acknowledgements remain visible for four seconds after appearing and then
-disappear without moving the workflow. Failed, cancelled, partial, and
-uncertain results remain until replaced or dismissed.
+Book Sender keeps visible workflow feedback in its owning context. Field
+errors, book rows, aggregate delivery state, history states, shortcut controls,
+confirmation sheets, and inline recovery do not also create floating cards.
 
-Use a notification action for its stated recovery step, or use
-**Dismiss notification** to hide only that card. Dismissal does not clear field
-errors, per-book results, expanded diagnostics, delivery uncertainty, setup,
-credentials, or send history. The app does not persist notifications or create
-a notification-history screen.
+Floating notifications are reserved for secure setup persistence/deletion,
+diagnostic clipboard writes, and a history write failure after accepted SMTP
+delivery. Eligible success cards disappear after four seconds; eligible failure
+or partial cards remain until replaced or dismissed. **Dismiss notification**
+hides only the card and never clears field errors, per-book results, expanded
+diagnostics, delivery uncertainty, setup, credentials, or send history. The app
+does not persist notifications or create a notification-history screen.
 
 ## Start another send
 

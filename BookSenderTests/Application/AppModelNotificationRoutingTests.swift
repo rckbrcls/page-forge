@@ -68,7 +68,7 @@ struct AppModelNotificationRoutingTests {
     }
 
     @Test
-    func shortcutAndUpdateFeedbackRemainWindowIsolated() throws {
+    func shortcutAndUpdateFeedbackRemainSemanticAndSilent() throws {
         let stores = try TestStores.make()
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
@@ -83,23 +83,93 @@ struct AppModelNotificationRoutingTests {
         )
         model.acknowledgeUpdateCheck()
 
+        #expect(model.feedback(for: .shortcut)?.state == .succeeded)
+        #expect(model.feedback(for: .update)?.state == .succeeded)
         #expect(
             model.notificationFeedback(
                 for: .shortcut,
                 destination: .settings
-            )?.state == .succeeded
+            ) == nil
         )
         #expect(
             model.notificationFeedback(
                 for: .update,
                 destination: .main
-            )?.state == .succeeded
+            ) == nil
+        )
+        #expect(
+            NotificationTestFixtures.hasNoPresentation(
+                in: model.notificationCenter,
+                destination: .main
+            )
+        )
+        #expect(
+            NotificationTestFixtures.hasNoPresentation(
+                in: model.notificationCenter,
+                destination: .settings
+            )
+        )
+    }
+
+    @Test
+    func contextualFailureRemainsSemanticWithoutUsingNotificationCapacity() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let graph = TestDependencyGraph.make(stores: stores)
+        let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
+        try await eventually { model.hasResolvedInitialSetup }
+
+        model.addBooks([])
+
+        #expect(model.feedback(for: .batch)?.state == .failed)
+        #expect(
+            NotificationTestFixtures.hasNoPresentation(
+                in: model.notificationCenter,
+                destination: .main
+            )
+        )
+    }
+
+    @Test
+    func newerContextualActionRemovesOnlyMatchingStalePresentation() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let graph = TestDependencyGraph.make(stores: stores)
+        let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
+        model.notificationCenter.attach(.settings)
+        try await eventually { model.hasResolvedInitialSetup }
+
+        let setupFeedback = NotificationTestFixtures.feedback(
+            scope: .deliverySetup,
+            action: .saveDeliverySetup,
+            title: "Setup saved."
+        )
+        let shortcutFeedback = NotificationTestFixtures.feedback(
+            id: NotificationTestFixtures.settingsFeedbackID,
+            scope: .shortcut,
+            action: .saveShortcut,
+            title: "Shortcut saved."
+        )
+        model.notificationCenter.publish(setupFeedback, destination: .main)
+        model.notificationCenter.publish(shortcutFeedback, destination: .settings)
+        model.setupDraft.senderAddress = "invalid"
+
+        model.saveSetup(destination: .main)
+
+        #expect(model.feedback(for: .deliverySetup)?.state == .failed)
+        #expect(
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            ) == nil
         )
         #expect(
             model.notificationFeedback(
                 for: .shortcut,
-                destination: .main
-            ) == nil
+                destination: .settings
+            )?.id == shortcutFeedback.id
         )
     }
 

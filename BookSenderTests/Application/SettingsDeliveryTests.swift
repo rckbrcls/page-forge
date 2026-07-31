@@ -10,6 +10,7 @@ struct SettingsDeliveryTests {
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft = validDraft()
         model.saveSetup()
         try await eventually { model.setup != nil }
@@ -29,6 +30,11 @@ struct SettingsDeliveryTests {
         #expect(model.batch.id == batchID)
         #expect(model.items.count == 1)
         #expect(model.feedback(for: .deliverySetup)?.state == .succeeded)
+        #expect(
+            model.notificationCenter.snapshot(for: .main).visible.filter {
+                $0.feedback.scope == .deliverySetup
+            }.count == 1
+        )
     }
 
     @Test
@@ -37,6 +43,7 @@ struct SettingsDeliveryTests {
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft = validDraft()
         model.saveSetup()
         try await eventually { model.setup != nil }
@@ -47,6 +54,41 @@ struct SettingsDeliveryTests {
         #expect(model.route == .deliverySetup)
         #expect(model.feedback(for: .deliverySetup)?.state == .succeeded)
         #expect(model.feedback(for: .deliverySetup)?.title == "Delivery setup deleted.")
+        #expect(
+            model.notificationCenter.snapshot(for: .main).visible.filter {
+                $0.feedback.scope == .deliverySetup
+            }.count == 1
+        )
+    }
+
+    @Test
+    func deleteKeychainFailurePublishesOnePartialCardAndKeepsSetupDeleted() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let graph = TestDependencyGraph.make(stores: stores)
+        let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
+        model.setupDraft = validDraft()
+        model.saveSetup()
+        try await eventually { model.setup != nil }
+        await graph.credentials.setDeleteFailure(
+            sanitizedFailure(.credentialDelete, family: .credential)
+        )
+
+        model.deleteSetup()
+        try await eventually { model.setup == nil && !model.isSavingSetup }
+
+        #expect(model.route == .deliverySetup)
+        #expect(model.feedback(for: .deliverySetup)?.state == .partial)
+        #expect(
+            model.feedback(for: .deliverySetup)?.failure?.code
+                == .credentialDelete
+        )
+        #expect(
+            model.notificationCenter.snapshot(for: .main).visible.filter {
+                $0.feedback.scope == .deliverySetup
+            }.count == 1
+        )
     }
 
     @Test
@@ -55,6 +97,7 @@ struct SettingsDeliveryTests {
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft = validDraft()
         model.saveSetup()
         try await eventually { model.setup != nil }
@@ -81,6 +124,12 @@ struct SettingsDeliveryTests {
                 == .preferencesInvalidRevision
         )
         #expect(model.setupDraft.smtpPort == "587")
+        #expect(
+            NotificationTestFixtures.hasNoPresentation(
+                in: model.notificationCenter,
+                destination: .main
+            )
+        )
     }
 
     @Test

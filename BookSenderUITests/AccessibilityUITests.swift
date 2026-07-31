@@ -14,8 +14,7 @@ final class AccessibilityUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         let feedback = app.descendants(matching: .any)["notification.batch"]
-        XCTAssertTrue(feedback.exists)
-        XCTAssertEqual(feedback.value as? String, "Succeeded")
+        XCTAssertFalse(feedback.exists)
         XCTAssertTrue(app.buttons["sendBook.dropTarget"].isHittable)
         XCTAssertTrue(app.buttons["sendBook.send"].isHittable)
         XCTAssertTrue(app.buttons["sendBook.editSetup"].isHittable)
@@ -59,8 +58,7 @@ final class AccessibilityUITests: XCTestCase {
         let setupFeedback = app.descendants(matching: .any)[
             "notification.deliverySetup"
         ]
-        XCTAssertTrue(setupFeedback.exists)
-        XCTAssertEqual(setupFeedback.value as? String, "Failed")
+        XCTAssertFalse(setupFeedback.exists)
         XCTAssertTrue(
             app.textFields["deliverySetup.senderAddress"].isHittable
         )
@@ -119,7 +117,7 @@ final class AccessibilityUITests: XCTestCase {
         )
     }
 
-    func testTransientBatchSuccessAppearsOnceThenCollapses() {
+    func testContextualBatchSuccessUsesTheAccessibleRowWithoutAnnouncement() {
         let app = XCUIApplication()
         app.launchArguments = [
             "-uiTesting",
@@ -130,16 +128,8 @@ final class AccessibilityUITests: XCTestCase {
         ]
         app.launch()
 
-        let success = app.staticTexts["1 book ready."]
-        XCTAssertTrue(success.waitForExistence(timeout: 5))
-        XCTAssertEqual(
-            app.staticTexts.matching(
-                NSPredicate(format: "label == %@", "1 book ready.")
-            ).count,
-            1
-        )
-        XCTAssertTrue(success.waitForNonExistence(timeout: 6))
-        XCTAssertTrue(app.staticTexts["Ready"].exists)
+        XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["1 book ready."].exists)
         XCTAssertTrue(app.buttons["sendBook.send"].isEnabled)
         XCTAssertFalse(
             app.descendants(matching: .any)["notification.batch"].exists

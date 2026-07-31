@@ -4,6 +4,27 @@ enum FloatingNotificationLimits {
     static let visiblePerDestination = 3
 }
 
+enum NotificationReason: CaseIterable, Equatable, Sendable {
+    case protectedCredentialPersistence
+    case protectedCredentialDeletion
+    case clipboardWrite
+    case submissionHistoryPersistence
+    case consequentialHiddenFailure
+    case auxiliarySystemActionFailure
+}
+
+enum NotificationPublicationIntent: Equatable, Sendable {
+    case contextual
+    case floating(NotificationReason)
+
+    func approvedReason(for state: FeedbackState) -> NotificationReason? {
+        guard state.isTerminal, case .floating(let reason) = self else {
+            return nil
+        }
+        return reason
+    }
+}
+
 enum NotificationDestination: String, CaseIterable, Equatable, Hashable, Sendable {
     case main
     case settings

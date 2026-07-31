@@ -27,7 +27,7 @@ final class BatchSendUITests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts["Ready"].waitForExistence(timeout: 5)
         )
-        XCTAssertTrue(app.staticTexts["1 book ready."].exists)
+        XCTAssertFalse(app.staticTexts["1 book ready."].exists)
         let send = app.buttons["sendBook.send"]
         XCTAssertTrue(send.isEnabled)
         send.click()
@@ -46,16 +46,15 @@ final class BatchSendUITests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts["Submitted"].waitForExistence(timeout: 5)
         )
-        XCTAssertTrue(app.staticTexts["1 book submitted."].exists)
         XCTAssertTrue(app.staticTexts["1 submitted"].exists)
         XCTAssertTrue(app.buttons["sendBook.sendMore"].isEnabled)
         XCTAssertTrue(app.buttons["sendBook.dropTarget"].exists)
         XCTAssertFalse(app.staticTexts["Delivery Unknown"].exists)
-        XCTAssertTrue(
-            app.staticTexts["1 book submitted."]
-                .waitForNonExistence(timeout: 6)
-        )
+        XCTAssertFalse(app.staticTexts["1 book submitted."].exists)
         XCTAssertTrue(app.buttons["sendBook.sendMore"].exists)
+        XCTAssertFalse(
+            app.descendants(matching: .any)["notification.batch"].exists
+        )
     }
 
     func testSubmittedBatchStartsAnotherSendWithoutRelaunching() {
@@ -82,10 +81,6 @@ final class BatchSendUITests: XCTestCase {
 
         app.buttons["sendBook.sendMore"].click()
 
-        XCTAssertTrue(
-            app.staticTexts["Ready for another send."]
-                .waitForExistence(timeout: 2)
-        )
         XCTAssertTrue(
             app.staticTexts["Ready"].waitForExistence(timeout: 5)
         )
@@ -117,11 +112,11 @@ final class BatchSendUITests: XCTestCase {
         XCTAssertTrue(app.buttons["sendBook.retryFailed"].isHittable)
         XCTAssertTrue(app.buttons["sendBook.sendMore"].isHittable)
         XCTAssertFalse(app.buttons["sendBook.dropTarget"].isEnabled)
+        XCTAssertFalse(
+            app.descendants(matching: .any)["notification.batch"].exists
+        )
 
-        let recovery = app.buttons["notification.action.batch"]
-        XCTAssertTrue(recovery.waitForExistence(timeout: 2))
-        XCTAssertEqual(recovery.label, "Retry")
-        recovery.click()
+        app.buttons["sendBook.retryFailed"].click()
         XCTAssertTrue(
             app.buttons["sendBook.confirm"].waitForExistence(timeout: 2)
         )
@@ -160,11 +155,11 @@ final class BatchSendUITests: XCTestCase {
 
         app.buttons["sendBook.sendMore"].click()
         app.alerts.buttons["Send More Books"].click()
-        XCTAssertTrue(
-            app.staticTexts["Ready for another send."]
-                .waitForExistence(timeout: 2)
-        )
+        XCTAssertTrue(app.buttons["sendBook.send"].waitForExistence(timeout: 2))
         XCTAssertFalse(app.staticTexts["Delivery Unknown"].exists)
+        XCTAssertFalse(
+            app.descendants(matching: .any)["notification.batch"].exists
+        )
     }
 
     func testBlockedEPUBShowsActionableDetailsAndDisclosureToggles() {
@@ -241,9 +236,12 @@ final class BatchSendUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Submitted"].exists)
         XCTAssertTrue(app.buttons["sendBook.sendMore"].isEnabled)
         XCTAssertTrue(app.buttons["sendBook.retryFailed"].isEnabled)
+        XCTAssertFalse(
+            app.descendants(matching: .any)["notification.batch"].exists
+        )
     }
 
-    func testRemoveClearAndCancellationPublishTerminalFeedback() {
+    func testRemoveClearAndCancellationUseOnlyDurableWorkflowState() {
         let editingApp = XCUIApplication()
         editingApp.launchArguments = [
             "-uiTesting",
@@ -260,22 +258,17 @@ final class BatchSendUITests: XCTestCase {
             ).element(boundBy: 1).waitForExistence(timeout: 5)
         )
         editingApp.buttons["Remove UITest-1.pdf"].click()
-        XCTAssertTrue(
-            editingApp.staticTexts["Book removed."]
-                .waitForExistence(timeout: 2)
-        )
-        XCTAssertTrue(
+        XCTAssertFalse(editingApp.staticTexts["UITest-1.pdf"].exists)
+        XCTAssertTrue(editingApp.staticTexts["UITest-2.pdf"].exists)
+        XCTAssertFalse(
             editingApp.descendants(matching: .any)["notification.batch"].exists
         )
         editingApp.buttons["sendBook.clear"].click()
-        XCTAssertTrue(
-            editingApp.staticTexts["Batch cleared."]
-                .waitForExistence(timeout: 2)
-        )
-        XCTAssertTrue(
+        XCTAssertFalse(editingApp.staticTexts["UITest-2.pdf"].exists)
+        XCTAssertFalse(
             editingApp.descendants(matching: .any)["notification.batch"].exists
         )
-        XCTAssertFalse(editingApp.staticTexts["UITest-2.pdf"].exists)
+        XCTAssertFalse(editingApp.buttons["sendBook.send"].isEnabled)
         editingApp.terminate()
 
         let cancellationApp = XCUIApplication()
@@ -306,12 +299,14 @@ final class BatchSendUITests: XCTestCase {
         cancellationApp.buttons["sendBook.cancel"].click()
 
         XCTAssertTrue(
-            cancellationApp.staticTexts["Operation cancelled."]
-                .waitForExistence(timeout: 5)
+            cancellationApp.staticTexts["Cancelled"].waitForExistence(timeout: 5)
         )
-        XCTAssertTrue(cancellationApp.staticTexts["Cancelled"].exists)
         XCTAssertFalse(cancellationApp.buttons["sendBook.cancel"].exists)
         XCTAssertTrue(cancellationApp.buttons["sendBook.sendMore"].isEnabled)
+        XCTAssertFalse(
+            cancellationApp.descendants(matching: .any)["notification.batch"]
+                .exists
+        )
     }
 
     func testControlledSMTPFailuresExposeEveryPhaseAndNumericStatus() {

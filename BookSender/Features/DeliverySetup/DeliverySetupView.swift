@@ -267,9 +267,6 @@ struct DeliverySetupView: View {
     }
 
     private var deliveryFeedback: ActionFeedback? {
-        model.notificationFeedback(
-            for: .deliverySetup,
-            destination: notificationDestination
-        )
+        model.feedback(for: .deliverySetup)
     }
 }

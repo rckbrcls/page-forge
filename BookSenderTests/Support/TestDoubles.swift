@@ -113,6 +113,7 @@ actor InMemoryCredentialStore: CredentialStoring {
     private(set) var deletedReferences: [CredentialReference] = []
     var saveFailure: SanitizedFailure?
     var readFailure: SanitizedFailure?
+    var deleteFailure: SanitizedFailure?
 
     func save(
         secret: String,
@@ -143,7 +144,8 @@ actor InMemoryCredentialStore: CredentialStoring {
         secrets[key(reference)] != nil
     }
 
-    func delete(_ reference: CredentialReference) {
+    func delete(_ reference: CredentialReference) throws {
+        if let deleteFailure { throw deleteFailure }
         secrets.removeValue(forKey: key(reference))
         deletedReferences.append(reference)
     }
@@ -158,6 +160,10 @@ actor InMemoryCredentialStore: CredentialStoring {
 
     func setReadFailure(_ failure: SanitizedFailure?) {
         readFailure = failure
+    }
+
+    func setDeleteFailure(_ failure: SanitizedFailure?) {
+        deleteFailure = failure
     }
 
     private func key(_ reference: CredentialReference) -> String {
@@ -196,6 +202,7 @@ actor InMemoryPreferencesStore: DeliveryPreferencesStoring {
 actor InMemorySendHistoryStore: SendHistoryStoring {
     private var records: [SubmissionRecord]
     private(set) var replaceCount = 0
+    private(set) var replaceAttemptCount = 0
     private(set) var clearCount = 0
     var loadFailure: HistoryFailure?
     var replaceFailure: HistoryFailure?
@@ -211,6 +218,7 @@ actor InMemorySendHistoryStore: SendHistoryStoring {
     }
 
     func replace(with records: [SubmissionRecord]) throws {
+        replaceAttemptCount += 1
         if let replaceFailure { throw replaceFailure }
         self.records = records
         replaceCount += 1

@@ -18,19 +18,22 @@ per-book readiness and delivery states. Inside `Send Book`, the `Send` tab owns
 the active batch and the `History` tab shows a simple newest-first record of
 definitive SMTP submissions.
 
-Concise action feedback appears in a shared top-trailing floating notification
-host instead of moving forms, lists, empty states, or primary actions.
-Successful and informational acknowledgements disappear after four seconds.
-Active work remains until its state changes. Failures, cancellations, mixed
-results, and `Delivery Unknown` remain until replaced or dismissed. Dismissing
-a notification hides only that presentation; field validation, batch states,
-failure evidence, delivery uncertainty, and send history remain unchanged.
+Feedback is contextual by default: controls, forms, rows, lists, modals, and
+inline failure details communicate states that are already visible. Floating
+notifications are terminal-only and reserved for four otherwise invisible
+paths: protected delivery-setup persistence, protected setup deletion,
+diagnostic clipboard writes, and submission-history persistence failure after
+SMTP acceptance. Normal intake, preparation, confirmation, sending, retry,
+reset, history load/clear, shortcut, bootstrap, and update-opening flows do not
+create cards.
 
-Each window owns an independent stack of at most three visible notifications.
-Additional relevant results wait without evicting persistent recovery. A card
-may expose one typed action and an optional close control. Notification state is
-ephemeral and is never written to send history, preferences, diagnostics, or
-another persistence surface.
+Eligible success notifications disappear after four seconds and never exceed
+five seconds. Eligible failure or partial results remain until replaced or
+dismissed. Each window owns an independent stack of at most three visible
+cards, and dismissing one never removes semantic state or durable failure
+evidence. Eligibility uses six bounded internal reasons: four current reasons
+and two reserved reasons that require a future explicit producer. Notification
+state remains ephemeral and is never persisted.
 
 A terminal batch exposes `Send More Books`, which clears only its temporary
 books and presentation state before the next intake. Adjacent book rows use
@@ -78,6 +81,8 @@ with transient feedback, repeated sends, and bounded local history defined by
 [`specs/009-transient-feedback-history/spec.md`](specs/009-transient-feedback-history/spec.md),
 with the reusable floating-feedback and batch-divider behavior defined by
 [`specs/010-floating-feedback-system/spec.md`](specs/010-floating-feedback-system/spec.md),
+and the contextual-default production catalogue defined by
+[`specs/011-reduce-notification-noise/spec.md`](specs/011-reduce-notification-noise/spec.md),
 and governed by
 [`.specify/memory/constitution.md`](.specify/memory/constitution.md).
 

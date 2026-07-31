@@ -88,7 +88,6 @@ final class AppModel {
         )
         feedbackByScope[.application] = openingProgress
         feedbackDestinationByLifecycle[openingProgress.id] = .main
-        notificationCenter.publish(openingProgress, destination: .main)
 
         observationTask = Task { [weak self, pipeline] in
             for await event in pipeline.events {
@@ -326,7 +325,10 @@ final class AppModel {
                 finishFeedback(
                     lifecycle,
                     state: .succeeded,
-                    title: "Setup saved. App password stored securely."
+                    title: "Setup saved. App password stored securely.",
+                    notificationIntent: .floating(
+                        .protectedCredentialPersistence
+                    )
                 )
             } catch let validationError as DeliveryValidationError {
                 setupErrors = [
@@ -407,13 +409,19 @@ final class AppModel {
                     state: .partial,
                     title: "Delivery setup removed with a Keychain warning.",
                     message: "Review the stored app password in Keychain.",
-                    failure: clearFailure
+                    failure: clearFailure,
+                    notificationIntent: .floating(
+                        .protectedCredentialDeletion
+                    )
                 )
             } else {
                 finishFeedback(
                     lifecycle,
                     state: .succeeded,
-                    title: "Delivery setup deleted."
+                    title: "Delivery setup deleted.",
+                    notificationIntent: .floating(
+                        .protectedCredentialDeletion
+                    )
                 )
             }
         }
@@ -545,7 +553,8 @@ final class AppModel {
             finishFeedback(
                 lifecycle,
                 state: .succeeded,
-                title: "Error details copied."
+                title: "Error details copied.",
+                notificationIntent: .floating(.clipboardWrite)
             )
         } catch {
             let failure = SanitizedFailure(
@@ -567,7 +576,8 @@ final class AppModel {
                 title: "Error details were not copied.",
                 message: "The original error remains visible.",
                 failure: failure,
-                recordDiagnostic: false
+                recordDiagnostic: false,
+                notificationIntent: .floating(.clipboardWrite)
             )
             recordFailure(
                 failure,
@@ -1195,7 +1205,10 @@ final class AppModel {
                 state: .partial,
                 title: "Book sent, but history was not updated.",
                 failure: failure,
-                recordDiagnostic: false
+                recordDiagnostic: false,
+                notificationIntent: .floating(
+                    .submissionHistoryPersistence
+                )
             )
             recordFailure(
                 failure,
@@ -1436,14 +1449,11 @@ final class AppModel {
                     destination: .main
                 )
             }
-            let ready = feedbackService.terminal(
-                from: lifecycle,
+            finishFeedback(
+                lifecycle,
                 state: .succeeded,
                 title: "Ready for another send."
             )
-            feedbackByScope[.batch] = ready
-            feedbackDestinationByLifecycle[ready.id] = .main
-            publishNotification(ready, destination: .main)
             if dependencies.shouldReintakeAfterReset,
                !dependencies.bootstrapFixtureURLs.isEmpty {
                 await pipeline.add(dependencies.bootstrapFixtureURLs)
@@ -1459,11 +1469,16 @@ final class AppModel {
         message: String? = nil,
         destination preferredDestination: NotificationDestination = .main
     ) -> ActionFeedback {
+        let destination = Self.notificationDestination(
+            for: scope,
+            preferred: preferredDestination
+        )
         if let current = feedbackByScope[scope], current.state.isTerminal {
             replacedTerminalFeedbackByScope[scope] = current
         } else {
             replacedTerminalFeedbackByScope[scope] = nil
         }
+        notificationCenter.remove(scope: scope, destination: destination)
         let acknowledged = feedbackService.acknowledged(
             scope: scope,
             action: action,
@@ -1476,12 +1491,7 @@ final class AppModel {
             message: message
         )
         feedbackByScope[scope] = progress
-        let destination = Self.notificationDestination(
-            for: scope,
-            preferred: preferredDestination
-        )
         feedbackDestinationByLifecycle[progress.id] = destination
-        publishNotification(progress, destination: destination)
         return progress
     }
 
@@ -1505,9 +1515,6 @@ final class AppModel {
             proposed: proposed
         )
         feedbackByScope[scope] = reconciled
-        let destination = feedbackDestinationByLifecycle[current.id]
-            ?? Self.notificationDestination(for: scope, preferred: .main)
-        publishNotification(reconciled, destination: destination)
     }
 
     private func finishFeedback(
@@ -1516,7 +1523,8 @@ final class AppModel {
         title: String,
         message: String? = nil,
         failure: SanitizedFailure? = nil,
-        recordDiagnostic: Bool = true
+        recordDiagnostic: Bool = true,
+        notificationIntent: NotificationPublicationIntent = .contextual
     ) {
         let presentation = failure.map {
             failurePresentationService.presentation(for: $0)
@@ -1559,7 +1567,9 @@ final class AppModel {
             proposed: proposed
         )
         feedbackByScope[lifecycle.scope] = reconciled
-        publishNotification(reconciled, destination: destination)
+        if notificationIntent.approvedReason(for: reconciled.state) != nil {
+            publishNotification(reconciled, destination: destination)
+        }
         feedbackDestinationByLifecycle.removeValue(forKey: lifecycle.id)
     }
 

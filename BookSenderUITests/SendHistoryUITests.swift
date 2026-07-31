@@ -56,6 +56,10 @@ final class SendHistoryUITests: XCTestCase {
         XCTAssertTrue(
             unavailableApp.buttons["sendBook.history.retry"].isHittable
         )
+        XCTAssertFalse(
+            unavailableApp.descendants(matching: .any)["notification.history"]
+                .exists
+        )
     }
 
     func testClearCancellationSuccessAndFailurePreserveTheRightState() {
@@ -80,8 +84,8 @@ final class SendHistoryUITests: XCTestCase {
             app.staticTexts["No books submitted yet."]
                 .waitForExistence(timeout: 3)
         )
-        XCTAssertTrue(app.staticTexts["Send history cleared."].exists)
-        XCTAssertTrue(
+        XCTAssertFalse(app.staticTexts["Send history cleared."].exists)
+        XCTAssertFalse(
             app.descendants(matching: .any)["notification.history"].exists
         )
         XCTAssertFalse(app.buttons["sendBook.history.clear"].isEnabled)
@@ -102,10 +106,53 @@ final class SendHistoryUITests: XCTestCase {
             failingApp.staticTexts["Send history was not cleared."]
                 .waitForExistence(timeout: 3)
         )
-        XCTAssertTrue(
+        XCTAssertFalse(
             failingApp.descendants(matching: .any)["notification.history"].exists
         )
         XCTAssertTrue(failingApp.staticTexts["Newest Submission.pdf"].exists)
+    }
+
+    func testAcceptedDeliveryHistoryWriteFailurePublishesOnePersistentCard() {
+        let app = launch(
+            "-resetHistory",
+            "-uiTestPDFs",
+            "-uiTestHistoryWriteFailure"
+        )
+
+        XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
+        app.buttons["sendBook.send"].click()
+        XCTAssertTrue(
+            app.buttons["sendBook.confirm"].waitForExistence(timeout: 2)
+        )
+        app.buttons["sendBook.confirm"].click()
+
+        XCTAssertTrue(app.staticTexts["Submitted"].waitForExistence(timeout: 5))
+        let historyCard = app.descendants(matching: .any)[
+            "notification.history"
+        ]
+        XCTAssertTrue(historyCard.waitForExistence(timeout: 3))
+        XCTAssertEqual(historyCard.value as? String, "Partial")
+        XCTAssertTrue(
+            app.staticTexts["Book sent, but history was not updated."].exists
+        )
+        XCTAssertEqual(
+            app.descendants(matching: .any).matching(
+                NSPredicate(
+                    format: "identifier == %@",
+                    "notification.history"
+                )
+            ).count,
+            1
+        )
+        XCTAssertFalse(app.buttons["sendBook.retryFailed"].exists)
+        XCTAssertFalse(app.buttons["sendBook.confirm"].exists)
+
+        selectHistory(in: app)
+        XCTAssertTrue(
+            app.staticTexts["No books submitted yet."]
+                .waitForExistence(timeout: 3)
+        )
+        XCTAssertTrue(historyCard.exists)
     }
 
     func testHistoryPersistsAcrossRelaunchAndUsesReadableDateTimeRows() {

@@ -10,6 +10,7 @@ struct ShortcutServiceTests {
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.settings)
         let registrar = FakeGlobalShortcutRegistrar(description: "⌘⌥K")
         let coordinator = WindowCoordinator(activateApplication: {})
         let service = ShortcutService(
@@ -50,6 +51,12 @@ struct ShortcutServiceTests {
         #expect(
             model.currentDiagnosticEvent?.failure.evidence.phase
                 == .shortcutRegistration
+        )
+        #expect(
+            NotificationTestFixtures.hasNoPresentation(
+                in: model.notificationCenter,
+                destination: .settings
+            )
         )
     }
 

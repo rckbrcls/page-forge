@@ -55,18 +55,17 @@ final class SettingsUITests: XCTestCase {
         )
         XCTAssertFalse(app.staticTexts["Shortcut registered."].exists)
         app.switches["settings.shortcut.enabled"].click()
-        XCTAssertTrue(
-            app.staticTexts["Shortcut disabled."]
-                .waitForExistence(timeout: 2)
+        XCTAssertFalse(app.staticTexts["Shortcut disabled."].exists)
+        XCTAssertEqual(
+            app.switches["settings.shortcut.enabled"].value as? String,
+            "0"
         )
-        XCTAssertTrue(
+        XCTAssertFalse(
             app.descendants(matching: .any)["notification.shortcut"].exists
         )
-        XCTAssertTrue(
-            app.descendants(matching: .any)["notification.shortcut"]
-                .waitForNonExistence(timeout: 6)
+        XCTAssertFalse(
+            app.descendants(matching: .any)["settings.shortcut"].isEnabled
         )
-        XCTAssertFalse(app.staticTexts["Shortcut disabled."].exists)
         XCTAssertFalse(app.buttons["settings.shortcut.disable"].exists)
         XCTAssertFalse(app.staticTexts["Quick Access"].exists)
         XCTAssertFalse(app.staticTexts["Shortcut:"].exists)
@@ -74,5 +73,54 @@ final class SettingsUITests: XCTestCase {
         app.typeKey("w", modifierFlags: .command)
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.staticTexts["Ready"].exists)
+    }
+
+    func testSettingsSaveAndDeleteUseOnlyCredentialOutcomeCards() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-uiTesting",
+            "-resetSetup",
+            "-configuredSetup",
+        ]
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
+        app.typeKey(",", modifierFlags: .command)
+        let scroll = app.scrollViews["settings.delivery.scroll"]
+        XCTAssertTrue(scroll.waitForExistence(timeout: 2))
+        scroll.swipeUp()
+
+        app.buttons["deliverySetup.save"].click()
+        let setupCard = app.descendants(matching: .any)[
+            "notification.deliverySetup"
+        ]
+        XCTAssertTrue(setupCard.waitForExistence(timeout: 2))
+        XCTAssertTrue(
+            app.staticTexts["Setup saved. App password stored securely."].exists
+        )
+        XCTAssertEqual(
+            app.descendants(matching: .any).matching(
+                NSPredicate(
+                    format: "identifier == %@",
+                    "notification.deliverySetup"
+                )
+            ).count,
+            1
+        )
+
+        app.buttons["deliverySetup.delete"].click()
+        XCTAssertTrue(
+            app.staticTexts["Delivery setup deleted."]
+                .waitForExistence(timeout: 2)
+        )
+        XCTAssertEqual(
+            app.descendants(matching: .any).matching(
+                NSPredicate(
+                    format: "identifier == %@",
+                    "notification.deliverySetup"
+                )
+            ).count,
+            1
+        )
     }
 }

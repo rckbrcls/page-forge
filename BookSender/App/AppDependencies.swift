@@ -152,6 +152,13 @@ struct AppDependencies {
         if isUITesting && arguments.contains("-uiTestHistoryUnavailable") {
             historyStore = IsolatedUITestUnavailableHistoryStore()
         } else if isUITesting
+                    && arguments.contains("-uiTestHistoryWriteFailure") {
+            historyStore = IsolatedUITestWriteFailingHistoryStore(
+                rootURL: FileManager.default.temporaryDirectory
+                    .appending(component: "BookSender-UITests")
+                    .appending(component: "SendHistory-WriteFailure")
+            )
+        } else if isUITesting
                     && arguments.contains("-uiTestHistoryClearFailure") {
             historyStore = IsolatedUITestClearFailingHistoryStore(
                 rootURL: FileManager.default.temporaryDirectory
@@ -423,6 +430,26 @@ private actor IsolatedUITestClearFailingHistoryStore: SendHistoryStoring {
 
     func clear() throws {
         throw HistoryFailure(operation: .clear, code: .clear)
+    }
+}
+
+private actor IsolatedUITestWriteFailingHistoryStore: SendHistoryStoring {
+    private let backing: FileSendHistoryStore
+
+    init(rootURL: URL) {
+        backing = FileSendHistoryStore(rootURL: rootURL)
+    }
+
+    func load() async throws -> [SubmissionRecord] {
+        try await backing.load()
+    }
+
+    func replace(with records: [SubmissionRecord]) throws {
+        throw HistoryFailure(operation: .record, code: .write)
+    }
+
+    func clear() async throws {
+        try await backing.clear()
     }
 }
 

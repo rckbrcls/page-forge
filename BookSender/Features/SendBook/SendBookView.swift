@@ -246,15 +246,7 @@ struct SendBookView: View {
     }
 
     private var sendFeedback: ActionFeedback? {
-        model.notificationFeedback(for: .batch, destination: .main)
-            ?? model.notificationFeedback(
-                for: .deliverySetup,
-                destination: .main
-            )
-            ?? model.notificationFeedback(
-                for: .application,
-                destination: .main
-            )
+        model.feedback(for: .batch)
     }
 
     private var screenTitle: String {

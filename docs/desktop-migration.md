@@ -22,19 +22,22 @@ definitive SMTP submissions, retains at most 500 identifier/name/timestamp
 records, and exposes no resend, retry, file-management, analytics, export, or
 remote synchronization behavior.
 
-Action acknowledgements use one shared floating notification component in the
-owning window. The main and Settings windows keep independent top-trailing
-stacks with at most three visible cards; queued results never displace
-persistent recovery. Successful and informational acknowledgements remain
-visible for four seconds after becoming visible and then disappear. Active work
-remains until its state changes. Blocked, failed, cancelled, partial, and
-delivery-unknown results remain until replacement or explicit dismissal.
+Semantic feedback remains application truth and is contextual by default.
+Forms, controls, rows, aggregate state, lists, modals, and inline failure detail
+own visible progress and outcomes without duplicating them in floating cards.
+Production progress never floats. The only current terminal opt-ins are secure
+setup persistence, setup deletion, diagnostic clipboard writes, and a local
+history write failure after definitive SMTP acceptance.
 
-Close is presentation-only. It does not clear field validation, per-book state,
-failure details, delivery uncertainty, or send history. Optional actions use
-the existing typed recovery commands and never store closures, retry delivery
-silently, or replace confirmation sheets and alerts. Notification presentation
-is ephemeral and has no persistence or notification-history surface.
+The main and Settings windows keep independent top-trailing stacks with at most
+three visible cards. Eligible success results last four seconds and never more
+than five; eligible failure and partial results remain until replacement or
+explicit dismissal. Close is presentation-only and optional typed actions never
+retry delivery silently or replace confirmation sheets and alerts. Six bounded
+internal reasons govern eligibility: four current reasons plus reserved
+consequential-hidden and auxiliary-system failure reasons with no current
+producer. Presentation remains ephemeral and has no persistence or notification
+history.
 
 The batch list keeps its existing card and rows. Native row separators are
 hidden and one calm, near-full-width native divider follows every complete

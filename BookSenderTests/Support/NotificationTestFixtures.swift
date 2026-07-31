@@ -16,6 +16,14 @@ enum NotificationTestFixtures {
     )!
     static let start = Date(timeIntervalSince1970: 1_000)
 
+    static let contextualIntent = NotificationPublicationIntent.contextual
+
+    static func floatingIntent(
+        _ reason: NotificationReason = .clipboardWrite
+    ) -> NotificationPublicationIntent {
+        .floating(reason)
+    }
+
     static func feedback(
         id: UUID = mainFeedbackID,
         scope: FeedbackScope = .batch,
@@ -123,6 +131,15 @@ enum NotificationTestFixtures {
         return FloatingNotificationCenter { duration in
             try await sleeper.sleep(for: duration)
         }
+    }
+
+    @MainActor
+    static func hasNoPresentation(
+        in center: FloatingNotificationCenter,
+        destination: NotificationDestination
+    ) -> Bool {
+        let snapshot = center.snapshot(for: destination)
+        return snapshot.visible.isEmpty && snapshot.queuedCount == 0
     }
 
     private static func defaultDismissal(

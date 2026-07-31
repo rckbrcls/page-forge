@@ -126,7 +126,7 @@ struct SendHistoryView: View {
     }
 
     private var historyFeedback: ActionFeedback? {
-        model.notificationFeedback(for: .history, destination: .main)
+        model.feedback(for: .history)
     }
 
     private func handleRecovery(_ action: RecoveryAction) {

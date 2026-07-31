@@ -2,7 +2,7 @@ import XCTest
 
 @MainActor
 final class FloatingNotificationUITests: XCTestCase {
-    func testMainNotificationDoesNotMoveSendWorkflow() {
+    func testContextualBatchStateDoesNotCreateOrMoveANotification() {
         let app = launch("-uiTestPDFs")
 
         let dropTarget = app.buttons["sendBook.dropTarget"]
@@ -16,13 +16,12 @@ final class FloatingNotificationUITests: XCTestCase {
             "notification.batch"
         ]
         XCTAssertTrue(host.exists)
-        XCTAssertTrue(notification.waitForExistence(timeout: 2))
+        XCTAssertFalse(notification.exists)
         XCTAssertEqual(before, [dropTarget.frame, batchCard.frame, send.frame])
-        XCTAssertTrue(notification.waitForNonExistence(timeout: 6))
-        XCTAssertEqual(before, [dropTarget.frame, batchCard.frame, send.frame])
+        XCTAssertTrue(app.staticTexts["Ready"].exists)
     }
 
-    func testSettingsFeedbackStaysInSettingsHost() {
+    func testContextualShortcutStateStaysVisibleWithoutAWindowNotification() {
         let app = launch("-uiTestPDFs")
         app.buttons["sendBook.editSetup"].click()
         app.typeKey(",", modifierFlags: .command)
@@ -47,12 +46,14 @@ final class FloatingNotificationUITests: XCTestCase {
             "notification.shortcut"
         ]
         XCTAssertTrue(settingsHost.exists)
-        XCTAssertTrue(notification.waitForExistence(timeout: 2))
+        XCTAssertFalse(notification.exists)
         XCTAssertFalse(
             app.descendants(matching: .any)["notification.host.main"]
                 .descendants(matching: .any)["notification.shortcut"]
                 .exists
         )
+        XCTAssertEqual(toggle.value as? String, "0")
+        XCTAssertFalse(recorder.isEnabled)
         XCTAssertEqual(before, [recorder.frame, toggle.frame])
     }
 

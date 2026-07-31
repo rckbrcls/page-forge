@@ -10,12 +10,14 @@ struct AppModelSetupTests {
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
 
         #expect(model.hasResolvedInitialSetup == false)
         await eventually { model.hasResolvedInitialSetup }
         #expect(model.setup == nil)
         #expect(model.route == .deliverySetup)
         #expect(model.items.isEmpty)
+        #expect(noMainNotifications(in: model))
         #expect(model.feedback(for: .application)?.state == .succeeded)
         #expect(
             model.feedback(for: .application)?.title
@@ -42,12 +44,14 @@ struct AppModelSetupTests {
         await graph.preferences.setResult(.value(setup))
 
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
 
         #expect(model.hasResolvedInitialSetup == false)
         await eventually { model.hasResolvedInitialSetup }
         #expect(model.route == .sendBook)
         #expect(model.setup == setup)
         #expect(model.setupDraft.appPassword.isEmpty)
+        #expect(noMainNotifications(in: model))
     }
 
     @Test
@@ -56,6 +60,7 @@ struct AppModelSetupTests {
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft = validDraft()
 
         model.saveSetup()
@@ -69,6 +74,15 @@ struct AppModelSetupTests {
             model.feedback(for: .deliverySetup)?.title
                 == "Setup saved. App password stored securely."
         )
+        #expect(
+            model.notificationCenter.snapshot(for: .main).visible.count == 1
+        )
+        #expect(
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            )?.state == .succeeded
+        )
         #expect(String(describing: model).contains("provider-secret") == false)
     }
 
@@ -78,6 +92,7 @@ struct AppModelSetupTests {
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft = validDraft()
 
         model.saveSetup()
@@ -93,6 +108,11 @@ struct AppModelSetupTests {
         #expect(feedback.state == .succeeded)
         #expect(feedback.dismissal == .persistentUntilReplaced)
         #expect(feedback.title == "Setup saved. App password stored securely.")
+        #expect(
+            model.notificationCenter.snapshot(for: .main).visible.filter {
+                $0.feedback.scope == .deliverySetup
+            }.count == 1
+        )
         #expect(model.setupDraft.appPassword.isEmpty)
         #expect(String(describing: feedback).contains("replacement-secret") == false)
     }
@@ -103,6 +123,7 @@ struct AppModelSetupTests {
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft.senderAddress = "invalid"
 
         model.saveSetup()
@@ -111,6 +132,7 @@ struct AppModelSetupTests {
         #expect(model.setupDraft.senderAddress == "invalid")
         #expect(model.setupErrors[.senderAddress] != nil)
         #expect(model.feedback(for: .deliverySetup)?.state == .failed)
+        #expect(noMainNotifications(in: model))
     }
 
     @Test
@@ -129,6 +151,7 @@ struct AppModelSetupTests {
         )
         await graph.preferences.setResult(.value(setup))
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
 
         #expect(model.hasResolvedInitialSetup == false)
         await eventually { model.hasResolvedInitialSetup }
@@ -138,6 +161,7 @@ struct AppModelSetupTests {
         #expect(model.setupMessage != nil)
         #expect(model.setupDraft.senderAddress == "reader@example.com")
         #expect(model.setupDraft.appPassword.isEmpty)
+        #expect(noMainNotifications(in: model))
         await eventually { model.currentDiagnosticEvent != nil }
         #expect(
             model.currentDiagnosticEvent?.failure.code == .credentialMissing
@@ -154,6 +178,7 @@ struct AppModelSetupTests {
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         await eventually { model.hasResolvedInitialSetup }
 
         model.acknowledgeUpdateCheck()
@@ -162,6 +187,7 @@ struct AppModelSetupTests {
         #expect(
             model.feedback(for: .update)?.title == "Update check opened."
         )
+        #expect(noMainNotifications(in: model))
         #expect(model.currentDiagnosticEvent == nil)
     }
 
@@ -182,6 +208,13 @@ struct AppModelSetupTests {
             username: "reader",
             appPassword: "provider-secret",
             kindleAddress: "reader@kindle.com"
+        )
+    }
+
+    private func noMainNotifications(in model: AppModel) -> Bool {
+        NotificationTestFixtures.hasNoPresentation(
+            in: model.notificationCenter,
+            destination: .main
         )
     }
 }

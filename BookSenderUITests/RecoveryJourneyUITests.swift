@@ -50,6 +50,16 @@ final class RecoveryJourneyUITests: XCTestCase {
                 "notification.diagnosticCopy"
             ].exists
         )
+        copy.click()
+        XCTAssertEqual(
+            app.descendants(matching: .any).matching(
+                NSPredicate(
+                    format: "identifier == %@",
+                    "notification.diagnosticCopy"
+                )
+            ).count,
+            1
+        )
         XCTAssertTrue(app.staticTexts["Failed"].exists)
         app.buttons["notification.close.diagnosticCopy"].click()
         XCTAssertFalse(
@@ -118,7 +128,7 @@ final class RecoveryJourneyUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Failed"].exists)
     }
 
-    func testUnknownNotificationRequiresConfirmationAndNeverRetriesSilently() {
+    func testUnknownInlineRecoveryRequiresConfirmationAndNeverRetriesSilently() {
         let app = XCUIApplication()
         app.launchArguments = [
             "-uiTesting",
@@ -140,9 +150,14 @@ final class RecoveryJourneyUITests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts["Delivery Unknown"].waitForExistence(timeout: 5)
         )
-        let review = app.buttons["notification.action.batch"]
+        XCTAssertTrue(app.staticTexts[
+            "Review Delivery Unknown items before sending them again."
+        ].exists)
+        XCTAssertFalse(
+            app.descendants(matching: .any)["notification.batch"].exists
+        )
+        let review = app.buttons["sendBook.sendMore"]
         XCTAssertTrue(review.waitForExistence(timeout: 2))
-        XCTAssertEqual(review.label, "Check Kindle Before Retrying")
         review.click()
 
         XCTAssertTrue(app.staticTexts["Start Another Send?"].exists)

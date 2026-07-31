@@ -80,9 +80,6 @@ struct ShortcutSettingsView: View {
     }
 
     private var shortcutFeedback: ActionFeedback? {
-        model.notificationFeedback(
-            for: .shortcut,
-            destination: .settings
-        )
+        model.feedback(for: .shortcut)
     }
 }

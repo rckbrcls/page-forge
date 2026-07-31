@@ -18,6 +18,7 @@ struct AppModelDiagnosticsTests {
             )
         )
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft = validDraft()
 
         model.saveSetup()
@@ -31,6 +32,12 @@ struct AppModelDiagnosticsTests {
         )
         #expect(event.failure.evidence.context.operationID != nil)
         #expect(await graph.diagnosticRecorder.events.count == 1)
+        #expect(
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            ) == nil
+        )
 
         model.copyCurrentErrorDetails()
         #expect(graph.diagnosticClipboard.copies.count == 1)
@@ -41,10 +48,23 @@ struct AppModelDiagnosticsTests {
             )?.title == "Error details copied."
         )
         #expect(model.currentDiagnosticEvent == event)
+        #expect(
+            model.notificationCenter.snapshot(for: .main).visible.filter {
+                $0.feedback.scope == .diagnosticCopy
+            }.count == 1
+        )
         for forbidden in DiagnosticTestFixtures.forbiddenValues {
             #expect(
                 graph.diagnosticClipboard.copies[0].text.contains(forbidden)
                     == false
+            )
+            #expect(
+                String(
+                    describing: model.notificationFeedback(
+                        for: .diagnosticCopy,
+                        destination: .main
+                    )
+                ).contains(forbidden) == false
             )
         }
     }
@@ -63,6 +83,7 @@ struct AppModelDiagnosticsTests {
             )
         )
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft = validDraft()
         model.saveSetup()
         try await eventually { model.currentDiagnosticEvent != nil }
@@ -86,6 +107,55 @@ struct AppModelDiagnosticsTests {
                 for: .diagnosticCopy,
                 destination: .main
             )?.failure?.code == .clipboardWrite
+        )
+        #expect(
+            model.notificationCenter.snapshot(for: .main).visible.filter {
+                $0.feedback.scope == .diagnosticCopy
+            }.count == 1
+        )
+    }
+
+    @Test
+    func repeatedDiagnosticCopyReplacesThePriorCardInItsDestination() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let graph = TestDependencyGraph.make(stores: stores)
+        await graph.credentials.setSaveFailure(
+            sanitizedFailure(.credentialSave, family: .credential)
+        )
+        let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.settings)
+        model.setupDraft = validDraft()
+        model.saveSetup(destination: .settings)
+        try await eventually { model.currentDiagnosticEvent != nil }
+
+        model.copyCurrentErrorDetails(destination: .settings)
+        let firstID = try #require(
+            model.notificationFeedback(
+                for: .diagnosticCopy,
+                destination: .settings
+            )?.id
+        )
+        model.copyCurrentErrorDetails(destination: .settings)
+        let replacement = try #require(
+            model.notificationFeedback(
+                for: .diagnosticCopy,
+                destination: .settings
+            )
+        )
+
+        #expect(replacement.id != firstID)
+        #expect(graph.diagnosticClipboard.copies.count == 2)
+        #expect(
+            model.notificationCenter.snapshot(for: .settings).visible.filter {
+                $0.feedback.scope == .diagnosticCopy
+            }.count == 1
+        )
+        #expect(
+            model.notificationFeedback(
+                for: .diagnosticCopy,
+                destination: .main
+            ) == nil
         )
     }
 

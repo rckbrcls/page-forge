@@ -46,7 +46,7 @@ struct ActionFeedbackExpiryTests {
     }
 
     @Test
-    func actionableFailureDoesNotExpire() async throws {
+    func contextualFailureCreatesNoExpiryTask() async throws {
         let stores = try TestStores.make()
         defer { stores.cleanup() }
         let sleeper = ControlledFeedbackSleeper()
@@ -58,19 +58,16 @@ struct ActionFeedbackExpiryTests {
         )
         let model = AppModel(dependencies: graph.dependencies)
         model.notificationCenter.attach(.main)
+        try await eventually { model.hasResolvedInitialSetup }
 
         model.addBooks([])
-        let failureID = try #require(
-            model.notificationFeedback(for: .batch, destination: .main)?.id
-        )
-        await sleeper.resumeAll()
-        await Task.yield()
 
-        #expect(
-            model.notificationFeedback(for: .batch, destination: .main)?.id
-                == failureID
-        )
         #expect(model.feedback(for: .batch)?.state == .failed)
+        #expect(
+            model.notificationFeedback(for: .batch, destination: .main) == nil
+        )
+        #expect(await sleeper.pendingCount() == 0)
+        #expect(await sleeper.requestedDurations.isEmpty)
     }
 
     @Test
@@ -87,16 +84,6 @@ struct ActionFeedbackExpiryTests {
         let model = AppModel(dependencies: graph.dependencies)
         model.notificationCenter.attach(.main)
         try await eventually { model.hasResolvedInitialSetup }
-        try await eventuallyAsync {
-            await gate.pendingCount() == 1
-        }
-        await gate.resumeFirst()
-        try await eventually {
-            model.notificationFeedback(
-                for: .application,
-                destination: .main
-            ) == nil
-        }
         model.setupDraft = validDraft()
         model.saveSetup()
         try await eventually {
@@ -153,7 +140,7 @@ struct ActionFeedbackExpiryTests {
     }
 
     @Test
-    func independentScopesOwnIndependentFourSecondExpiryTasks() async throws {
+    func contextualUpdateDoesNotAddAnExpiryTaskBesideApprovedSetup() async throws {
         let stores = try TestStores.make()
         defer { stores.cleanup() }
         let sleeper = ControlledFeedbackSleeper()
@@ -174,30 +161,58 @@ struct ActionFeedbackExpiryTests {
                 for: .deliverySetup,
                 destination: .main
             )?.state == .succeeded
-                && model.notificationFeedback(
-                    for: .update,
-                    destination: .main
-                )?.state == .succeeded
         }
         try await eventuallyAsync {
-            await sleeper.pendingCount() >= 2
+            await sleeper.pendingCount() == 1
         }
 
-        #expect(await sleeper.requestedDurations.allSatisfy { $0 == 4 })
-        #expect(await sleeper.requestedDurations.allSatisfy { $0 <= 5 })
+        #expect(await sleeper.requestedDurations == [4])
+        #expect(model.feedback(for: .update)?.state == .succeeded)
+        #expect(
+            model.notificationFeedback(for: .update, destination: .main) == nil
+        )
         await sleeper.resumeAll()
         try await eventually {
             model.notificationFeedback(
                 for: .deliverySetup,
                 destination: .main
             ) == nil
-                && model.notificationFeedback(
-                    for: .update,
-                    destination: .main
-                ) == nil
         }
         #expect(model.feedback(for: .deliverySetup)?.state == .succeeded)
         #expect(model.feedback(for: .update)?.state == .succeeded)
+    }
+
+    @Test
+    func approvedClipboardFailureRemainsPersistentWithoutAnExpiryTask() async throws {
+        let stores = try TestStores.make()
+        defer { stores.cleanup() }
+        let sleeper = ControlledFeedbackSleeper()
+        let graph = TestDependencyGraph.make(
+            stores: stores,
+            feedbackSleep: { duration in
+                try await sleeper.sleep(for: duration)
+            }
+        )
+        await graph.credentials.setSaveFailure(
+            sanitizedFailure(.credentialSave, family: .credential)
+        )
+        graph.diagnosticClipboard.error = .writeFailed
+        let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
+        model.setupDraft = validDraft()
+        model.saveSetup()
+        try await eventually { model.currentDiagnosticEvent != nil }
+
+        model.copyCurrentErrorDetails()
+
+        #expect(
+            model.notificationFeedback(
+                for: .diagnosticCopy,
+                destination: .main
+            )?.state == .failed
+        )
+        #expect(await sleeper.pendingCount() == 0)
+        #expect(await sleeper.requestedDurations.isEmpty)
     }
 
     private func eventually(

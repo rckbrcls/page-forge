@@ -86,9 +86,14 @@ struct FirstBookJourneyTests {
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft = validDraft()
         model.saveSetup()
         try await eventuallyMainActor { model.route == .sendBook }
+        model.notificationCenter.remove(
+            scope: .deliverySetup,
+            destination: .main
+        )
         let pdf = try FixtureFactory.makePDF(valid: true, in: stores.rootURL)
 
         model.addBooks([pdf])
@@ -97,6 +102,7 @@ struct FirstBookJourneyTests {
                 && model.items.first?.preparation == .ready
         }
         #expect(model.feedback(for: .batch)?.state == .succeeded)
+        #expect(noMainNotifications(in: model))
 
         #expect(model.items.first?.displayName == "valid.pdf")
         #expect(String(describing: model.batch).contains(pdf.path) == false)
@@ -104,6 +110,7 @@ struct FirstBookJourneyTests {
         model.requestSendConfirmation()
         try await eventuallyMainActor { model.isShowingConfirmation }
         #expect(model.feedback(for: .batch)?.title == "Confirmation ready.")
+        #expect(noMainNotifications(in: model))
         #expect(model.confirmation?.eligibleCount == 1)
         model.confirmSend()
         try await eventuallyMainActor {
@@ -113,6 +120,7 @@ struct FirstBookJourneyTests {
         #expect(model.aggregateMessage == "1 submitted")
         #expect(model.feedback(for: .batch)?.state == .succeeded)
         #expect(model.feedback(for: .batch)?.title == "1 book submitted.")
+        #expect(noMainNotifications(in: model))
     }
 
     @Test
@@ -122,9 +130,14 @@ struct FirstBookJourneyTests {
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft = validDraft()
         model.saveSetup()
         try await eventuallyMainActor { model.setup != nil }
+        model.notificationCenter.remove(
+            scope: .deliverySetup,
+            destination: .main
+        )
         let pdf = try FixtureFactory.makePDF(valid: true, in: stores.rootURL)
         model.addBooks([pdf])
         try await eventuallyMainActor { model.items.first?.preparation == .ready }
@@ -133,6 +146,7 @@ struct FirstBookJourneyTests {
         model.remove(id)
         try await eventuallyMainActor { model.items.isEmpty }
         #expect(model.feedback(for: .batch)?.title == "Book removed.")
+        #expect(noMainNotifications(in: model))
 
         model.addBooks([pdf])
         try await eventuallyMainActor { model.items.first?.preparation == .ready }
@@ -140,10 +154,12 @@ struct FirstBookJourneyTests {
         try await eventuallyMainActor { model.isShowingConfirmation }
         model.dismissConfirmation()
         #expect(model.feedback(for: .batch)?.title == "Confirmation dismissed.")
+        #expect(noMainNotifications(in: model))
 
         model.clear()
         try await eventuallyMainActor { model.items.isEmpty }
         #expect(model.feedback(for: .batch)?.title == "Batch cleared.")
+        #expect(noMainNotifications(in: model))
     }
 
     @Test
@@ -153,6 +169,7 @@ struct FirstBookJourneyTests {
         defer { stores.cleanup() }
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
 
         model.addBooks([])
 
@@ -165,6 +182,7 @@ struct FirstBookJourneyTests {
             model.feedback(for: .batch)?.failure?.code
                 == .intakeUnsupported
         )
+        #expect(noMainNotifications(in: model))
     }
 
     @Test
@@ -180,9 +198,14 @@ struct FirstBookJourneyTests {
             ]
         )
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft = validDraft()
         model.saveSetup()
         try await eventuallyMainActor { model.setup != nil }
+        model.notificationCenter.remove(
+            scope: .deliverySetup,
+            destination: .main
+        )
         let pdf = try FixtureFactory.makePDF(valid: true, in: stores.rootURL)
         model.addBooks([pdf])
         try await eventuallyMainActor { model.items.first?.preparation == .ready }
@@ -195,6 +218,7 @@ struct FirstBookJourneyTests {
         }
         let firstFeedback = try #require(model.feedback(for: .batch))
         #expect(firstFeedback.state == .failed)
+        #expect(noMainNotifications(in: model))
 
         model.requestRetryConfirmation()
         try await eventuallyMainActor { model.isShowingConfirmation }
@@ -205,6 +229,7 @@ struct FirstBookJourneyTests {
         let retryFeedback = try #require(model.feedback(for: .batch))
         #expect(retryFeedback.id != firstFeedback.id)
         #expect(retryFeedback.state == .succeeded)
+        #expect(noMainNotifications(in: model))
     }
 
     private func eventually(
@@ -237,6 +262,14 @@ struct FirstBookJourneyTests {
             username: "sender",
             appPassword: "secret",
             kindleAddress: "reader@kindle.com"
+        )
+    }
+
+    @MainActor
+    private func noMainNotifications(in model: AppModel) -> Bool {
+        NotificationTestFixtures.hasNoPresentation(
+            in: model.notificationCenter,
+            destination: .main
         )
     }
 }
