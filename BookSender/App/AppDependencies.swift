@@ -154,15 +154,21 @@ struct AppDependencies {
         } else if isUITesting
                     && arguments.contains("-uiTestHistoryWriteFailure") {
             historyStore = IsolatedUITestWriteFailingHistoryStore(
-                backing: IsolatedUITestHistoryStore(defaults: defaults)
+                backing: IsolatedUITestHistoryStore(
+                    suiteName: defaultsSuiteName
+                )
             )
         } else if isUITesting
                     && arguments.contains("-uiTestHistoryClearFailure") {
             historyStore = IsolatedUITestClearFailingHistoryStore(
-                backing: IsolatedUITestHistoryStore(defaults: defaults)
+                backing: IsolatedUITestHistoryStore(
+                    suiteName: defaultsSuiteName
+                )
             )
         } else if isUITesting {
-            historyStore = IsolatedUITestHistoryStore(defaults: defaults)
+            historyStore = IsolatedUITestHistoryStore(
+                suiteName: defaultsSuiteName
+            )
         } else if let applicationSupportURL = try? FileManager.default.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
@@ -409,8 +415,13 @@ private actor IsolatedUITestHistoryStore: SendHistoryStoring {
     private static let key = "sendHistory.v1"
     private let defaults: UserDefaults
 
-    init(defaults: UserDefaults) {
-        self.defaults = defaults
+    init(suiteName: String?) {
+        if let suiteName,
+           let isolatedDefaults = UserDefaults(suiteName: suiteName) {
+            defaults = isolatedDefaults
+        } else {
+            defaults = .standard
+        }
     }
 
     func load() throws -> [SubmissionRecord] {
