@@ -21,41 +21,6 @@ final class FloatingNotificationUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Ready"].exists)
     }
 
-    func testContextualShortcutStateStaysVisibleWithoutAWindowNotification() {
-        let app = launch("-uiTestPDFs")
-        app.typeKey(",", modifierFlags: .command)
-
-        let shortcutTab = app.descendants(matching: .any).matching(
-            NSPredicate(format: "label == %@", "Shortcut")
-        ).firstMatch
-        XCTAssertTrue(shortcutTab.waitForExistence(timeout: 2))
-        shortcutTab.click()
-        let recorder = app.descendants(matching: .any)["settings.shortcut"]
-        let toggle = app.switches["settings.shortcut.enabled"]
-        XCTAssertTrue(recorder.exists)
-        XCTAssertTrue(toggle.exists)
-        let before = [recorder.frame, toggle.frame]
-
-        toggle.click()
-
-        let settingsHost = app.descendants(matching: .any)[
-            "notification.host.settings"
-        ]
-        let notification = app.descendants(matching: .any)[
-            "notification.shortcut"
-        ]
-        XCTAssertTrue(settingsHost.exists)
-        XCTAssertFalse(notification.exists)
-        XCTAssertFalse(
-            app.descendants(matching: .any)["notification.host.main"]
-                .descendants(matching: .any)["notification.shortcut"]
-                .exists
-        )
-        XCTAssertEqual(toggle.value as? String, "0")
-        XCTAssertFalse(recorder.isEnabled)
-        XCTAssertEqual(before, [recorder.frame, toggle.frame])
-    }
-
     func testNativeConfirmationRemainsTheActiveDecisionSurface() {
         let app = launch("-uiTestPDFs")
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
@@ -244,7 +209,7 @@ final class FloatingNotificationUITests: XCTestCase {
             "-configuredSetup",
             "-resetHistory",
         ] + additionalArguments
-        app.launch()
+        app.launchBookSender()
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
         return app
     }

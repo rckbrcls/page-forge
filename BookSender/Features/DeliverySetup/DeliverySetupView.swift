@@ -221,6 +221,9 @@ struct DeliverySetupView: View {
                 .font(.caption)
                 .foregroundStyle(.red)
                 .accessibilityLabel("Error: \(message(for: error))")
+                .accessibilityIdentifier(
+                    "deliverySetup.error.\(field.rawValue)"
+                )
         }
     }
 

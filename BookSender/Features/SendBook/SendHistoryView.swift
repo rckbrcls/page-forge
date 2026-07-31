@@ -110,6 +110,7 @@ struct SendHistoryView: View {
                     .monospacedDigit()
                 }
                 .accessibilityElement(children: .combine)
+                .accessibilityLabel(historyAccessibilityLabel(for: record))
                 .accessibilityIdentifier(
                     "sendBook.history.record.\(record.id.uuidString)"
                 )
@@ -123,6 +124,22 @@ struct SendHistoryView: View {
     private var historyCount: String {
         let count = model.historySnapshot.records.count
         return count == 1 ? "1 submission" : "\(count) submissions"
+    }
+
+    private func historyAccessibilityLabel(
+        for record: SubmissionRecord
+    ) -> Text {
+        Text(record.displayName)
+            + Text(", ")
+            + Text(
+                record.acceptedAt,
+                format: .dateTime
+                    .year()
+                    .month(.abbreviated)
+                    .day()
+                    .hour()
+                    .minute()
+            )
     }
 
     private var historyFeedback: ActionFeedback? {

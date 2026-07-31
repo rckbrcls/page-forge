@@ -10,10 +10,7 @@ struct BoundedXMLParser: BoundedXMLParsing {
             throw failure(.xmlByteLimit)
         }
 
-        let lowercase = String(decoding: data, as: UTF8.self).lowercased()
-        guard !lowercase.contains("<!doctype"),
-              !lowercase.contains("<!entity")
-        else {
+        guard try !containsForbiddenDeclaration(in: data) else {
             throw failure(.xmlExternalEntity)
         }
         try Task.checkCancellation()
@@ -56,6 +53,31 @@ struct BoundedXMLParser: BoundedXMLParsing {
             message: "This EPUB contains XML that cannot be processed safely.",
             recoveryAction: .reviewBook
         )
+    }
+
+    private nonisolated func containsForbiddenDeclaration(
+        in data: Data
+    ) throws -> Bool {
+        let chunkSize = 64 * 1_024
+        let overlap = 16
+        var offset = 0
+
+        while offset < data.count {
+            try Task.checkCancellation()
+            let lowerBound = max(0, offset - overlap)
+            let upperBound = min(data.count, offset + chunkSize)
+            let lowercase = String(
+                decoding: data[lowerBound..<upperBound],
+                as: UTF8.self
+            ).lowercased()
+            if lowercase.contains("<!doctype")
+                || lowercase.contains("<!entity") {
+                return true
+            }
+            offset = upperBound
+        }
+
+        return false
     }
 }
 

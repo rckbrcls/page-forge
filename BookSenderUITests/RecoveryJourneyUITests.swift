@@ -13,7 +13,7 @@ final class RecoveryJourneyUITests: XCTestCase {
             "-uiTestOutcomeFailed",
             "-uiTestOutcomeUnknown",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         app.buttons["sendBook.send"].click()
@@ -41,10 +41,13 @@ final class RecoveryJourneyUITests: XCTestCase {
         let copy = app.buttons["failure.copy"].firstMatch
         XCTAssertTrue(copy.waitForExistence(timeout: 2))
         copy.click()
+        let diagnosticCard = app.descendants(matching: .any)[
+            "notification.diagnosticCopy"
+        ]
         XCTAssertTrue(
-            app.staticTexts["Error details copied."]
-                .waitForExistence(timeout: 2)
+            diagnosticCard.waitForExistence(timeout: 2)
         )
+        XCTAssertTrue(diagnosticCard.label.contains("Error details copied."))
         XCTAssertTrue(
             app.buttons["notification.close.diagnosticCopy"].exists
         )
@@ -89,7 +92,7 @@ final class RecoveryJourneyUITests: XCTestCase {
             "-uiTestOutcomeFailed",
             "-uiTestClipboardFailure",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         app.buttons["sendBook.send"].click()
@@ -108,15 +111,20 @@ final class RecoveryJourneyUITests: XCTestCase {
         )
         app.buttons["failure.copy"].firstMatch.click()
 
+        let diagnosticCard = app.descendants(matching: .any)[
+            "notification.diagnosticCopy"
+        ]
         XCTAssertTrue(
-            app.staticTexts["Error details were not copied."]
-                .waitForExistence(timeout: 2)
+            diagnosticCard.waitForExistence(timeout: 2)
+        )
+        XCTAssertTrue(
+            diagnosticCard.label.contains("Error details were not copied.")
         )
         XCTAssertTrue(
             app.buttons["notification.close.diagnosticCopy"].exists
         )
         XCTAssertTrue(
-            app.staticTexts["The original error remains visible."].exists
+            diagnosticCard.label.contains("The original error remains visible.")
         )
         XCTAssertTrue(app.staticTexts["smtp.ui-test-rejected"].exists)
         XCTAssertTrue(app.staticTexts["Failed"].exists)
@@ -132,7 +140,7 @@ final class RecoveryJourneyUITests: XCTestCase {
             "-uiTestOutcomeUnknown",
             "-resetHistory",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         app.buttons["sendBook.send"].click()
@@ -155,9 +163,13 @@ final class RecoveryJourneyUITests: XCTestCase {
         review.click()
 
         XCTAssertTrue(app.staticTexts["Start Another Send?"].exists)
-        XCTAssertTrue(app.buttons["Keep Results"].isHittable)
-        XCTAssertTrue(app.buttons["Send More Books"].isHittable)
-        app.buttons["Keep Results"].click()
+        XCTAssertTrue(
+            app.sheets.buttons["Keep Results"].firstMatch.isHittable
+        )
+        XCTAssertTrue(
+            app.sheets.buttons["Send More Books"].firstMatch.isHittable
+        )
+        app.sheets.buttons["Keep Results"].firstMatch.click()
         XCTAssertTrue(app.staticTexts["Delivery Unknown"].exists)
         XCTAssertFalse(app.staticTexts["Submitted"].exists)
     }

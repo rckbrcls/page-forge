@@ -10,7 +10,7 @@ final class GlobalShortcutUITests: XCTestCase {
             "-configuredSetup",
             "-uiTestPDFs",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         app.typeKey("w", modifierFlags: .command)

@@ -63,7 +63,7 @@ final class FloatingNotificationAppearanceUITests: XCTestCase {
             "-configuredSetup",
             "-uiTestNotificationAppearance",
         ] + additionalArguments
-        app.launch()
+        app.launchBookSender()
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
         return app
     }

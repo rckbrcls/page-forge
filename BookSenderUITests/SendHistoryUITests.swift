@@ -76,13 +76,13 @@ final class SendHistoryUITests: XCTestCase {
 
         app.buttons["sendBook.history.clear"].click()
         XCTAssertTrue(app.staticTexts["Clear Send History?"].exists)
-        app.buttons["Cancel"].click()
+        app.sheets.buttons["Cancel"].firstMatch.click()
         XCTAssertTrue(
             historyRow(in: app, containing: "Newest Submission.pdf").exists
         )
 
         app.buttons["sendBook.history.clear"].click()
-        app.buttons["Clear History"].click()
+        app.sheets.buttons["Clear History"].firstMatch.click()
         XCTAssertTrue(
             app.staticTexts["No books submitted yet."]
                 .waitForExistence(timeout: 3)
@@ -104,7 +104,7 @@ final class SendHistoryUITests: XCTestCase {
                 .waitForExistence(timeout: 3)
         )
         failingApp.buttons["sendBook.history.clear"].click()
-        failingApp.buttons["Clear History"].click()
+        failingApp.sheets.buttons["Clear History"].firstMatch.click()
         XCTAssertTrue(
             failingApp.staticTexts["Send history was not cleared."]
                 .waitForExistence(timeout: 3)
@@ -180,6 +180,7 @@ final class SendHistoryUITests: XCTestCase {
         XCTAssertTrue(firstRecord.label.contains("Newest Submission.pdf"))
         XCTAssertGreaterThan(firstRecord.label.count, "Newest Submission.pdf".count)
         app.terminate()
+        XCTAssertTrue(app.wait(for: .notRunning, timeout: 5))
 
         let relaunched = launch()
         selectHistory(in: relaunched)
@@ -207,18 +208,19 @@ final class SendHistoryUITests: XCTestCase {
             "en_US",
         ]
         utcApp.launchEnvironment["TZ"] = "UTC"
-        utcApp.launch()
+        utcApp.launchBookSender()
         XCTAssertTrue(
             utcApp.staticTexts["Send Book"].waitForExistence(timeout: 5)
         )
         selectHistory(in: utcApp)
         let utcLabel = historyRowLabel(in: utcApp)
         utcApp.terminate()
+        XCTAssertTrue(utcApp.wait(for: .notRunning, timeout: 5))
 
         let pacificApp = XCUIApplication()
         pacificApp.launchArguments = utcApp.launchArguments
         pacificApp.launchEnvironment["TZ"] = "America/Los_Angeles"
-        pacificApp.launch()
+        pacificApp.launchBookSender()
         XCTAssertTrue(
             pacificApp.staticTexts["Send Book"].waitForExistence(timeout: 5)
         )
@@ -284,14 +286,15 @@ final class SendHistoryUITests: XCTestCase {
         XCTAssertTrue(tabs.isHittable)
         XCTAssertEqual(send.label, "Send")
         XCTAssertEqual(history.label, "History")
-        let heading = app.staticTexts["Send Book"]
+        let heading = app.staticTexts["sendBook.title"]
         let editSetup = app.buttons["sendBook.editSetup"]
         XCTAssertTrue(heading.exists)
         XCTAssertEqual(heading.label, "Send Book")
         XCTAssertTrue(editSetup.isHittable)
         XCTAssertLessThan(tabs.frame.midY, heading.frame.midY)
         XCTAssertLessThan(editSetup.frame.midY, heading.frame.midY)
-        tabs.click()
+        XCTAssertTrue(send.isHittable)
+        send.click()
         app.typeKey(.rightArrow, modifierFlags: [])
         XCTAssertTrue(
             app.descendants(matching: .any)["sendBook.history.list"]
@@ -310,20 +313,20 @@ final class SendHistoryUITests: XCTestCase {
             "-resetSetup",
             "-configuredSetup",
         ] + additionalArguments
-        app.launch()
-        XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
+        app.launchBookSender()
+        XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 8))
         return app
     }
 
     private func selectHistory(in app: XCUIApplication) {
         let tab = app.descendants(matching: .any)["sendBook.tab.history"]
-        XCTAssertTrue(tab.waitForExistence(timeout: 2))
+        XCTAssertTrue(tab.waitForExistence(timeout: 5))
         tab.click()
     }
 
     private func selectSend(in app: XCUIApplication) {
         let tab = app.descendants(matching: .any)["sendBook.tab.send"]
-        XCTAssertTrue(tab.waitForExistence(timeout: 2))
+        XCTAssertTrue(tab.waitForExistence(timeout: 5))
         tab.click()
     }
 

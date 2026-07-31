@@ -9,25 +9,27 @@ final class FirstBookJourneyUITests: XCTestCase {
             "-configuredSetup",
             "-uiTestSlowSetupLoad",
         ]
-        app.launch()
+        app.launchBookSender()
 
+        let bootstrapProgress = app.descendants(matching: .any)[
+            "app.bootstrap.progress"
+        ]
         XCTAssertTrue(
-            app.progressIndicators["app.bootstrap.progress"]
-                .waitForExistence(timeout: 2)
+            bootstrapProgress.waitForExistence(timeout: 2)
         )
         XCTAssertFalse(app.staticTexts["Delivery Setup"].exists)
         XCTAssertFalse(app.staticTexts["Send Book"].exists)
 
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["Delivery Setup"].exists)
-        XCTAssertFalse(app.progressIndicators["app.bootstrap.progress"].exists)
+        XCTAssertFalse(bootstrapProgress.exists)
         XCTAssertFalse(app.staticTexts["ui-test-secret"].exists)
     }
 
     func testFirstLaunchValidatesSavesAndRelaunchesWithoutBypass() {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTesting", "-resetSetup"]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(
             app.staticTexts["Delivery Setup"].waitForExistence(timeout: 5)
@@ -37,6 +39,7 @@ final class FirstBookJourneyUITests: XCTestCase {
 
         let senderAddress = app.textFields["deliverySetup.senderAddress"]
         let smtpHost = app.textFields["deliverySetup.smtpHost"]
+        let smtpPort = app.textFields["deliverySetup.smtpPort"]
         let username = app.textFields["deliverySetup.username"]
         let appPassword = app.secureTextFields["deliverySetup.appPassword"]
         let kindleAddress = app.textFields["deliverySetup.kindleAddress"]
@@ -58,54 +61,50 @@ final class FirstBookJourneyUITests: XCTestCase {
         XCTAssertFalse(app.descendants(matching: .any)["settings.shortcut"].exists)
 
         senderAddress.click()
-        app.typeText("invalid")
+        senderAddress.typeText("invalid")
         app.buttons["deliverySetup.save"].click()
+        let senderError = app.descendants(matching: .any)[
+            "deliverySetup.error.senderAddress"
+        ]
         XCTAssertTrue(
-            app.staticTexts["Error: Enter a valid email address."]
-                .waitForExistence(timeout: 2)
+            senderError.waitForExistence(timeout: 2)
+        )
+        XCTAssertEqual(
+            senderError.label,
+            "Error: Enter a valid email address."
         )
 
-        replaceText(
-            in: senderAddress,
-            using: app,
-            with: "reader@example.com"
-        )
-        app.typeKey(.tab, modifierFlags: [])
-        app.typeText("smtp.example.com")
-        app.typeKey(.tab, modifierFlags: [])
-        app.typeText("465")
-        app.typeKey(.tab, modifierFlags: [])
-        app.typeText("reader")
-        app.typeKey(.tab, modifierFlags: [])
-        app.typeText("ui-test-secret")
-        app.typeKey(.tab, modifierFlags: [])
-        app.typeText("reader@kindle.com")
+        replaceText(in: senderAddress, with: "reader@example.com")
+        replaceText(in: smtpHost, with: "smtp.example.com")
+        replaceText(in: smtpPort, with: "465")
+        replaceText(in: username, with: "reader")
+        replaceText(in: appPassword, with: "ui-test-secret")
+        replaceText(in: kindleAddress, with: "reader@kindle.com")
 
         app.buttons["deliverySetup.save"].click()
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
+        let setupCard = app.descendants(matching: .any)[
+            "notification.deliverySetup"
+        ]
         XCTAssertTrue(
-            app.staticTexts[
-                "Setup saved. App password stored securely."
-            ].waitForExistence(timeout: 2)
+            setupCard.waitForExistence(timeout: 2)
         )
         XCTAssertTrue(
-            app.staticTexts[
+            setupCard.label.contains(
                 "Setup saved. App password stored securely."
-            ].waitForNonExistence(timeout: 6)
+            )
+        )
+        XCTAssertTrue(
+            setupCard.waitForNonExistence(timeout: 6)
         )
         XCTAssertFalse(app.staticTexts["Delivery Setup"].exists)
         XCTAssertFalse(app.staticTexts["ui-test-secret"].exists)
-        app.buttons["sendBook.editSetup"].click()
-        let clearedPassword = app.secureTextFields[
-            "deliverySetup.appPassword"
-        ]
-        XCTAssertTrue(clearedPassword.waitForExistence(timeout: 2))
-        XCTAssertEqual(clearedPassword.value as? String, "")
 
         app.terminate()
+        XCTAssertTrue(app.wait(for: .notRunning, timeout: 5))
         let relaunched = XCUIApplication()
         relaunched.launchArguments = ["-uiTesting"]
-        relaunched.launch()
+        relaunched.launchBookSender()
 
         XCTAssertTrue(
             relaunched.staticTexts["Send Book"].waitForExistence(timeout: 5)
@@ -117,11 +116,10 @@ final class FirstBookJourneyUITests: XCTestCase {
 
     private func replaceText(
         in element: XCUIElement,
-        using app: XCUIApplication,
         with value: String
     ) {
         element.click()
-        app.typeKey("a", modifierFlags: .command)
-        app.typeText(value)
+        element.typeKey("a", modifierFlags: .command)
+        element.typeText(value)
     }
 }

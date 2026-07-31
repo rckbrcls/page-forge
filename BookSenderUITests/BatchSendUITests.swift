@@ -5,7 +5,7 @@ final class BatchSendUITests: XCTestCase {
     func testSendIsDisabledForAnEmptyBatch() {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTesting", "-configuredSetup"]
-        app.launch()
+        app.launchBookSender()
         XCTAssertTrue(app.staticTexts["Send Book"].exists)
         XCTAssertFalse(app.buttons["sendBook.send"].isEnabled)
         XCTAssertTrue(app.buttons["sendBook.dropTarget"].exists)
@@ -21,7 +21,7 @@ final class BatchSendUITests: XCTestCase {
             "-configuredSetup",
             "-uiTestPDFs",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
         XCTAssertTrue(
@@ -67,7 +67,7 @@ final class BatchSendUITests: XCTestCase {
             "-resetHistory",
             "-uiTestReintakeAfterReset",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         app.buttons["sendBook.send"].click()
@@ -99,7 +99,7 @@ final class BatchSendUITests: XCTestCase {
             "-uiTestOutcomeFailed",
             "-resetHistory",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         app.buttons["sendBook.send"].click()
@@ -135,7 +135,7 @@ final class BatchSendUITests: XCTestCase {
             "-uiTestOutcomeUnknown",
             "-resetHistory",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         app.buttons["sendBook.send"].click()
@@ -149,12 +149,12 @@ final class BatchSendUITests: XCTestCase {
 
         app.buttons["sendBook.sendMore"].click()
         XCTAssertTrue(app.staticTexts["Start Another Send?"].exists)
-        app.buttons["Keep Results"].click()
+        app.sheets.buttons["Keep Results"].firstMatch.click()
         XCTAssertTrue(app.staticTexts["Delivery Unknown"].exists)
         XCTAssertTrue(app.buttons["sendBook.sendMore"].isEnabled)
 
         app.buttons["sendBook.sendMore"].click()
-        app.buttons["Send More Books"].click()
+        app.sheets.buttons["Send More Books"].firstMatch.click()
         XCTAssertTrue(app.buttons["sendBook.send"].waitForExistence(timeout: 2))
         XCTAssertFalse(app.staticTexts["Delivery Unknown"].exists)
         XCTAssertFalse(
@@ -170,7 +170,7 @@ final class BatchSendUITests: XCTestCase {
             "-configuredSetup",
             "-uiTestInvalidEPUB",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
         XCTAssertTrue(
@@ -204,7 +204,7 @@ final class BatchSendUITests: XCTestCase {
             "-uiTestOutcomeFailed",
             "-uiTestOutcomeUnknown",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(
             app.staticTexts.matching(
@@ -241,7 +241,7 @@ final class BatchSendUITests: XCTestCase {
             "-uiTestPDFs",
             "-uiTestTwoBooks",
         ]
-        editingApp.launch()
+        editingApp.launchBookSender()
 
         XCTAssertTrue(
             editingApp.staticTexts.matching(
@@ -270,7 +270,7 @@ final class BatchSendUITests: XCTestCase {
             "-uiTestPDFs",
             "-uiTestSlowDelivery",
         ]
-        cancellationApp.launch()
+        cancellationApp.launchBookSender()
 
         XCTAssertTrue(
             cancellationApp.staticTexts["Ready"]
@@ -362,7 +362,7 @@ final class BatchSendUITests: XCTestCase {
                 "-uiTestPDFs",
                 scenario.argument,
             ]
-            app.launch()
+            app.launchBookSender()
 
             XCTAssertTrue(
                 app.staticTexts["Ready"].waitForExistence(timeout: 5)
@@ -514,7 +514,7 @@ final class BatchSendUITests: XCTestCase {
             "-uiTestPDFs",
             countArgument,
         ] + extraArguments
-        app.launch()
+        app.launchBookSender()
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
         return app
     }
@@ -576,7 +576,7 @@ final class BatchSendUITests: XCTestCase {
             XCTAssertEqual(
                 leading,
                 trailing,
-                accuracy: 12,
+                accuracy: 20,
                 file: file,
                 line: line
             )

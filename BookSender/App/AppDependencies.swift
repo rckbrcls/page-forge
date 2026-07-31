@@ -242,7 +242,10 @@ struct AppDependencies {
             diagnosticFormatter: DiagnosticFormatter(),
             diagnosticClipboard: diagnosticClipboard,
             feedbackSleep: { duration in
-                try await Task.sleep(for: .seconds(duration))
+                let resolvedDuration = isUITesting
+                    ? max(duration, 5)
+                    : duration
+                try await Task.sleep(for: .seconds(resolvedDuration))
             },
             appVersion: appVersion,
             bootstrapMode: bootstrapMode,

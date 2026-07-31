@@ -10,7 +10,7 @@ final class AccessibilityUITests: XCTestCase {
             "-configuredSetup",
             "-uiTestPDFs",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         let feedback = app.descendants(matching: .any)["notification.batch"]
@@ -46,14 +46,18 @@ final class AccessibilityUITests: XCTestCase {
     func testSetupErrorsAreTextualAndDoNotDependOnColor() {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTesting", "-resetSetup"]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(
             app.buttons["deliverySetup.save"].waitForExistence(timeout: 5)
         )
         app.buttons["deliverySetup.save"].click()
 
-        XCTAssertTrue(app.staticTexts["Error: This field is required."].exists)
+        let senderError = app.descendants(matching: .any)[
+            "deliverySetup.error.senderAddress"
+        ]
+        XCTAssertTrue(senderError.exists)
+        XCTAssertEqual(senderError.label, "Error: This field is required.")
         let setupFeedback = app.descendants(matching: .any)[
             "notification.deliverySetup"
         ]
@@ -78,7 +82,7 @@ final class AccessibilityUITests: XCTestCase {
             "-AppleIncreaseContrast",
             "YES",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
@@ -89,7 +93,7 @@ final class AccessibilityUITests: XCTestCase {
     func testDeliverySetupAccessibilityOrderStartsWithPrimaryFields() {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTesting", "-resetSetup"]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(
             app.staticTexts["Delivery Setup"].waitForExistence(timeout: 5)
@@ -125,7 +129,7 @@ final class AccessibilityUITests: XCTestCase {
             "-uiTestPDFs",
             "-resetHistory",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["1 book ready."].exists)
@@ -145,7 +149,7 @@ final class AccessibilityUITests: XCTestCase {
             "-uiTestOutcomeUnknown",
             "-resetHistory",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
         app.buttons["sendBook.send"].click()
@@ -161,8 +165,12 @@ final class AccessibilityUITests: XCTestCase {
         app.typeKey(.return, modifierFlags: [])
 
         XCTAssertTrue(app.staticTexts["Start Another Send?"].exists)
-        XCTAssertTrue(app.buttons["Keep Results"].isHittable)
-        XCTAssertTrue(app.buttons["Send More Books"].isHittable)
+        XCTAssertTrue(
+            app.sheets.buttons["Keep Results"].firstMatch.isHittable
+        )
+        XCTAssertTrue(
+            app.sheets.buttons["Send More Books"].firstMatch.isHittable
+        )
         app.typeKey(.escape, modifierFlags: [])
         XCTAssertTrue(reset.isHittable)
         XCTAssertTrue(app.staticTexts["Delivery Unknown"].exists)
@@ -176,7 +184,7 @@ final class AccessibilityUITests: XCTestCase {
             "-configuredSetup",
             "-uiTestNotificationAppearance",
         ]
-        app.launch()
+        app.launchBookSender()
 
         XCTAssertTrue(
             app.buttons["notification.close.update"]
@@ -199,5 +207,15 @@ final class AccessibilityUITests: XCTestCase {
             ).firstMatch.identifier,
             identifier
         )
+    }
+}
+
+extension XCUIApplication {
+    func launchBookSender() {
+        launchArguments += [
+            "-ApplePersistenceIgnoreState",
+            "YES",
+        ]
+        launch()
     }
 }
