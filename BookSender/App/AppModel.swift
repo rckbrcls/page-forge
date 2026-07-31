@@ -898,7 +898,7 @@ final class AppModel {
             olderThan: Date().addingTimeInterval(-86_400)
         )
         if slowInitialSetupLoad {
-            try? await Task.sleep(for: .seconds(3))
+            try? await Task.sleep(for: .seconds(8))
         }
         await loadSetup()
         await loadHistoryNow()

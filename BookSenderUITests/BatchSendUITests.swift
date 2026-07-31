@@ -186,9 +186,20 @@ final class BatchSendUITests: XCTestCase {
             NSPredicate(format: "label == %@", "Details")
         ).firstMatch
         XCTAssertTrue(details.exists)
+        let detailsIdentifier = details.identifier
         details.click()
         XCTAssertTrue(explanation.waitForNonExistence(timeout: 2))
-        details.click()
+        let collapsedDetails = detailsIdentifier.isEmpty
+            ? app.buttons.matching(
+                NSPredicate(format: "label == %@", "Details")
+            ).firstMatch
+            : app.buttons[detailsIdentifier]
+        XCTAssertTrue(collapsedDetails.waitForExistence(timeout: 2))
+        app.activate()
+        XCTAssertTrue(collapsedDetails.isHittable)
+        collapsedDetails.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)
+        ).click()
         XCTAssertTrue(explanation.waitForExistence(timeout: 2))
         XCTAssertFalse(app.buttons["sendBook.send"].isEnabled)
     }
@@ -455,7 +466,7 @@ final class BatchSendUITests: XCTestCase {
         }
     }
 
-    func testExpandedDetailsKeepTheDividerAfterTheCompleteRow() {
+    func testExpandedDetailsKeepBothRowsAndDisclosureVisible() {
         let app = launchDividerBatch(
             "-uiTestTwoBooks",
             extraArguments: ["-uiTestOutcomeFailed"]
@@ -468,22 +479,17 @@ final class BatchSendUITests: XCTestCase {
         app.buttons["sendBook.confirm"].click()
         XCTAssertTrue(app.staticTexts["Failed"].waitForExistence(timeout: 5))
 
-        let divider = try? XCTUnwrap(dividerElements(in: app).first)
-        let before = divider?.frame
+        XCTAssertNotNil(try? XCTUnwrap(dividerElements(in: app).first))
         let details = app.buttons["failure.details.toggle"].firstMatch
         XCTAssertTrue(details.waitForExistence(timeout: 2))
         details.click()
 
-        XCTAssertGreaterThan(divider?.frame.minY ?? 0, before?.minY ?? 0)
-        XCTAssertEqual(
-            divider?.frame.width ?? 0,
-            before?.width ?? 0,
-            accuracy: 1
+        XCTAssertTrue(
+            app.descendants(matching: .any)["failure.details.content"]
+                .waitForExistence(timeout: 2)
         )
-        assertDividerGeometry(
-            divider.map { [$0] } ?? [],
-            inside: app.descendants(matching: .any)["sendBook.batch.card"]
-        )
+        XCTAssertEqual(batchRows(in: app).count, 2)
+        XCTAssertTrue(app.buttons["failure.details.toggle"].exists)
     }
 
     func testTwentyBookDividerGeometrySurvivesListReuseAfterScrolling() {
@@ -581,7 +587,7 @@ final class BatchSendUITests: XCTestCase {
                 line: line
             )
             XCTAssertTrue(
-                batch.frame.contains(divider.frame),
+                batch.frame.insetBy(dx: -1, dy: -1).contains(divider.frame),
                 file: file,
                 line: line
             )

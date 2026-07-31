@@ -30,7 +30,7 @@ struct BookSenderApp: App {
     }
 
     var body: some Scene {
-        Window("Book Sender", id: "main") {
+        WindowGroup("Book Sender", id: "main") {
             MainWindowRoot(model: model)
                 .frame(
                     minWidth: 620,
@@ -49,6 +49,8 @@ struct BookSenderApp: App {
         .defaultLaunchBehavior(.presented)
         .commands {
             CommandGroup(replacing: .newItem) { }
+            BookSenderWindowCommands(coordinator: model.windowCoordinator)
+            BookSenderNavigationCommands(model: model)
             CommandGroup(after: .appInfo) {
                 CheckForUpdatesView(updater: updaterController.updater) {
                     model.acknowledgeUpdateCheck()
@@ -59,6 +61,41 @@ struct BookSenderApp: App {
 
         Settings {
             BookSenderSettingsView(model: model, shortcutService: shortcutService)
+        }
+    }
+}
+
+private struct BookSenderNavigationCommands: Commands {
+    let model: AppModel
+
+    var body: some Commands {
+        CommandGroup(after: .sidebar) {
+            Button("Show Send") {
+                model.sendBookTab = .send
+                model.windowCoordinator.reveal()
+            }
+            .keyboardShortcut("1", modifiers: .command)
+
+            Button("Show History") {
+                model.sendBookTab = .history
+                model.windowCoordinator.reveal()
+            }
+            .keyboardShortcut("2", modifiers: .command)
+        }
+    }
+}
+
+private struct BookSenderWindowCommands: Commands {
+    @Environment(\.openWindow) private var openWindow
+    let coordinator: WindowCoordinator
+
+    var body: some Commands {
+        CommandGroup(after: .windowList) {
+            Button("Show Book Sender") {
+                coordinator.reveal {
+                    openWindow(id: "main")
+                }
+            }
         }
     }
 }

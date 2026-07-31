@@ -25,13 +25,14 @@ final class WindowCoordinator {
         openMainWindow = action
     }
 
-    func reveal() {
+    func reveal(openIfNeeded fallback: (() -> Void)? = nil) {
         activateApplication()
         if let mainWindow {
             mainWindow.makeKeyAndOrderFront(nil)
         } else if !isReopenPending {
+            guard let action = openMainWindow ?? fallback else { return }
             isReopenPending = true
-            openMainWindow?()
+            action()
         }
     }
 }

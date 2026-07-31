@@ -28,6 +28,21 @@ struct WindowCoordinatorTests {
         #expect(window.frontCount == 1)
         #expect(reopenCount == 1)
     }
+
+    @Test
+    func usesFallbackWhenTheWindowHasNeverBeenCreated() {
+        var fallbackCount = 0
+        let coordinator = WindowCoordinator()
+
+        coordinator.reveal {
+            fallbackCount += 1
+        }
+        coordinator.reveal {
+            fallbackCount += 1
+        }
+
+        #expect(fallbackCount == 1)
+    }
 }
 
 @MainActor

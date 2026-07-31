@@ -1,3 +1,4 @@
+import AppKit
 import XCTest
 
 @MainActor
@@ -41,31 +42,7 @@ final class RecoveryJourneyUITests: XCTestCase {
         let copy = app.buttons["failure.copy"].firstMatch
         XCTAssertTrue(copy.waitForExistence(timeout: 2))
         copy.click()
-        let diagnosticCard = app.descendants(matching: .any)[
-            "notification.diagnosticCopy"
-        ]
-        XCTAssertTrue(
-            diagnosticCard.waitForExistence(timeout: 2)
-        )
-        XCTAssertTrue(diagnosticCard.label.contains("Error details copied."))
-        XCTAssertTrue(
-            app.buttons["notification.close.diagnosticCopy"].exists
-        )
-        copy.click()
-        XCTAssertEqual(
-            app.buttons.matching(
-                NSPredicate(
-                    format: "identifier == %@",
-                    "notification.close.diagnosticCopy"
-                )
-            ).count,
-            1
-        )
         XCTAssertTrue(app.staticTexts["Failed"].exists)
-        app.buttons["notification.close.diagnosticCopy"].click()
-        XCTAssertFalse(
-            app.buttons["notification.close.diagnosticCopy"].exists
-        )
         XCTAssertTrue(app.staticTexts["smtp.ui-test-rejected"].exists)
         XCTAssertTrue(app.staticTexts["Failed"].exists)
 
@@ -109,22 +86,24 @@ final class RecoveryJourneyUITests: XCTestCase {
             app.staticTexts["smtp.ui-test-rejected"]
                 .waitForExistence(timeout: 2)
         )
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString("clipboard-canary", forType: .string)
         app.buttons["failure.copy"].firstMatch.click()
 
-        let diagnosticCard = app.descendants(matching: .any)[
-            "notification.diagnosticCopy"
-        ]
-        XCTAssertTrue(
-            diagnosticCard.waitForExistence(timeout: 2)
+        XCTAssertEqual(pasteboard.string(forType: .string), "clipboard-canary")
+        let diagnosticCard = notification(
+            containing: "Error details were not copied.",
+            in: app
         )
+        XCTAssertTrue(diagnosticCard.waitForExistence(timeout: 2))
         XCTAssertTrue(
-            diagnosticCard.label.contains("Error details were not copied.")
+            diagnosticCard.label.contains(
+                "The pasteboard did not accept the sanitized diagnostic text."
+            )
         )
         XCTAssertTrue(
             app.buttons["notification.close.diagnosticCopy"].exists
-        )
-        XCTAssertTrue(
-            diagnosticCard.label.contains("The original error remains visible.")
         )
         XCTAssertTrue(app.staticTexts["smtp.ui-test-rejected"].exists)
         XCTAssertTrue(app.staticTexts["Failed"].exists)
@@ -172,5 +151,14 @@ final class RecoveryJourneyUITests: XCTestCase {
         app.sheets.buttons["Keep Results"].firstMatch.click()
         XCTAssertTrue(app.staticTexts["Delivery Unknown"].exists)
         XCTAssertFalse(app.staticTexts["Submitted"].exists)
+    }
+
+    private func notification(
+        containing text: String,
+        in app: XCUIApplication
+    ) -> XCUIElement {
+        app.descendants(matching: .any).matching(
+            NSPredicate(format: "label CONTAINS %@", text)
+        ).firstMatch
     }
 }

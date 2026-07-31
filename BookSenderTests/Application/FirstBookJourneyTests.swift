@@ -144,7 +144,10 @@ struct FirstBookJourneyTests {
         let id = try #require(model.items.first?.id)
 
         model.remove(id)
-        try await eventuallyMainActor { model.items.isEmpty }
+        try await eventuallyMainActor {
+            model.items.isEmpty
+                && model.feedback(for: .batch)?.title == "Book removed."
+        }
         #expect(model.feedback(for: .batch)?.title == "Book removed.")
         #expect(noMainNotifications(in: model))
 
@@ -159,7 +162,10 @@ struct FirstBookJourneyTests {
         #expect(noMainNotifications(in: model))
 
         model.clear()
-        try await eventuallyMainActor { model.items.isEmpty }
+        try await eventuallyMainActor {
+            model.items.isEmpty
+                && model.feedback(for: .batch)?.title == "Batch cleared."
+        }
         #expect(model.feedback(for: .batch)?.title == "Batch cleared.")
         #expect(noMainNotifications(in: model))
     }

@@ -6,6 +6,7 @@ final class FirstBookJourneyUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = [
             "-uiTesting",
+            "-resetSetup",
             "-configuredSetup",
             "-uiTestSlowSetupLoad",
         ]
@@ -20,7 +21,7 @@ final class FirstBookJourneyUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Delivery Setup"].exists)
         XCTAssertFalse(app.staticTexts["Send Book"].exists)
 
-        XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 12))
         XCTAssertFalse(app.staticTexts["Delivery Setup"].exists)
         XCTAssertFalse(bootstrapProgress.exists)
         XCTAssertFalse(app.staticTexts["ui-test-secret"].exists)
@@ -39,7 +40,6 @@ final class FirstBookJourneyUITests: XCTestCase {
 
         let senderAddress = app.textFields["deliverySetup.senderAddress"]
         let smtpHost = app.textFields["deliverySetup.smtpHost"]
-        let smtpPort = app.textFields["deliverySetup.smtpPort"]
         let username = app.textFields["deliverySetup.username"]
         let appPassword = app.secureTextFields["deliverySetup.appPassword"]
         let kindleAddress = app.textFields["deliverySetup.kindleAddress"]
@@ -60,8 +60,11 @@ final class FirstBookJourneyUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Quick Access"].exists)
         XCTAssertFalse(app.descendants(matching: .any)["settings.shortcut"].exists)
 
-        senderAddress.click()
-        senderAddress.typeText("invalid")
+        replaceText(
+            in: app,
+            identifier: "deliverySetup.senderAddress",
+            with: "invalid"
+        )
         app.buttons["deliverySetup.save"].click()
         let senderError = app.descendants(matching: .any)[
             "deliverySetup.error.senderAddress"
@@ -86,11 +89,6 @@ final class FirstBookJourneyUITests: XCTestCase {
         )
         replaceText(
             in: app,
-            identifier: "deliverySetup.smtpPort",
-            with: "465"
-        )
-        replaceText(
-            in: app,
             identifier: "deliverySetup.username",
             with: "reader"
         )
@@ -107,9 +105,12 @@ final class FirstBookJourneyUITests: XCTestCase {
 
         app.buttons["deliverySetup.save"].click()
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
-        let setupCard = app.descendants(matching: .any)[
-            "notification.deliverySetup"
-        ]
+        let setupCard = app.descendants(matching: .any).matching(
+            NSPredicate(
+                format: "label CONTAINS %@",
+                "Setup saved. App password stored securely."
+            )
+        ).firstMatch
         XCTAssertTrue(
             setupCard.waitForExistence(timeout: 2)
         )
@@ -143,20 +144,47 @@ final class FirstBookJourneyUITests: XCTestCase {
         identifier: String,
         with value: String
     ) {
+        app.activate()
         let element = app.descendants(matching: .any)[identifier]
         XCTAssertTrue(element.waitForExistence(timeout: 2))
-        element.click()
+        let scrollView = app.scrollViews.firstMatch
+        for _ in 0..<4 where !element.isHittable {
+            if scrollView.exists {
+                scrollView.swipeUp()
+            } else {
+                app.windows.firstMatch.swipeUp()
+            }
+        }
+        XCTAssertTrue(element.isHittable)
+        element.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)
+        ).click()
         let focusedElement = app.descendants(matching: .any).matching(
             NSPredicate(
                 format: "identifier == %@ AND hasKeyboardFocus == YES",
                 identifier
             )
         ).firstMatch
-        if !focusedElement.waitForExistence(timeout: 1) {
+        if !focusedElement.waitForExistence(timeout: 0.5) {
             element.click()
         }
+        for _ in 0..<12 where !focusedElement.exists {
+            app.typeKey(.tab, modifierFlags: [])
+        }
         XCTAssertTrue(focusedElement.waitForExistence(timeout: 1))
-        focusedElement.typeKey("a", modifierFlags: .command)
-        focusedElement.typeText(value)
+        let existingValue = element.value as? String ?? ""
+        for _ in existingValue {
+            app.typeKey(.delete, modifierFlags: [])
+        }
+        for character in value {
+            app.typeKey(String(character), modifierFlags: [])
+        }
+        let enteredValue = element.value as? String
+        if element.elementType == .secureTextField {
+            XCTAssertFalse(enteredValue?.isEmpty ?? true)
+            XCTAssertNotEqual(enteredValue, element.placeholderValue)
+        } else {
+            XCTAssertEqual(enteredValue, value)
+        }
     }
 }

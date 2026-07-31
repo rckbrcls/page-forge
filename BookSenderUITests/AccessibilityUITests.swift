@@ -127,7 +127,6 @@ final class AccessibilityUITests: XCTestCase {
             "-resetSetup",
             "-configuredSetup",
             "-uiTestPDFs",
-            "-resetHistory",
         ]
         app.launchBookSender()
 
@@ -212,6 +211,26 @@ final class AccessibilityUITests: XCTestCase {
 
 extension XCUIApplication {
     func launchBookSender() {
+        launchArguments += [
+            "-AppleReduceMotion",
+            "YES",
+            "-AppleKeyboardUIMode",
+            "3",
+        ]
+        if state != .notRunning {
+            terminate()
+            _ = wait(for: .notRunning, timeout: 5)
+        }
         launch()
+        let mainWindow = windows.firstMatch
+        guard !mainWindow.waitForExistence(timeout: 1) else { return }
+
+        let windowMenu = menuBars.menuBarItems["Window"]
+        XCTAssertTrue(windowMenu.waitForExistence(timeout: 1))
+        windowMenu.click()
+        let showBookSender = menuItems["Show Book Sender"]
+        XCTAssertTrue(showBookSender.waitForExistence(timeout: 1))
+        showBookSender.click()
+        XCTAssertTrue(mainWindow.waitForExistence(timeout: 2))
     }
 }

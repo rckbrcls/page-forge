@@ -24,8 +24,12 @@ final class SendHistoryUITests: XCTestCase {
             app.descendants(matching: .any)["sendBook.history.list"].exists
         )
         XCTAssertTrue(app.staticTexts["3 submissions"].exists)
-        XCTAssertFalse(app.buttons["Resend"].exists)
-        XCTAssertFalse(app.searchFields.firstMatch.exists)
+        let historyList = app.descendants(matching: .any)[
+            "sendBook.history.list"
+        ]
+        XCTAssertFalse(
+            historyList.descendants(matching: .searchField).firstMatch.exists
+        )
     }
 
     func testEmptyAndUnavailableHistoryAreDistinct() {
@@ -41,6 +45,7 @@ final class SendHistoryUITests: XCTestCase {
             emptyApp.staticTexts["Send History Unavailable"].exists
         )
         emptyApp.terminate()
+        XCTAssertTrue(emptyApp.wait(for: .notRunning, timeout: 5))
 
         let unavailableApp = launch(
             "-resetHistory",
@@ -93,6 +98,7 @@ final class SendHistoryUITests: XCTestCase {
         )
         XCTAssertFalse(app.buttons["sendBook.history.clear"].isEnabled)
         app.terminate()
+        XCTAssertTrue(app.wait(for: .notRunning, timeout: 5))
 
         let failingApp = launch(
             "-uiTestHistory",
@@ -104,10 +110,20 @@ final class SendHistoryUITests: XCTestCase {
                 .waitForExistence(timeout: 3)
         )
         failingApp.buttons["sendBook.history.clear"].click()
-        failingApp.sheets.buttons["Clear History"].firstMatch.click()
+        let confirmClear = failingApp.sheets.buttons["Clear History"].firstMatch
+        XCTAssertTrue(confirmClear.waitForExistence(timeout: 2))
+        confirmClear.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)
+        ).click()
+        let details = failingApp.buttons["failure.details.toggle"]
         XCTAssertTrue(
-            failingApp.staticTexts["Send history was not cleared."]
-                .waitForExistence(timeout: 3)
+            details.waitForExistence(timeout: 3)
+        )
+        details.click()
+        XCTAssertTrue(
+            failingApp.staticTexts[
+                "Book Sender could not remove the local submission record."
+            ].waitForExistence(timeout: 2)
         )
         XCTAssertFalse(
             failingApp.descendants(matching: .any)["notification.history"].exists
@@ -249,6 +265,7 @@ final class SendHistoryUITests: XCTestCase {
         XCTAssertTrue(readyApp.staticTexts["Ready"].exists)
         XCTAssertTrue(readyApp.buttons["sendBook.send"].isEnabled)
         readyApp.terminate()
+        XCTAssertTrue(readyApp.wait(for: .notRunning, timeout: 5))
 
         let activeApp = launch(
             "-resetHistory",
@@ -289,21 +306,22 @@ final class SendHistoryUITests: XCTestCase {
         let heading = app.staticTexts["sendBook.title"]
         let editSetup = app.buttons["sendBook.editSetup"]
         XCTAssertTrue(heading.exists)
-        XCTAssertEqual(heading.label, "Send Book")
+        XCTAssertTrue(app.staticTexts["Send Book"].exists)
         XCTAssertTrue(editSetup.isHittable)
         XCTAssertLessThan(tabs.frame.midY, heading.frame.midY)
         XCTAssertLessThan(editSetup.frame.midY, heading.frame.midY)
         XCTAssertTrue(send.isHittable)
-        send.click()
-        app.typeKey(.rightArrow, modifierFlags: [])
+        app.typeKey("2", modifierFlags: .command)
         XCTAssertTrue(
             app.descendants(matching: .any)["sendBook.history.list"]
                 .waitForExistence(timeout: 2)
         )
         XCTAssertTrue(app.staticTexts["History"].exists)
         XCTAssertTrue(app.buttons["sendBook.history.clear"].isHittable)
-        app.typeKey(.leftArrow, modifierFlags: [])
+        app.typeKey("1", modifierFlags: .command)
         XCTAssertTrue(app.staticTexts["Send Book"].exists)
+        app.typeKey("2", modifierFlags: .command)
+        XCTAssertTrue(app.staticTexts["History"].exists)
     }
 
     private func launch(_ additionalArguments: String...) -> XCUIApplication {

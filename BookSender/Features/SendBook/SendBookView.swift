@@ -9,7 +9,7 @@ struct SendBookView: View {
         VStack(alignment: .leading, spacing: 22) {
             Text(screenTitle)
                 .font(.largeTitle.weight(.bold))
-                .accessibilityLabel(screenTitle)
+                .accessibilityLabel(Text(verbatim: screenTitle))
                 .accessibilityIdentifier("sendBook.title")
 
             if model.sendBookTab == .send {
