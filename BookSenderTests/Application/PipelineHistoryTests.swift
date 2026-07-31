@@ -245,8 +245,8 @@ private actor PipelineHistoryEventProbe {
     }
 
     var lastHistoryFailure: HistoryFailure? {
-        events.reversed().compactMap {
-            guard case .historyPersistenceFailed(_, let failure) = $0.kind
+        events.reversed().compactMap { event -> HistoryFailure? in
+            guard case .historyPersistenceFailed(_, let failure) = event.kind
             else {
                 return nil
             }
