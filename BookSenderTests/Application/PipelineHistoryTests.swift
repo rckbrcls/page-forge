@@ -101,9 +101,10 @@ struct PipelineHistoryTests {
             validDraft(),
             replacing: nil
         )
+        let pipeline = graph.dependencies.pipeline
         let probe = PipelineHistoryEventProbe()
         let observation = Task {
-            for await event in graph.dependencies.pipeline.events {
+            for await event in pipeline.events {
                 await probe.append(event)
             }
         }
