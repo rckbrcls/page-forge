@@ -31,35 +31,17 @@ struct BookSenderApp: App {
 
     var body: some Scene {
         Window("Book Sender", id: "main") {
-            FloatingNotificationHost(
-                center: model.notificationCenter,
-                destination: .main,
-                performAction: { action in
-                    let handled = model.performNotificationAction(
-                        action,
-                        destination: .main
-                    )
-                    if handled,
-                       action == .editSetup
-                        || action == .chooseAnotherShortcut
-                    {
-                        showSettingsWindow()
-                    }
-                    return handled
+            MainWindowRoot(model: model)
+                .frame(
+                    minWidth: 620,
+                    maxWidth: .infinity,
+                    minHeight: 620,
+                    maxHeight: .infinity
+                )
+                .background {
+                    WindowGlassBackdrop(coordinator: model.windowCoordinator)
+                        .ignoresSafeArea()
                 }
-            ) {
-                MainWindowContent(model: model)
-            }
-            .frame(
-                minWidth: 620,
-                maxWidth: .infinity,
-                minHeight: 620,
-                maxHeight: .infinity
-            )
-            .background {
-                WindowGlassBackdrop(coordinator: model.windowCoordinator)
-                    .ignoresSafeArea()
-            }
         }
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified(showsTitle: false))
@@ -78,14 +60,32 @@ struct BookSenderApp: App {
             BookSenderSettingsView(model: model, shortcutService: shortcutService)
         }
     }
+}
 
-    @MainActor
-    private func showSettingsWindow() {
-        NSApp.sendAction(
-            Selector(("showSettingsWindow:")),
-            to: nil,
-            from: nil
-        )
+private struct MainWindowRoot: View {
+    @Environment(\.openSettings) private var openSettings
+    @Bindable var model: AppModel
+
+    var body: some View {
+        FloatingNotificationHost(
+            center: model.notificationCenter,
+            destination: .main,
+            performAction: { action in
+                let handled = model.performNotificationAction(
+                    action,
+                    destination: .main
+                )
+                if handled,
+                   action == .editSetup
+                    || action == .chooseAnotherShortcut
+                {
+                    openSettings()
+                }
+                return handled
+            }
+        ) {
+            MainWindowContent(model: model)
+        }
     }
 }
 

@@ -149,12 +149,12 @@ final class BatchSendUITests: XCTestCase {
 
         app.buttons["sendBook.sendMore"].click()
         XCTAssertTrue(app.staticTexts["Start Another Send?"].exists)
-        app.alerts.buttons["Keep Results"].click()
+        app.buttons["Keep Results"].click()
         XCTAssertTrue(app.staticTexts["Delivery Unknown"].exists)
         XCTAssertTrue(app.buttons["sendBook.sendMore"].isEnabled)
 
         app.buttons["sendBook.sendMore"].click()
-        app.alerts.buttons["Send More Books"].click()
+        app.buttons["Send More Books"].click()
         XCTAssertTrue(app.buttons["sendBook.send"].waitForExistence(timeout: 2))
         XCTAssertFalse(app.staticTexts["Delivery Unknown"].exists)
         XCTAssertFalse(
@@ -180,7 +180,7 @@ final class BatchSendUITests: XCTestCase {
             "The EPUB archive is not safe to process."
         ]
         XCTAssertTrue(explanation.waitForExistence(timeout: 2))
-        XCTAssertTrue(app.staticTexts["1 book needs attention."].exists)
+        XCTAssertTrue(app.staticTexts["Needs Attention"].exists)
 
         let details = app.buttons.matching(
             NSPredicate(format: "label == %@", "Details")
@@ -218,19 +218,10 @@ final class BatchSendUITests: XCTestCase {
         app.buttons["sendBook.confirm"].click()
 
         XCTAssertTrue(
-            app.staticTexts["Delivery finished with mixed results."]
+            app.staticTexts["18 submitted"]
                 .waitForExistence(timeout: 15)
         )
-        XCTAssertEqual(
-            app.staticTexts
-                .matching(
-                    NSPredicate(
-                        format: "label BEGINSWITH 'UITest-'"
-                    )
-                )
-                .count,
-            20
-        )
+        XCTAssertEqual(batchRows(in: app).count, 20)
         XCTAssertTrue(app.staticTexts["Failed"].exists)
         XCTAssertTrue(app.staticTexts["Delivery Unknown"].exists)
         XCTAssertTrue(app.staticTexts["Submitted"].exists)
@@ -416,7 +407,7 @@ final class BatchSendUITests: XCTestCase {
             )
             waitForReadyRows(count, in: app)
 
-            let batch = app.descendants(matching: .any)["sendBook.batch"]
+            let batch = app.descendants(matching: .any)["sendBook.batch.card"]
             let dividers = dividerElements(in: app)
             XCTAssertEqual(dividers.count, count - 1)
             assertDividerGeometry(dividers, inside: batch)
@@ -491,14 +482,14 @@ final class BatchSendUITests: XCTestCase {
         )
         assertDividerGeometry(
             divider.map { [$0] } ?? [],
-            inside: app.descendants(matching: .any)["sendBook.batch"]
+            inside: app.descendants(matching: .any)["sendBook.batch.card"]
         )
     }
 
     func testTwentyBookDividerGeometrySurvivesListReuseAfterScrolling() {
         let app = launchDividerBatch("-uiTestTwentyBooks")
         waitForReadyRows(20, in: app)
-        let batch = app.descendants(matching: .any)["sendBook.batch"]
+        let batch = app.descendants(matching: .any)["sendBook.batch.card"]
 
         let before = visibleDividers(in: app, intersecting: batch.frame)
         XCTAssertFalse(before.isEmpty)
@@ -547,6 +538,14 @@ final class BatchSendUITests: XCTestCase {
                 format: "identifier BEGINSWITH 'sendBook.item.divider.'"
             )
         ).allElementsBoundByIndex
+    }
+
+    private func batchRows(in app: XCUIApplication) -> XCUIElementQuery {
+        app.descendants(matching: .any).matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH 'sendBook.item.' AND NOT identifier CONTAINS '.remove.' AND NOT identifier CONTAINS '.divider.'"
+            )
+        )
     }
 
     private func visibleDividers(

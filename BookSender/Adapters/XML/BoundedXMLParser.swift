@@ -16,6 +16,7 @@ struct BoundedXMLParser: BoundedXMLParsing {
         else {
             throw failure(.xmlExternalEntity)
         }
+        try Task.checkCancellation()
 
         return try await withThrowingTaskGroup(
             of: XMLDocumentProjection.self

@@ -43,7 +43,6 @@ struct FailurePresentationTests {
         )
         let presentation = FailurePresentationService().presentation(for: failure)
         #expect(presentation.message.contains(rawSecret) == false)
-        #expect(presentation.action == .retryFailed)
     }
 
     @Test

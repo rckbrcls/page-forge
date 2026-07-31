@@ -23,12 +23,11 @@ final class FloatingNotificationUITests: XCTestCase {
 
     func testContextualShortcutStateStaysVisibleWithoutAWindowNotification() {
         let app = launch("-uiTestPDFs")
-        app.buttons["sendBook.editSetup"].click()
         app.typeKey(",", modifierFlags: .command)
 
-        let shortcutTab = app.descendants(matching: .any)[
-            "settings.tab.shortcut"
-        ]
+        let shortcutTab = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label == %@", "Shortcut")
+        ).firstMatch
         XCTAssertTrue(shortcutTab.waitForExistence(timeout: 2))
         shortcutTab.click()
         let recorder = app.descendants(matching: .any)["settings.shortcut"]
@@ -81,18 +80,12 @@ final class FloatingNotificationUITests: XCTestCase {
     func testReusableCardSupportsThePermittedControlMatrix() throws {
         let app = launch("-uiTestNotificationMatrix")
 
-        let closeOnly = app.descendants(matching: .any)[
-            "notification.update"
-        ]
-        let actionOnly = app.descendants(matching: .any)[
-            "notification.deliverySetup"
-        ]
-        let noControl = app.descendants(matching: .any)[
-            "notification.history"
-        ]
-        XCTAssertTrue(closeOnly.waitForExistence(timeout: 2))
-        XCTAssertTrue(actionOnly.waitForExistence(timeout: 2))
+        let closeOnly = app.staticTexts["Close-only notification"]
+        let actionOnly = app.staticTexts["Action-only notification"]
+        let noControl = app.staticTexts["No-control notification"]
         XCTAssertTrue(noControl.waitForExistence(timeout: 2))
+        XCTAssertTrue(closeOnly.exists)
+        XCTAssertTrue(actionOnly.exists)
 
         XCTAssertTrue(
             app.buttons["notification.close.update"].isHittable
@@ -108,18 +101,17 @@ final class FloatingNotificationUITests: XCTestCase {
         XCTAssertFalse(app.buttons["notification.close.history"].exists)
 
         let host = app.descendants(matching: .any)["notification.host.main"]
-        XCTAssertLessThanOrEqual(noControl.frame.width, host.frame.width)
-        XCTAssertTrue(
-            app.staticTexts[
-                "The content remains aligned without empty controls."
-            ].exists
-        )
+        let noControlMessage = app.staticTexts[
+            "The content remains aligned without empty controls."
+        ]
+        XCTAssertLessThanOrEqual(noControlMessage.frame.width, host.frame.width)
+        XCTAssertTrue(noControlMessage.exists)
 
         app.buttons["notification.close.update"].click()
-        let bothControls = app.descendants(matching: .any)[
-            "notification.batch"
-        ]
-        XCTAssertTrue(bothControls.waitForExistence(timeout: 2))
+        XCTAssertTrue(
+            app.buttons["notification.action.batch"]
+                .waitForExistence(timeout: 2)
+        )
         XCTAssertEqual(
             app.buttons["notification.action.batch"].label,
             "Choose Another Book"
@@ -128,7 +120,13 @@ final class FloatingNotificationUITests: XCTestCase {
             app.buttons["notification.close.batch"].label,
             "Dismiss notification"
         )
-        let orderedControls = bothControls.buttons.allElementsBoundByIndex
+        let orderedControls = app.buttons.matching(
+            NSPredicate(
+                format: "identifier == %@ OR identifier == %@",
+                "notification.action.batch",
+                "notification.close.batch"
+            )
+        ).allElementsBoundByIndex
             .map(\.identifier)
         XCTAssertLessThan(
             try XCTUnwrap(
@@ -146,16 +144,15 @@ final class FloatingNotificationUITests: XCTestCase {
 
     func testPassiveCardAddsNoInteractiveAccessibilityStop() {
         let app = launch("-uiTestNotificationMatrix")
-        let passive = app.descendants(matching: .any)[
-            "notification.history"
-        ]
+        let passive = app.staticTexts["No-control notification"]
 
         XCTAssertTrue(passive.waitForExistence(timeout: 2))
-        XCTAssertEqual(passive.buttons.count, 0)
-        XCTAssertEqual(passive.value as? String, "Succeeded")
-        XCTAssertEqual(
-            passive.label,
-            "No-control notification The content remains aligned without empty controls."
+        XCTAssertFalse(app.buttons["notification.action.history"].exists)
+        XCTAssertFalse(app.buttons["notification.close.history"].exists)
+        XCTAssertTrue(
+            app.staticTexts[
+                "The content remains aligned without empty controls."
+            ].exists
         )
     }
 

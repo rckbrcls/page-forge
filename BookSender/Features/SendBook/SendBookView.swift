@@ -1,7 +1,7 @@
-import AppKit
 import SwiftUI
 
 struct SendBookView: View {
+    @Environment(\.openSettings) private var openSettings
     @Bindable var model: AppModel
     @State private var isShowingImporter = false
 
@@ -302,14 +302,14 @@ struct SendBookView: View {
         switch action {
         case .editSetup:
             model.settingsTab = .delivery
-            showSettingsWindow()
+            openSettings()
         case .chooseAnotherFile:
             isShowingImporter = true
         case .retryFailed:
             model.requestRetryConfirmation()
         case .chooseAnotherShortcut:
             model.settingsTab = .shortcut
-            showSettingsWindow()
+            openSettings()
         case .confirmUnknownRetry, .reviewBook:
             break
         case .retryHistoryLoad:
@@ -335,14 +335,6 @@ struct SendBookView: View {
              .retryHistoryClear:
             break
         }
-    }
-
-    private func showSettingsWindow() {
-        NSApp.sendAction(
-            Selector(("showSettingsWindow:")),
-            to: nil,
-            from: nil
-        )
     }
 
     private func shouldShowDetails(for item: BatchItemPresentation) -> Bool {

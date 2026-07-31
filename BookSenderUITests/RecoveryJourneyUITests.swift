@@ -26,7 +26,7 @@ final class RecoveryJourneyUITests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts["Delivery Unknown"].waitForExistence(timeout: 5)
         )
-        XCTAssertTrue(app.staticTexts["Delivery finished with mixed results."].exists)
+        XCTAssertTrue(app.staticTexts["0 submitted"].exists)
         XCTAssertTrue(app.staticTexts["Review Delivery Unknown items before sending them again."].exists)
         XCTAssertTrue(app.buttons["sendBook.retryFailed"].isEnabled)
 
@@ -46,16 +46,14 @@ final class RecoveryJourneyUITests: XCTestCase {
                 .waitForExistence(timeout: 2)
         )
         XCTAssertTrue(
-            app.descendants(matching: .any)[
-                "notification.diagnosticCopy"
-            ].exists
+            app.buttons["notification.close.diagnosticCopy"].exists
         )
         copy.click()
         XCTAssertEqual(
-            app.descendants(matching: .any).matching(
+            app.buttons.matching(
                 NSPredicate(
                     format: "identifier == %@",
-                    "notification.diagnosticCopy"
+                    "notification.close.diagnosticCopy"
                 )
             ).count,
             1
@@ -63,9 +61,7 @@ final class RecoveryJourneyUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Failed"].exists)
         app.buttons["notification.close.diagnosticCopy"].click()
         XCTAssertFalse(
-            app.descendants(matching: .any)[
-                "notification.diagnosticCopy"
-            ].exists
+            app.buttons["notification.close.diagnosticCopy"].exists
         )
         XCTAssertTrue(app.staticTexts["smtp.ui-test-rejected"].exists)
         XCTAssertTrue(app.staticTexts["Failed"].exists)
@@ -117,9 +113,7 @@ final class RecoveryJourneyUITests: XCTestCase {
                 .waitForExistence(timeout: 2)
         )
         XCTAssertTrue(
-            app.descendants(matching: .any)[
-                "notification.diagnosticCopy"
-            ].exists
+            app.buttons["notification.close.diagnosticCopy"].exists
         )
         XCTAssertTrue(
             app.staticTexts["The original error remains visible."].exists
@@ -161,9 +155,9 @@ final class RecoveryJourneyUITests: XCTestCase {
         review.click()
 
         XCTAssertTrue(app.staticTexts["Start Another Send?"].exists)
-        XCTAssertTrue(app.alerts.buttons["Keep Results"].isHittable)
-        XCTAssertTrue(app.alerts.buttons["Send More Books"].isHittable)
-        app.alerts.buttons["Keep Results"].click()
+        XCTAssertTrue(app.buttons["Keep Results"].isHittable)
+        XCTAssertTrue(app.buttons["Send More Books"].isHittable)
+        app.buttons["Keep Results"].click()
         XCTAssertTrue(app.staticTexts["Delivery Unknown"].exists)
         XCTAssertFalse(app.staticTexts["Submitted"].exists)
     }

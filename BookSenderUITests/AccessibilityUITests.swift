@@ -21,7 +21,6 @@ final class AccessibilityUITests: XCTestCase {
         XCTAssertTrue(
             app.descendants(matching: .any)["sendBook.batch.card"].exists
         )
-        XCTAssertTrue(app.descendants(matching: .any)["sendBook.batch"].exists)
         let row = app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier BEGINSWITH 'sendBook.item.'"))
             .firstMatch
@@ -54,7 +53,7 @@ final class AccessibilityUITests: XCTestCase {
         )
         app.buttons["deliverySetup.save"].click()
 
-        XCTAssertTrue(app.staticTexts["This field is required."].exists)
+        XCTAssertTrue(app.staticTexts["Error: This field is required."].exists)
         let setupFeedback = app.descendants(matching: .any)[
             "notification.deliverySetup"
         ]
@@ -162,8 +161,8 @@ final class AccessibilityUITests: XCTestCase {
         app.typeKey(.return, modifierFlags: [])
 
         XCTAssertTrue(app.staticTexts["Start Another Send?"].exists)
-        XCTAssertTrue(app.alerts.buttons["Keep Results"].isHittable)
-        XCTAssertTrue(app.alerts.buttons["Send More Books"].isHittable)
+        XCTAssertTrue(app.buttons["Keep Results"].isHittable)
+        XCTAssertTrue(app.buttons["Send More Books"].isHittable)
         app.typeKey(.escape, modifierFlags: [])
         XCTAssertTrue(reset.isHittable)
         XCTAssertTrue(app.staticTexts["Delivery Unknown"].exists)
@@ -180,7 +179,7 @@ final class AccessibilityUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(
-            app.descendants(matching: .any)["notification.update"]
+            app.buttons["notification.close.update"]
                 .waitForExistence(timeout: 2)
         )
         app.typeKey(.tab, modifierFlags: [])
@@ -191,7 +190,7 @@ final class AccessibilityUITests: XCTestCase {
         let identifier = focusedBefore.identifier
 
         XCTAssertTrue(
-            app.descendants(matching: .any)["notification.update"]
+            app.buttons["notification.close.update"]
                 .waitForNonExistence(timeout: 6)
         )
         XCTAssertEqual(

@@ -61,6 +61,7 @@ struct AppModelSetupTests {
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
         model.notificationCenter.attach(.main)
+        await eventually { model.hasResolvedInitialSetup }
         model.setupDraft = validDraft()
 
         model.saveSetup()
@@ -93,6 +94,7 @@ struct AppModelSetupTests {
         let graph = TestDependencyGraph.make(stores: stores)
         let model = AppModel(dependencies: graph.dependencies)
         model.notificationCenter.attach(.main)
+        await eventually { model.hasResolvedInitialSetup }
         model.setupDraft = validDraft()
 
         model.saveSetup()
@@ -106,7 +108,11 @@ struct AppModelSetupTests {
 
         let feedback = try #require(model.feedback(for: .deliverySetup))
         #expect(feedback.state == .succeeded)
-        #expect(feedback.dismissal == .persistentUntilReplaced)
+        #expect(
+            feedback.dismissal == .delayed(
+                minimumVisibleDuration: ActionFeedbackService.transientDuration
+            )
+        )
         #expect(feedback.title == "Setup saved. App password stored securely.")
         #expect(
             model.notificationCenter.snapshot(for: .main).visible.filter {

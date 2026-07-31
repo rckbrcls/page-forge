@@ -58,14 +58,18 @@ final class FirstBookJourneyUITests: XCTestCase {
         XCTAssertFalse(app.descendants(matching: .any)["settings.shortcut"].exists)
 
         senderAddress.click()
-        senderAddress.typeText("invalid")
+        app.typeText("invalid")
         app.buttons["deliverySetup.save"].click()
         XCTAssertTrue(
-            app.staticTexts["Enter a valid email address."]
+            app.staticTexts["Error: Enter a valid email address."]
                 .waitForExistence(timeout: 2)
         )
 
-        replaceText(in: senderAddress, with: "reader@example.com")
+        replaceText(
+            in: senderAddress,
+            using: app,
+            with: "reader@example.com"
+        )
         app.typeKey(.tab, modifierFlags: [])
         app.typeText("smtp.example.com")
         app.typeKey(.tab, modifierFlags: [])
@@ -92,7 +96,6 @@ final class FirstBookJourneyUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Delivery Setup"].exists)
         XCTAssertFalse(app.staticTexts["ui-test-secret"].exists)
         app.buttons["sendBook.editSetup"].click()
-        app.typeKey(",", modifierFlags: .command)
         let clearedPassword = app.secureTextFields[
             "deliverySetup.appPassword"
         ]
@@ -114,10 +117,11 @@ final class FirstBookJourneyUITests: XCTestCase {
 
     private func replaceText(
         in element: XCUIElement,
+        using app: XCUIApplication,
         with value: String
     ) {
         element.click()
-        element.typeKey("a", modifierFlags: .command)
-        element.typeText(value)
+        app.typeKey("a", modifierFlags: .command)
+        app.typeText(value)
     }
 }

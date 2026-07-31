@@ -153,7 +153,9 @@ struct FirstBookJourneyTests {
         model.requestSendConfirmation()
         try await eventuallyMainActor { model.isShowingConfirmation }
         model.dismissConfirmation()
-        #expect(model.feedback(for: .batch)?.title == "Confirmation dismissed.")
+        try await eventuallyMainActor {
+            model.feedback(for: .batch)?.title == "Confirmation dismissed."
+        }
         #expect(noMainNotifications(in: model))
 
         model.clear()
@@ -225,6 +227,7 @@ struct FirstBookJourneyTests {
         model.confirmSend()
         try await eventuallyMainActor {
             model.items.first?.delivery == .submitted
+                && model.feedback(for: .batch)?.state == .succeeded
         }
         let retryFeedback = try #require(model.feedback(for: .batch))
         #expect(retryFeedback.id != firstFeedback.id)

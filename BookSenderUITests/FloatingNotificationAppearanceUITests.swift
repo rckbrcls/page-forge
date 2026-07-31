@@ -11,20 +11,19 @@ final class FloatingNotificationAppearanceUITests: XCTestCase {
             "-AppleIncreaseContrast",
             "YES"
         )
-        let card = app.descendants(matching: .any)["notification.update"]
+        let title = app.staticTexts["Adaptive notification"]
+        let message = app.staticTexts[
+            "A longer supporting message wraps within the card while preserving legibility and the central workflow."
+        ]
         let close = app.buttons["notification.close.update"]
 
-        XCTAssertTrue(card.waitForExistence(timeout: 2))
-        XCTAssertTrue(
-            app.staticTexts[
-                "A longer supporting message wraps within the card while preserving legibility and the central workflow."
-            ].exists
-        )
+        XCTAssertTrue(message.waitForExistence(timeout: 2))
         XCTAssertTrue(close.isHittable)
         XCTAssertGreaterThanOrEqual(close.frame.width, 28)
         XCTAssertGreaterThanOrEqual(close.frame.height, 28)
-        XCTAssertTrue(app.windows.firstMatch.frame.contains(card.frame))
-        XCTAssertLessThanOrEqual(card.frame.width, 360)
+        let contentFrame = title.frame.union(message.frame).union(close.frame)
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(contentFrame))
+        XCTAssertLessThanOrEqual(contentFrame.width, 360)
     }
 
     func testMinimumWindowSizeKeepsNotificationOffThePrimaryAction() {
@@ -41,14 +40,19 @@ final class FloatingNotificationAppearanceUITests: XCTestCase {
             thenDragTo: smallerTarget
         )
 
-        let card = app.descendants(matching: .any)["notification.update"]
+        let title = app.staticTexts["Adaptive notification"]
+        let message = app.staticTexts[
+            "A longer supporting message wraps within the card while preserving legibility and the central workflow."
+        ]
+        let close = app.buttons["notification.close.update"]
         let primaryAction = app.buttons["sendBook.send"]
-        XCTAssertTrue(card.waitForExistence(timeout: 2))
+        XCTAssertTrue(close.exists)
         XCTAssertTrue(primaryAction.exists)
         XCTAssertGreaterThanOrEqual(window.frame.width, 620)
         XCTAssertGreaterThanOrEqual(window.frame.height, 620)
-        XCTAssertFalse(card.frame.intersects(primaryAction.frame))
-        XCTAssertTrue(window.frame.contains(card.frame))
+        let contentFrame = title.frame.union(message.frame).union(close.frame)
+        XCTAssertFalse(contentFrame.intersects(primaryAction.frame))
+        XCTAssertTrue(window.frame.contains(contentFrame))
     }
 
     private func launch(_ additionalArguments: String...) -> XCUIApplication {

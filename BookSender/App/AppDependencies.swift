@@ -154,23 +154,15 @@ struct AppDependencies {
         } else if isUITesting
                     && arguments.contains("-uiTestHistoryWriteFailure") {
             historyStore = IsolatedUITestWriteFailingHistoryStore(
-                rootURL: FileManager.default.temporaryDirectory
-                    .appending(component: "BookSender-UITests")
-                    .appending(component: "SendHistory-WriteFailure")
+                backing: IsolatedUITestHistoryStore(defaults: defaults)
             )
         } else if isUITesting
                     && arguments.contains("-uiTestHistoryClearFailure") {
             historyStore = IsolatedUITestClearFailingHistoryStore(
-                rootURL: FileManager.default.temporaryDirectory
-                    .appending(component: "BookSender-UITests")
-                    .appending(component: "SendHistory-ClearFailure")
+                backing: IsolatedUITestHistoryStore(defaults: defaults)
             )
         } else if isUITesting {
-            historyStore = FileSendHistoryStore(
-                rootURL: FileManager.default.temporaryDirectory
-                    .appending(component: "BookSender-UITests")
-                    .appending(component: "SendHistory")
-            )
+            historyStore = IsolatedUITestHistoryStore(defaults: defaults)
         } else if let applicationSupportURL = try? FileManager.default.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
@@ -413,11 +405,60 @@ private actor IsolatedUITestUnavailableHistoryStore: SendHistoryStoring {
     }
 }
 
-private actor IsolatedUITestClearFailingHistoryStore: SendHistoryStoring {
-    private let backing: FileSendHistoryStore
+private actor IsolatedUITestHistoryStore: SendHistoryStoring {
+    private static let key = "sendHistory.v1"
+    private let defaults: UserDefaults
 
-    init(rootURL: URL) {
-        backing = FileSendHistoryStore(rootURL: rootURL)
+    init(defaults: UserDefaults) {
+        self.defaults = defaults
+    }
+
+    func load() throws -> [SubmissionRecord] {
+        guard let data = defaults.data(forKey: Self.key) else { return [] }
+        do {
+            let envelope = try JSONDecoder().decode(
+                SendHistoryEnvelope.self,
+                from: data
+            )
+            guard envelope.schemaVersion
+                    == SendHistoryEnvelope.currentSchemaVersion
+            else {
+                throw HistoryFailure(
+                    operation: .load,
+                    code: .unsupportedSchema
+                )
+            }
+            return envelope.records
+        } catch let failure as HistoryFailure {
+            throw failure
+        } catch {
+            throw HistoryFailure(operation: .load, code: .decode)
+        }
+    }
+
+    func replace(with records: [SubmissionRecord]) throws {
+        do {
+            let data = try JSONEncoder().encode(
+                SendHistoryEnvelope(records: records)
+            )
+            defaults.set(data, forKey: Self.key)
+            _ = defaults.synchronize()
+        } catch {
+            throw HistoryFailure(operation: .record, code: .write)
+        }
+    }
+
+    func clear() {
+        defaults.removeObject(forKey: Self.key)
+        _ = defaults.synchronize()
+    }
+}
+
+private actor IsolatedUITestClearFailingHistoryStore: SendHistoryStoring {
+    private let backing: IsolatedUITestHistoryStore
+
+    init(backing: IsolatedUITestHistoryStore) {
+        self.backing = backing
     }
 
     func load() async throws -> [SubmissionRecord] {
@@ -434,10 +475,10 @@ private actor IsolatedUITestClearFailingHistoryStore: SendHistoryStoring {
 }
 
 private actor IsolatedUITestWriteFailingHistoryStore: SendHistoryStoring {
-    private let backing: FileSendHistoryStore
+    private let backing: IsolatedUITestHistoryStore
 
-    init(rootURL: URL) {
-        backing = FileSendHistoryStore(rootURL: rootURL)
+    init(backing: IsolatedUITestHistoryStore) {
+        self.backing = backing
     }
 
     func load() async throws -> [SubmissionRecord] {
@@ -449,7 +490,7 @@ private actor IsolatedUITestWriteFailingHistoryStore: SendHistoryStoring {
     }
 
     func clear() async throws {
-        try await backing.clear()
+        await backing.clear()
     }
 }
 
@@ -525,7 +566,7 @@ private actor IsolatedUITestSMTPTransport: SMTPDelivering {
     ) async -> TerminalOutcome {
         if delaysBeforeTransmission {
             do {
-                try await Task.sleep(for: .seconds(2))
+                try await Task.sleep(for: .seconds(10))
             } catch {
                 return .cancelled
             }

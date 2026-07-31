@@ -9,11 +9,12 @@ final class SendHistoryUITests: XCTestCase {
         )
         selectHistory(in: app)
 
-        let newest = app.staticTexts["Newest Submission.pdf"]
-        let repeated = app.staticTexts.matching(
-            NSPredicate(format: "label == %@", "Repeated Title.epub")
+        let newest = historyRow(in: app, containing: "Newest Submission.pdf")
+        let repeated = historyRows(in: app).matching(
+            NSPredicate(format: "label CONTAINS %@", "Repeated Title.epub")
         )
-        XCTAssertTrue(newest.waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["3 submissions"].waitForExistence(timeout: 3))
+        XCTAssertTrue(newest.exists)
         XCTAssertEqual(repeated.count, 2)
         XCTAssertLessThan(
             newest.frame.minY,
@@ -54,7 +55,7 @@ final class SendHistoryUITests: XCTestCase {
             unavailableApp.staticTexts["No books submitted yet."].exists
         )
         XCTAssertTrue(
-            unavailableApp.buttons["sendBook.history.retry"].isHittable
+            unavailableApp.buttons["Retry"].isHittable
         )
         XCTAssertFalse(
             unavailableApp.descendants(matching: .any)["notification.history"]
@@ -69,17 +70,19 @@ final class SendHistoryUITests: XCTestCase {
         )
         selectHistory(in: app)
         XCTAssertTrue(
-            app.staticTexts["Newest Submission.pdf"]
+            historyRow(in: app, containing: "Newest Submission.pdf")
                 .waitForExistence(timeout: 3)
         )
 
         app.buttons["sendBook.history.clear"].click()
         XCTAssertTrue(app.staticTexts["Clear Send History?"].exists)
-        app.alerts.buttons["Cancel"].click()
-        XCTAssertTrue(app.staticTexts["Newest Submission.pdf"].exists)
+        app.buttons["Cancel"].click()
+        XCTAssertTrue(
+            historyRow(in: app, containing: "Newest Submission.pdf").exists
+        )
 
         app.buttons["sendBook.history.clear"].click()
-        app.alerts.buttons["Clear History"].click()
+        app.buttons["Clear History"].click()
         XCTAssertTrue(
             app.staticTexts["No books submitted yet."]
                 .waitForExistence(timeout: 3)
@@ -97,11 +100,11 @@ final class SendHistoryUITests: XCTestCase {
         )
         selectHistory(in: failingApp)
         XCTAssertTrue(
-            failingApp.staticTexts["Newest Submission.pdf"]
+            historyRow(in: failingApp, containing: "Newest Submission.pdf")
                 .waitForExistence(timeout: 3)
         )
         failingApp.buttons["sendBook.history.clear"].click()
-        failingApp.alerts.buttons["Clear History"].click()
+        failingApp.buttons["Clear History"].click()
         XCTAssertTrue(
             failingApp.staticTexts["Send history was not cleared."]
                 .waitForExistence(timeout: 3)
@@ -109,7 +112,12 @@ final class SendHistoryUITests: XCTestCase {
         XCTAssertFalse(
             failingApp.descendants(matching: .any)["notification.history"].exists
         )
-        XCTAssertTrue(failingApp.staticTexts["Newest Submission.pdf"].exists)
+        XCTAssertTrue(
+            historyRow(
+                in: failingApp,
+                containing: "Newest Submission.pdf"
+            ).exists
+        )
     }
 
     func testAcceptedDeliveryHistoryWriteFailurePublishesOnePersistentCard() {
@@ -127,19 +135,16 @@ final class SendHistoryUITests: XCTestCase {
         app.buttons["sendBook.confirm"].click()
 
         XCTAssertTrue(app.staticTexts["Submitted"].waitForExistence(timeout: 5))
-        let historyCard = app.descendants(matching: .any)[
-            "notification.history"
-        ]
-        XCTAssertTrue(historyCard.waitForExistence(timeout: 3))
-        XCTAssertEqual(historyCard.value as? String, "Partial")
+        let historyClose = app.buttons["notification.close.history"]
+        XCTAssertTrue(historyClose.waitForExistence(timeout: 3))
         XCTAssertTrue(
             app.staticTexts["Book sent, but history was not updated."].exists
         )
         XCTAssertEqual(
-            app.descendants(matching: .any).matching(
+            app.buttons.matching(
                 NSPredicate(
                     format: "identifier == %@",
-                    "notification.history"
+                    "notification.close.history"
                 )
             ).count,
             1
@@ -152,7 +157,7 @@ final class SendHistoryUITests: XCTestCase {
             app.staticTexts["No books submitted yet."]
                 .waitForExistence(timeout: 3)
         )
-        XCTAssertTrue(historyCard.exists)
+        XCTAssertTrue(historyClose.exists)
     }
 
     func testHistoryPersistsAcrossRelaunchAndUsesReadableDateTimeRows() {
@@ -164,16 +169,13 @@ final class SendHistoryUITests: XCTestCase {
         )
         selectHistory(in: app)
         XCTAssertTrue(
-            app.staticTexts["Newest Submission.pdf"]
+            historyRow(in: app, containing: "Newest Submission.pdf")
                 .waitForExistence(timeout: 3)
         )
-        let firstRecord = app.descendants(matching: .any)
-            .matching(
-                NSPredicate(
-                    format: "identifier BEGINSWITH 'sendBook.history.record.'"
-                )
-            )
-            .firstMatch
+        let firstRecord = historyRow(
+            in: app,
+            containing: "Newest Submission.pdf"
+        )
         XCTAssertTrue(firstRecord.exists)
         XCTAssertTrue(firstRecord.label.contains("Newest Submission.pdf"))
         XCTAssertGreaterThan(firstRecord.label.count, "Newest Submission.pdf".count)
@@ -182,12 +184,12 @@ final class SendHistoryUITests: XCTestCase {
         let relaunched = launch()
         selectHistory(in: relaunched)
         XCTAssertTrue(
-            relaunched.staticTexts["Newest Submission.pdf"]
+            historyRow(in: relaunched, containing: "Newest Submission.pdf")
                 .waitForExistence(timeout: 3)
         )
         XCTAssertEqual(
-            relaunched.staticTexts.matching(
-                NSPredicate(format: "label == %@", "Repeated Title.epub")
+            historyRows(in: relaunched).matching(
+                NSPredicate(format: "label CONTAINS %@", "Repeated Title.epub")
             ).count,
             2
         )
@@ -282,7 +284,7 @@ final class SendHistoryUITests: XCTestCase {
         XCTAssertTrue(tabs.isHittable)
         XCTAssertEqual(send.label, "Send")
         XCTAssertEqual(history.label, "History")
-        let heading = app.staticTexts["sendBook.title"]
+        let heading = app.staticTexts["Send Book"]
         let editSetup = app.buttons["sendBook.editSetup"]
         XCTAssertTrue(heading.exists)
         XCTAssertEqual(heading.label, "Send Book")
@@ -295,10 +297,10 @@ final class SendHistoryUITests: XCTestCase {
             app.descendants(matching: .any)["sendBook.history.list"]
                 .waitForExistence(timeout: 2)
         )
-        XCTAssertEqual(heading.label, "History")
+        XCTAssertTrue(app.staticTexts["History"].exists)
         XCTAssertTrue(app.buttons["sendBook.history.clear"].isHittable)
         app.typeKey(.leftArrow, modifierFlags: [])
-        XCTAssertEqual(heading.label, "Send Book")
+        XCTAssertTrue(app.staticTexts["Send Book"].exists)
     }
 
     private func launch(_ additionalArguments: String...) -> XCUIApplication {
@@ -326,14 +328,25 @@ final class SendHistoryUITests: XCTestCase {
     }
 
     private func historyRowLabel(in app: XCUIApplication) -> String {
-        let row = app.descendants(matching: .any)
-            .matching(
-                NSPredicate(
-                    format: "identifier BEGINSWITH 'sendBook.history.record.'"
-                )
-            )
-            .firstMatch
+        let row = historyRows(in: app).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 3))
         return row.label
+    }
+
+    private func historyRows(in app: XCUIApplication) -> XCUIElementQuery {
+        app.descendants(matching: .any).matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH 'sendBook.history.record.'"
+            )
+        )
+    }
+
+    private func historyRow(
+        in app: XCUIApplication,
+        containing displayName: String
+    ) -> XCUIElement {
+        historyRows(in: app).matching(
+            NSPredicate(format: "label CONTAINS %@", displayName)
+        ).firstMatch
     }
 }

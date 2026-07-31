@@ -898,7 +898,7 @@ final class AppModel {
             olderThan: Date().addingTimeInterval(-86_400)
         )
         if slowInitialSetupLoad {
-            try? await Task.sleep(for: .seconds(1))
+            try? await Task.sleep(for: .seconds(3))
         }
         await loadSetup()
         await loadHistoryNow()
@@ -975,7 +975,7 @@ final class AppModel {
                 message: "The content remains aligned without empty controls.",
                 configuration: FloatingNotificationConfiguration(
                     icon: .system("clock"),
-                    lifetime: .temporary(seconds: 4),
+                    lifetime: .temporary(seconds: 5),
                     closePolicy: .hidden
                 )
             )

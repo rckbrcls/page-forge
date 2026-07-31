@@ -173,6 +173,7 @@ struct AppModelDiagnosticsTests {
             )
         )
         let model = AppModel(dependencies: graph.dependencies)
+        try await eventually { model.hasResolvedInitialSetup }
         model.setupDraft = validDraft()
 
         model.saveSetup()
