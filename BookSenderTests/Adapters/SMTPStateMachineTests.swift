@@ -123,7 +123,7 @@ struct SMTPStateMachineTests {
         _ = machine.receive(reply(250, "AUTH PLAIN"))
 
         let failure = try #require(
-            failure(
+            firstFailure(
                 in: machine.receive(
                     SMTPReply(
                         code: code,
@@ -165,7 +165,7 @@ struct SMTPStateMachineTests {
                 )
                 advance(&machine, to: scenario.0)
                 let failure = try #require(
-                    failure(
+                    firstFailure(
                         in: machine.receive(
                             reply(
                                 replyCode,
@@ -260,9 +260,9 @@ struct SMTPStateMachineTests {
         _ = machine.receive(reply(354, "continue"))
     }
 
-    private func failure(in actions: [SMTPAction]) -> SanitizedFailure? {
-        actions.compactMap {
-            guard case .failed(let failure) = $0 else { return nil }
+    private func firstFailure(in actions: [SMTPAction]) -> SanitizedFailure? {
+        actions.compactMap { action -> SanitizedFailure? in
+            guard case .failed(let failure) = action else { return nil }
             return failure
         }.first
     }
