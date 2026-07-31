@@ -212,10 +212,6 @@ final class AccessibilityUITests: XCTestCase {
 
 extension XCUIApplication {
     func launchBookSender() {
-        launchArguments += [
-            "-ApplePersistenceIgnoreState",
-            "YES",
-        ]
         launch()
     }
 }

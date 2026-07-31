@@ -74,12 +74,36 @@ final class FirstBookJourneyUITests: XCTestCase {
             "Error: Enter a valid email address."
         )
 
-        replaceText(in: senderAddress, with: "reader@example.com")
-        replaceText(in: smtpHost, with: "smtp.example.com")
-        replaceText(in: smtpPort, with: "465")
-        replaceText(in: username, with: "reader")
-        replaceText(in: appPassword, with: "ui-test-secret")
-        replaceText(in: kindleAddress, with: "reader@kindle.com")
+        replaceText(
+            in: app,
+            identifier: "deliverySetup.senderAddress",
+            with: "reader@example.com"
+        )
+        replaceText(
+            in: app,
+            identifier: "deliverySetup.smtpHost",
+            with: "smtp.example.com"
+        )
+        replaceText(
+            in: app,
+            identifier: "deliverySetup.smtpPort",
+            with: "465"
+        )
+        replaceText(
+            in: app,
+            identifier: "deliverySetup.username",
+            with: "reader"
+        )
+        replaceText(
+            in: app,
+            identifier: "deliverySetup.appPassword",
+            with: "ui-test-secret"
+        )
+        replaceText(
+            in: app,
+            identifier: "deliverySetup.kindleAddress",
+            with: "reader@kindle.com"
+        )
 
         app.buttons["deliverySetup.save"].click()
         XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
@@ -115,11 +139,24 @@ final class FirstBookJourneyUITests: XCTestCase {
     }
 
     private func replaceText(
-        in element: XCUIElement,
+        in app: XCUIApplication,
+        identifier: String,
         with value: String
     ) {
+        let element = app.descendants(matching: .any)[identifier]
+        XCTAssertTrue(element.waitForExistence(timeout: 2))
         element.click()
-        element.typeKey("a", modifierFlags: .command)
-        element.typeText(value)
+        let focusedElement = app.descendants(matching: .any).matching(
+            NSPredicate(
+                format: "identifier == %@ AND hasKeyboardFocus == YES",
+                identifier
+            )
+        ).firstMatch
+        if !focusedElement.waitForExistence(timeout: 1) {
+            element.click()
+        }
+        XCTAssertTrue(focusedElement.waitForExistence(timeout: 1))
+        focusedElement.typeKey("a", modifierFlags: .command)
+        focusedElement.typeText(value)
     }
 }

@@ -46,6 +46,7 @@ struct BookSenderApp: App {
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified(showsTitle: false))
         .windowResizability(.contentMinSize)
+        .defaultLaunchBehavior(.presented)
         .commands {
             CommandGroup(replacing: .newItem) { }
             CommandGroup(after: .appInfo) {
