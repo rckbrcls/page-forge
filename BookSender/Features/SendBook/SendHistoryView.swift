@@ -13,17 +13,15 @@ struct SendHistoryView: View {
                 )
                 .layoutPriority(1)
 
-            if let feedback = model.feedback(for: .history) {
-                ActionFeedbackView(feedback: feedback)
-                if let failure = feedback.failure {
-                    FailureDetailView(
-                        presentation: failure,
-                        diagnosticEvent: model.currentDiagnosticEvent,
-                        copyFeedback: model.currentCopyFeedback,
-                        copyErrorDetails: model.copyCurrentErrorDetails,
-                        performRecovery: handleRecovery
-                    )
-                }
+            if let failure = historyFeedback?.failure {
+                FailureDetailView(
+                    presentation: failure,
+                    diagnosticEvent: model.currentDiagnosticEvent,
+                    copyErrorDetails: {
+                        model.copyCurrentErrorDetails(destination: .main)
+                    },
+                    performRecovery: handleRecovery
+                )
             }
 
             HStack {
@@ -125,6 +123,10 @@ struct SendHistoryView: View {
     private var historyCount: String {
         let count = model.historySnapshot.records.count
         return count == 1 ? "1 submission" : "\(count) submissions"
+    }
+
+    private var historyFeedback: ActionFeedback? {
+        model.notificationFeedback(for: .history, destination: .main)
     }
 
     private func handleRecovery(_ action: RecoveryAction) {

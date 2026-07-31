@@ -10,60 +10,69 @@ struct DeliverySetupView: View {
     let presentation: DeliverySetupPresentation
     @FocusState private var focusedField: DeliveryField?
 
-    @ViewBuilder
     var body: some View {
-        if presentation == .settings {
-            ScrollView(.vertical) {
-                LazyVStack(alignment: .leading, spacing: 18) {
-                    setupFields
-                    feedbackContent
-                    actionButtons
-                }
-                .frame(maxWidth: 560)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 32)
-            }
-            .scrollIndicators(.visible)
-            .accessibilityIdentifier("settings.delivery.scroll")
-        } else {
-            Form {
-                Section {
-                    setupFields
-                } header: {
-                    Text("Delivery Setup")
-                        .font(.largeTitle.weight(.bold))
-                }
-
-                if model.feedback(for: .deliverySetup) != nil
-                    || model.setupMessage != nil {
-                    Section {
+        Group {
+            if presentation == .settings {
+                ScrollView(.vertical) {
+                    LazyVStack(alignment: .leading, spacing: 18) {
+                        setupFields
                         feedbackContent
+                        actionButtons
+                    }
+                    .frame(maxWidth: 560)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 32)
+                }
+                .scrollIndicators(.visible)
+                .accessibilityIdentifier("settings.delivery.scroll")
+            } else {
+                Form {
+                    Section {
+                        setupFields
+                    } header: {
+                        Text("Delivery Setup")
+                            .font(.largeTitle.weight(.bold))
+                    }
+
+                    if deliveryFeedback?.failure != nil
+                        || model.setupMessage != nil {
+                        Section {
+                            feedbackContent
+                        }
+                    }
+
+                    Section {
+                        actionButtons
                     }
                 }
-
-                Section {
-                    actionButtons
-                }
+                .scrollContentBackground(.hidden)
+                .frame(maxWidth: 560)
+                .padding(32)
             }
-            .scrollContentBackground(.hidden)
-            .frame(maxWidth: 560)
-            .padding(32)
+        }
+        .onAppear {
+            consumeFocusRequestIfNeeded(
+                model.notificationCenter.focusRequest
+            )
+        }
+        .onChange(of: model.notificationCenter.focusRequest) { _, request in
+            consumeFocusRequestIfNeeded(request)
         }
     }
 
     @ViewBuilder
     private var feedbackContent: some View {
-        if let feedback = model.feedback(for: .deliverySetup) {
-            ActionFeedbackView(feedback: feedback)
-            if let failure = feedback.failure {
-                FailureDetailView(
-                    presentation: failure,
-                    diagnosticEvent: model.currentDiagnosticEvent,
-                    copyFeedback: model.currentCopyFeedback,
-                    copyErrorDetails: model.copyCurrentErrorDetails,
-                    performRecovery: handleRecovery
-                )
-            }
+        if let failure = deliveryFeedback?.failure {
+            FailureDetailView(
+                presentation: failure,
+                diagnosticEvent: model.currentDiagnosticEvent,
+                copyErrorDetails: {
+                    model.copyCurrentErrorDetails(
+                        destination: notificationDestination
+                    )
+                },
+                performRecovery: handleRecovery
+            )
         } else if let setupMessage = model.setupMessage {
             Label(setupMessage, systemImage: "exclamationmark.circle")
                 .foregroundStyle(.red)
@@ -74,7 +83,7 @@ struct DeliverySetupView: View {
     @ViewBuilder
     private var actionButtons: some View {
         Button {
-            model.saveSetup()
+            model.saveSetup(destination: notificationDestination)
         } label: {
             Group {
                 if model.isSavingSetup {
@@ -97,7 +106,7 @@ struct DeliverySetupView: View {
 
         if presentation == .settings, model.setup != nil {
             Button("Delete Delivery Setup", role: .destructive) {
-                model.deleteSetup()
+                model.deleteSetup(destination: .settings)
             }
             .buttonStyle(.glassProminent)
             .buttonBorderShape(.capsule)
@@ -240,5 +249,27 @@ struct DeliverySetupView: View {
         if action == .editSetup {
             focusedField = .appPassword
         }
+    }
+
+    private func consumeFocusRequestIfNeeded(
+        _ request: NotificationFocusRequest?
+    ) {
+        guard let request,
+              request.destination == notificationDestination,
+              request.action == .editSetup
+        else { return }
+        focusedField = .appPassword
+        model.notificationCenter.consumeFocusRequest(id: request.id)
+    }
+
+    private var notificationDestination: NotificationDestination {
+        presentation == .settings ? .settings : .main
+    }
+
+    private var deliveryFeedback: ActionFeedback? {
+        model.notificationFeedback(
+            for: .deliverySetup,
+            destination: notificationDestination
+        )
     }
 }

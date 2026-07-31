@@ -22,17 +22,15 @@ struct SendBookView: View {
                 add: model.addBooks
             )
 
-            if let feedback = sendFeedback {
-                ActionFeedbackView(feedback: feedback)
-                if let failure = feedback.failure {
-                    FailureDetailView(
-                        presentation: failure,
-                        diagnosticEvent: model.currentDiagnosticEvent,
-                        copyFeedback: model.currentCopyFeedback,
-                        copyErrorDetails: model.copyCurrentErrorDetails,
-                        performRecovery: handleRecovery
-                    )
-                }
+            if let failure = sendFeedback?.failure {
+                FailureDetailView(
+                    presentation: failure,
+                    diagnosticEvent: model.currentDiagnosticEvent,
+                    copyErrorDetails: {
+                        model.copyCurrentErrorDetails(destination: .main)
+                    },
+                    performRecovery: handleRecovery
+                )
             }
 
             if model.isImporting || !model.items.isEmpty {
@@ -62,34 +60,62 @@ struct SendBookView: View {
 
             if !model.items.isEmpty {
                 GroupBox {
+                    let items = model.items
+                    let positions = BatchRowPosition.positions(
+                        for: items.map(\.id)
+                    )
                     List {
-                        ForEach(model.items) { item in
-                            VStack(alignment: .leading, spacing: 6) {
-                                BatchItemRow(
-                                    item: item,
-                                    canRemove: model.canEditBatch
-                                        && !model.isShowingConfirmation
-                                ) {
-                                    model.remove(item.id)
-                                }
-                                if shouldShowDetails(for: item) {
-                                    let itemEvent = model.diagnosticEvent(
-                                        for: item.id
-                                    )
-                                    ItemDetailDisclosure(
+                        ForEach(Array(items.enumerated()), id: \.element.id) {
+                            index,
+                            item in
+                            let position = positions[index]
+                            VStack(alignment: .leading, spacing: 0) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    BatchItemRow(
                                         item: item,
-                                        diagnosticEvent: itemEvent,
-                                        copyFeedback: model.currentCopyFeedback,
-                                        copyErrorDetails: {
-                                            model.copyErrorDetails(for: itemEvent)
-                                        },
-                                        performRecovery: handleRecovery
-                                    )
+                                        canRemove: model.canEditBatch
+                                            && !model.isShowingConfirmation
+                                    ) {
+                                        model.remove(item.id)
+                                    }
+                                    if shouldShowDetails(for: item) {
+                                        let itemEvent = model.diagnosticEvent(
+                                            for: item.id
+                                        )
+                                        ItemDetailDisclosure(
+                                            item: item,
+                                            diagnosticEvent: itemEvent,
+                                            copyErrorDetails: {
+                                                model.copyErrorDetails(
+                                                    for: itemEvent,
+                                                    destination: .main
+                                                )
+                                            },
+                                            performRecovery: handleRecovery
+                                        )
+                                    }
+                                }
+
+                                if position.showsDivider {
+                                    batchDivider(for: position)
+                                        .padding(.horizontal, 4)
+                                        .padding(.top, 10)
                                 }
                             }
                             .listRowBackground(Color.clear)
+                            .listRowInsets(
+                                EdgeInsets(
+                                    top: 8,
+                                    leading: 6,
+                                    bottom: 8,
+                                    trailing: 6
+                                )
+                            )
+                            .listRowSeparator(.hidden)
                         }
                     }
+                    .listStyle(.plain)
+                    .listRowSeparator(.hidden)
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 156)
                     .accessibilityIdentifier("sendBook.batch")
@@ -209,12 +235,26 @@ struct SendBookView: View {
                 "A Delivery Unknown item may already have been accepted by the provider. Starting another send clears the visible result without retrying it."
             )
         }
+        .onAppear {
+            consumeFocusRequestIfNeeded(
+                model.notificationCenter.focusRequest
+            )
+        }
+        .onChange(of: model.notificationCenter.focusRequest) { _, request in
+            consumeFocusRequestIfNeeded(request)
+        }
     }
 
     private var sendFeedback: ActionFeedback? {
-        model.feedback(for: .batch)
-            ?? model.feedback(for: .deliverySetup)
-            ?? model.feedback(for: .application)
+        model.notificationFeedback(for: .batch, destination: .main)
+            ?? model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            )
+            ?? model.notificationFeedback(
+                for: .application,
+                destination: .main
+            )
     }
 
     private var screenTitle: String {
@@ -287,6 +327,24 @@ struct SendBookView: View {
         }
     }
 
+    private func consumeFocusRequestIfNeeded(
+        _ request: NotificationFocusRequest?
+    ) {
+        guard let request, request.destination == .main else { return }
+        switch request.action {
+        case .chooseAnotherFile:
+            isShowingImporter = true
+            model.notificationCenter.consumeFocusRequest(id: request.id)
+        case .reviewBook:
+            model.sendBookTab = .send
+            model.notificationCenter.consumeFocusRequest(id: request.id)
+        case .editSetup, .retryFailed, .confirmUnknownRetry,
+             .chooseAnotherShortcut, .retryHistoryLoad,
+             .retryHistoryClear:
+            break
+        }
+    }
+
     private func showSettingsWindow() {
         NSApp.sendAction(
             Selector(("showSettingsWindow:")),
@@ -308,6 +366,25 @@ struct SendBookView: View {
             return true
         case .notScheduled, .sending, .submitted, .cancelled:
             return false
+        }
+    }
+
+    @ViewBuilder
+    private func batchDivider(
+        for position: BatchRowPosition
+    ) -> some View {
+        let identifier =
+            "sendBook.item.divider.\(position.itemID.uuidString)"
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting") {
+            Divider()
+                .frame(maxWidth: .infinity)
+                .allowsHitTesting(false)
+                .accessibilityIdentifier(identifier)
+        } else {
+            Divider()
+                .frame(maxWidth: .infinity)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
         }
     }
 }

@@ -3,7 +3,6 @@ import SwiftUI
 struct ItemDetailDisclosure: View {
     let item: BatchItemPresentation
     let diagnosticEvent: DiagnosticEvent?
-    let copyFeedback: ActionFeedback?
     let copyErrorDetails: () -> Void
     let performRecovery: ((RecoveryAction) -> Void)?
     @State private var isExpanded: Bool
@@ -11,13 +10,11 @@ struct ItemDetailDisclosure: View {
     init(
         item: BatchItemPresentation,
         diagnosticEvent: DiagnosticEvent? = nil,
-        copyFeedback: ActionFeedback? = nil,
         copyErrorDetails: @escaping () -> Void = {},
         performRecovery: ((RecoveryAction) -> Void)? = nil
     ) {
         self.item = item
         self.diagnosticEvent = diagnosticEvent
-        self.copyFeedback = copyFeedback
         self.copyErrorDetails = copyErrorDetails
         self.performRecovery = performRecovery
         _isExpanded = State(initialValue: Self.startsExpanded(item))
@@ -86,7 +83,6 @@ struct ItemDetailDisclosure: View {
             FailureDetailView(
                 presentation: presentation,
                 diagnosticEvent: diagnosticEvent,
-                copyFeedback: copyFeedback,
                 copyErrorDetails: copyErrorDetails,
                 performRecovery: performRecovery
             )

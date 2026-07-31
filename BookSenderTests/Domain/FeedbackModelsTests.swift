@@ -67,6 +67,18 @@ struct FeedbackModelsTests {
     }
 
     @Test
+    func diagnosticCopyHasAnIndependentAccessibilityScope() {
+        #expect(
+            FeedbackScope.diagnosticCopy.accessibilityIdentifier
+                == "diagnosticCopy"
+        )
+        #expect(
+            FeedbackScope.diagnosticCopy
+                != FeedbackScope.deliverySetup
+        )
+    }
+
+    @Test
     func failedFeedbackRetainsPresentation() {
         let failure = testFailure()
         let presentation = FailurePresentationService().presentation(for: failure)

@@ -138,4 +138,84 @@ struct ActionFeedbackServiceTests {
         #expect(service.shouldAnnounce(previous: nil, current: progress))
         #expect(!service.shouldAnnounce(previous: progress, current: unchanged))
     }
+
+    @Test
+    func notificationProjectionUsesSemanticDefaults() {
+        let service = ActionFeedbackService()
+        let start = service.acknowledged(
+            scope: .batch,
+            action: .addBooks,
+            title: "Adding book…"
+        )
+        let success = service.terminal(
+            from: start,
+            state: .succeeded,
+            title: "Book added."
+        )
+
+        let configuration = service.notificationConfiguration(for: success)
+
+        #expect(configuration.icon == .automatic)
+        #expect(configuration.lifetime == .temporary(seconds: 4))
+        #expect(configuration.closePolicy == .shown)
+        #expect(configuration.action == nil)
+    }
+
+    @Test
+    func projectionRetainsOneTypedRecoveryAction() {
+        let service = ActionFeedbackService()
+        let failure = SanitizedFailure(
+            family: .credential,
+            code: .credentialRead,
+            message: "The app password is unavailable.",
+            recoveryAction: .editSetup
+        )
+        let start = service.acknowledged(
+            scope: .deliverySetup,
+            action: .saveDeliverySetup,
+            title: "Saving setup…"
+        )
+        let terminal = service.terminal(
+            from: start,
+            state: .failed,
+            title: "Setup was not saved.",
+            failure: FailurePresentationService().presentation(for: failure)
+        )
+
+        let configuration = service.notificationConfiguration(for: terminal)
+
+        #expect(configuration.lifetime == .persistentUntilReplaced)
+        #expect(configuration.action?.command == .editSetup)
+        #expect(configuration.action?.label == "Edit Setup")
+        #expect(
+            configuration.action?.dismissalAfterActivation
+                == .awaitReplacement
+        )
+    }
+
+    @Test
+    func projectionHonorsSafeIconCloseAndDurationOverrides() {
+        let service = ActionFeedbackService()
+        let start = service.acknowledged(
+            scope: .update,
+            action: .checkForUpdates,
+            title: "Opening update check…"
+        )
+        let success = service.terminal(
+            from: start,
+            state: .succeeded,
+            title: "Update check opened."
+        )
+
+        let configuration = service.notificationConfiguration(
+            for: success,
+            icon: .none,
+            closePolicy: .hidden,
+            temporaryDuration: 8
+        )
+
+        #expect(configuration.icon == .none)
+        #expect(configuration.closePolicy == .hidden)
+        #expect(configuration.lifetime == .temporary(seconds: 5))
+    }
 }

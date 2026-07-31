@@ -45,6 +45,19 @@ final class RecoveryJourneyUITests: XCTestCase {
             app.staticTexts["Error details copied."]
                 .waitForExistence(timeout: 2)
         )
+        XCTAssertTrue(
+            app.descendants(matching: .any)[
+                "notification.diagnosticCopy"
+            ].exists
+        )
+        XCTAssertTrue(app.staticTexts["Failed"].exists)
+        app.buttons["notification.close.diagnosticCopy"].click()
+        XCTAssertFalse(
+            app.descendants(matching: .any)[
+                "notification.diagnosticCopy"
+            ].exists
+        )
+        XCTAssertTrue(app.staticTexts["smtp.ui-test-rejected"].exists)
         XCTAssertTrue(app.staticTexts["Failed"].exists)
 
         app.buttons["sendBook.retryFailed"].click()
@@ -94,9 +107,49 @@ final class RecoveryJourneyUITests: XCTestCase {
                 .waitForExistence(timeout: 2)
         )
         XCTAssertTrue(
+            app.descendants(matching: .any)[
+                "notification.diagnosticCopy"
+            ].exists
+        )
+        XCTAssertTrue(
             app.staticTexts["The original error remains visible."].exists
         )
         XCTAssertTrue(app.staticTexts["smtp.ui-test-rejected"].exists)
         XCTAssertTrue(app.staticTexts["Failed"].exists)
+    }
+
+    func testUnknownNotificationRequiresConfirmationAndNeverRetriesSilently() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-uiTesting",
+            "-resetSetup",
+            "-configuredSetup",
+            "-uiTestPDFs",
+            "-uiTestOutcomeUnknown",
+            "-resetHistory",
+        ]
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
+        app.buttons["sendBook.send"].click()
+        XCTAssertTrue(
+            app.buttons["sendBook.confirm"].waitForExistence(timeout: 2)
+        )
+        app.buttons["sendBook.confirm"].click()
+
+        XCTAssertTrue(
+            app.staticTexts["Delivery Unknown"].waitForExistence(timeout: 5)
+        )
+        let review = app.buttons["notification.action.batch"]
+        XCTAssertTrue(review.waitForExistence(timeout: 2))
+        XCTAssertEqual(review.label, "Check Kindle Before Retrying")
+        review.click()
+
+        XCTAssertTrue(app.staticTexts["Start Another Send?"].exists)
+        XCTAssertTrue(app.alerts.buttons["Keep Results"].isHittable)
+        XCTAssertTrue(app.alerts.buttons["Send More Books"].isHittable)
+        app.alerts.buttons["Keep Results"].click()
+        XCTAssertTrue(app.staticTexts["Delivery Unknown"].exists)
+        XCTAssertFalse(app.staticTexts["Submitted"].exists)
     }
 }

@@ -1,10 +1,16 @@
 # Troubleshooting Book Sender
 
-Book Sender keeps action feedback inline. Successful and informational
-acknowledgements remain visible for four seconds and then disappear without
-leaving empty space. Failed, cancelled, partial, and uncertain operations remain
-available with a concise explanation, an expandable safe diagnostic, and one
-primary next step.
+Book Sender shows concise action feedback in floating notifications at the top
+trailing edge of the owning window. Successful and informational
+acknowledgements remain visible for four seconds after appearing and then
+disappear without moving the workflow. Failed, cancelled, partial, and
+uncertain results remain until replaced or dismissed.
+
+Use a notification action for its stated recovery step, or use
+**Dismiss notification** to hide only that card. Dismissal does not clear field
+errors, per-book results, expanded diagnostics, delivery uncertainty, setup,
+credentials, or send history. The app does not persist notifications or create
+a notification-history screen.
 
 ## Start another send
 
@@ -37,7 +43,7 @@ history.
 2. Review the action, impact, code, subsystem, phase, retry guidance, and any
    numeric provider status.
 3. Choose **Copy Error Details**.
-4. Wait for **Error details copied.**
+4. Wait for the floating **Error details copied.** acknowledgement.
 
 The copy action writes plain text only after explicit user interaction. If the
 clipboard write fails, Book Sender leaves the original error visible.
@@ -55,7 +61,8 @@ The copied block may contain:
 
 ## Privacy boundary
 
-The inline details, copied block, and local diagnostic record do not include:
+The contextual details, copied block, and local diagnostic record do not
+include:
 
 - app passwords or Keychain values;
 - sender, SMTP username, or Kindle addresses;

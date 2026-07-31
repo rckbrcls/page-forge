@@ -31,7 +31,25 @@ struct BookSenderApp: App {
 
     var body: some Scene {
         Window("Book Sender", id: "main") {
-            MainWindowContent(model: model)
+            FloatingNotificationHost(
+                center: model.notificationCenter,
+                destination: .main,
+                performAction: { action in
+                    let handled = model.performNotificationAction(
+                        action,
+                        destination: .main
+                    )
+                    if handled,
+                       action == .editSetup
+                        || action == .chooseAnotherShortcut
+                    {
+                        showSettingsWindow()
+                    }
+                    return handled
+                }
+            ) {
+                MainWindowContent(model: model)
+            }
             .frame(
                 minWidth: 620,
                 maxWidth: .infinity,
@@ -59,6 +77,15 @@ struct BookSenderApp: App {
         Settings {
             BookSenderSettingsView(model: model, shortcutService: shortcutService)
         }
+    }
+
+    @MainActor
+    private func showSettingsWindow() {
+        NSApp.sendAction(
+            Selector(("showSettingsWindow:")),
+            to: nil,
+            from: nil
+        )
     }
 }
 

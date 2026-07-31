@@ -117,6 +117,17 @@ final class BatchSendUITests: XCTestCase {
         XCTAssertTrue(app.buttons["sendBook.retryFailed"].isHittable)
         XCTAssertTrue(app.buttons["sendBook.sendMore"].isHittable)
         XCTAssertFalse(app.buttons["sendBook.dropTarget"].isEnabled)
+
+        let recovery = app.buttons["notification.action.batch"]
+        XCTAssertTrue(recovery.waitForExistence(timeout: 2))
+        XCTAssertEqual(recovery.label, "Retry")
+        recovery.click()
+        XCTAssertTrue(
+            app.buttons["sendBook.confirm"].waitForExistence(timeout: 2)
+        )
+        app.typeKey(.escape, modifierFlags: [])
+        XCTAssertTrue(app.staticTexts["Failed"].exists)
+        XCTAssertTrue(app.buttons["sendBook.retryFailed"].isHittable)
     }
 
     func testUnknownResetCanBeCancelledOrConfirmed() {
@@ -253,10 +264,16 @@ final class BatchSendUITests: XCTestCase {
             editingApp.staticTexts["Book removed."]
                 .waitForExistence(timeout: 2)
         )
+        XCTAssertTrue(
+            editingApp.descendants(matching: .any)["notification.batch"].exists
+        )
         editingApp.buttons["sendBook.clear"].click()
         XCTAssertTrue(
             editingApp.staticTexts["Batch cleared."]
                 .waitForExistence(timeout: 2)
+        )
+        XCTAssertTrue(
+            editingApp.descendants(matching: .any)["notification.batch"].exists
         )
         XCTAssertFalse(editingApp.staticTexts["UITest-2.pdf"].exists)
         editingApp.terminate()
@@ -387,6 +404,193 @@ final class BatchSendUITests: XCTestCase {
                 ].exists
             )
             app.terminate()
+        }
+    }
+
+    func testTwoAndThreeBookBatchesUseExactlyOneNearFullDividerPerBoundary() {
+        for (argument, count) in [
+            ("-uiTestTwoBooks", 2),
+            ("-uiTestThreeBooks", 3),
+        ] {
+            let app = launchDividerBatch(
+                argument,
+                extraArguments: [
+                    "-AppleIncreaseContrast",
+                    "YES",
+                ]
+            )
+            waitForReadyRows(count, in: app)
+
+            let batch = app.descendants(matching: .any)["sendBook.batch"]
+            let dividers = dividerElements(in: app)
+            XCTAssertEqual(dividers.count, count - 1)
+            assertDividerGeometry(dividers, inside: batch)
+
+            if count == 3 {
+                let window = app.windows.firstMatch
+                let originalFrame = window.frame
+                let resizeHandle = window.coordinate(
+                    withNormalizedOffset: CGVector(dx: 1, dy: 1)
+                )
+                let largerTarget = window.coordinate(
+                    withNormalizedOffset: CGVector(dx: 1.15, dy: 1.15)
+                )
+                resizeHandle.press(
+                    forDuration: 0.1,
+                    thenDragTo: largerTarget
+                )
+                XCTAssertGreaterThanOrEqual(
+                    window.frame.width,
+                    originalFrame.width
+                )
+                assertDividerGeometry(
+                    dividerElements(in: app),
+                    inside: batch
+                )
+            }
+
+            let finalRow = try? XCTUnwrap(
+                batch.descendants(matching: .any).matching(
+                    NSPredicate(
+                        format: "identifier BEGINSWITH 'sendBook.item.' AND NOT identifier CONTAINS '.remove.' AND NOT identifier CONTAINS '.divider.'"
+                    )
+                ).allElementsBoundByIndex.last
+            )
+            let finalID = finalRow?.identifier.replacingOccurrences(
+                of: "sendBook.item.",
+                with: ""
+            )
+            XCTAssertFalse(
+                app.descendants(matching: .any)[
+                    "sendBook.item.divider.\(finalID ?? "")"
+                ].exists
+            )
+            app.terminate()
+        }
+    }
+
+    func testExpandedDetailsKeepTheDividerAfterTheCompleteRow() {
+        let app = launchDividerBatch(
+            "-uiTestTwoBooks",
+            extraArguments: ["-uiTestOutcomeFailed"]
+        )
+        waitForReadyRows(2, in: app)
+        app.buttons["sendBook.send"].click()
+        XCTAssertTrue(
+            app.buttons["sendBook.confirm"].waitForExistence(timeout: 2)
+        )
+        app.buttons["sendBook.confirm"].click()
+        XCTAssertTrue(app.staticTexts["Failed"].waitForExistence(timeout: 5))
+
+        let divider = try? XCTUnwrap(dividerElements(in: app).first)
+        let before = divider?.frame
+        let details = app.buttons["failure.details.toggle"].firstMatch
+        XCTAssertTrue(details.waitForExistence(timeout: 2))
+        details.click()
+
+        XCTAssertGreaterThan(divider?.frame.minY ?? 0, before?.minY ?? 0)
+        XCTAssertEqual(
+            divider?.frame.width ?? 0,
+            before?.width ?? 0,
+            accuracy: 1
+        )
+        assertDividerGeometry(
+            divider.map { [$0] } ?? [],
+            inside: app.descendants(matching: .any)["sendBook.batch"]
+        )
+    }
+
+    func testTwentyBookDividerGeometrySurvivesListReuseAfterScrolling() {
+        let app = launchDividerBatch("-uiTestTwentyBooks")
+        waitForReadyRows(20, in: app)
+        let batch = app.descendants(matching: .any)["sendBook.batch"]
+
+        let before = visibleDividers(in: app, intersecting: batch.frame)
+        XCTAssertFalse(before.isEmpty)
+        assertDividerGeometry(before, inside: batch)
+
+        batch.swipeUp()
+
+        let after = visibleDividers(in: app, intersecting: batch.frame)
+        XCTAssertFalse(after.isEmpty)
+        assertDividerGeometry(after, inside: batch)
+    }
+
+    private func launchDividerBatch(
+        _ countArgument: String,
+        extraArguments: [String] = []
+    ) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-uiTesting",
+            "-resetSetup",
+            "-configuredSetup",
+            "-uiTestPDFs",
+            countArgument,
+        ] + extraArguments
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Send Book"].waitForExistence(timeout: 5))
+        return app
+    }
+
+    private func waitForReadyRows(
+        _ count: Int,
+        in app: XCUIApplication
+    ) {
+        XCTAssertTrue(
+            app.staticTexts.matching(
+                NSPredicate(format: "label == %@", "Ready")
+            ).element(boundBy: count - 1).waitForExistence(timeout: 10)
+        )
+    }
+
+    private func dividerElements(
+        in app: XCUIApplication
+    ) -> [XCUIElement] {
+        app.descendants(matching: .any).matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH 'sendBook.item.divider.'"
+            )
+        ).allElementsBoundByIndex
+    }
+
+    private func visibleDividers(
+        in app: XCUIApplication,
+        intersecting frame: CGRect
+    ) -> [XCUIElement] {
+        dividerElements(in: app).filter {
+            !$0.frame.isEmpty && $0.frame.intersects(frame)
+        }
+    }
+
+    private func assertDividerGeometry(
+        _ dividers: [XCUIElement],
+        inside batch: XCUIElement,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        for divider in dividers {
+            let ratio = divider.frame.width / batch.frame.width
+            XCTAssertGreaterThanOrEqual(
+                ratio,
+                0.90,
+                file: file,
+                line: line
+            )
+            let leading = divider.frame.minX - batch.frame.minX
+            let trailing = batch.frame.maxX - divider.frame.maxX
+            XCTAssertEqual(
+                leading,
+                trailing,
+                accuracy: 12,
+                file: file,
+                line: line
+            )
+            XCTAssertTrue(
+                batch.frame.contains(divider.frame),
+                file: file,
+                line: line
+            )
         }
     }
 }

@@ -22,11 +22,23 @@ definitive SMTP submissions, retains at most 500 identifier/name/timestamp
 records, and exposes no resend, retry, file-management, analytics, export, or
 remote synchronization behavior.
 
-Successful and informational acknowledgements remain visible for four seconds
-and then collapse completely. Active, blocked, failed, cancelled, partial, and
-delivery-unknown states remain until the state changes or the user deliberately
-clears it. This timing applies independently to setup, shortcut, batch, update,
-clipboard, and history feedback scopes.
+Action acknowledgements use one shared floating notification component in the
+owning window. The main and Settings windows keep independent top-trailing
+stacks with at most three visible cards; queued results never displace
+persistent recovery. Successful and informational acknowledgements remain
+visible for four seconds after becoming visible and then disappear. Active work
+remains until its state changes. Blocked, failed, cancelled, partial, and
+delivery-unknown results remain until replacement or explicit dismissal.
+
+Close is presentation-only. It does not clear field validation, per-book state,
+failure details, delivery uncertainty, or send history. Optional actions use
+the existing typed recovery commands and never store closures, retry delivery
+silently, or replace confirmation sheets and alerts. Notification presentation
+is ephemeral and has no persistence or notification-history surface.
+
+The batch list keeps its existing card and rows. Native row separators are
+hidden and one calm, near-full-width native divider follows every complete
+non-final row, including any expanded details.
 
 Default item feedback remains limited to states equivalent to:
 

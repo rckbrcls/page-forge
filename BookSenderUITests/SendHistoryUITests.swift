@@ -81,6 +81,9 @@ final class SendHistoryUITests: XCTestCase {
                 .waitForExistence(timeout: 3)
         )
         XCTAssertTrue(app.staticTexts["Send history cleared."].exists)
+        XCTAssertTrue(
+            app.descendants(matching: .any)["notification.history"].exists
+        )
         XCTAssertFalse(app.buttons["sendBook.history.clear"].isEnabled)
         app.terminate()
 
@@ -98,6 +101,9 @@ final class SendHistoryUITests: XCTestCase {
         XCTAssertTrue(
             failingApp.staticTexts["Send history was not cleared."]
                 .waitForExistence(timeout: 3)
+        )
+        XCTAssertTrue(
+            failingApp.descendants(matching: .any)["notification.history"].exists
         )
         XCTAssertTrue(failingApp.staticTexts["Newest Submission.pdf"].exists)
     }

@@ -34,7 +34,12 @@ struct AppModelDiagnosticsTests {
 
         model.copyCurrentErrorDetails()
         #expect(graph.diagnosticClipboard.copies.count == 1)
-        #expect(model.currentCopyFeedback?.title == "Error details copied.")
+        #expect(
+            model.notificationFeedback(
+                for: .diagnosticCopy,
+                destination: .main
+            )?.title == "Error details copied."
+        )
         #expect(model.currentDiagnosticEvent == event)
         for forbidden in DiagnosticTestFixtures.forbiddenValues {
             #expect(
@@ -70,9 +75,17 @@ struct AppModelDiagnosticsTests {
         }
 
         #expect(model.currentDiagnosticEvent == original)
-        #expect(model.currentCopyFeedback?.state == .failed)
         #expect(
-            model.currentCopyFeedback?.failure?.code == .clipboardWrite
+            model.notificationFeedback(
+                for: .diagnosticCopy,
+                destination: .main
+            )?.state == .failed
+        )
+        #expect(
+            model.notificationFeedback(
+                for: .diagnosticCopy,
+                destination: .main
+            )?.failure?.code == .clipboardWrite
         )
     }
 

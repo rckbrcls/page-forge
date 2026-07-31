@@ -1,6 +1,12 @@
 import Foundation
 
 struct AppDependencies {
+    enum NotificationUITestScenario: Sendable {
+        case configurationMatrix
+        case stackAndQueue
+        case appearance
+    }
+
     enum BootstrapMode {
         case production
         case uiTesting(
@@ -25,6 +31,7 @@ struct AppDependencies {
     let appVersion: String
     let bootstrapMode: BootstrapMode
     let bootstrapFixtureURLs: [URL]
+    let notificationUITestScenario: NotificationUITestScenario?
 
     static func forCurrentInvocation(
         processInfo: ProcessInfo = .processInfo
@@ -35,6 +42,7 @@ struct AppDependencies {
         let defaultsSuiteName: String?
         let serviceName: String
         let bootstrapMode: BootstrapMode
+        let notificationUITestScenario: NotificationUITestScenario?
 
         if isUITesting {
             let suiteName = "com.rckbrcls.BookSender.UITests"
@@ -58,6 +66,16 @@ struct AppDependencies {
             defaults = .standard
             serviceName = "com.rckbrcls.BookSender.smtp"
             bootstrapMode = .production
+        }
+
+        if arguments.contains("-uiTestNotificationMatrix") {
+            notificationUITestScenario = .configurationMatrix
+        } else if arguments.contains("-uiTestNotificationStack") {
+            notificationUITestScenario = .stackAndQueue
+        } else if arguments.contains("-uiTestNotificationAppearance") {
+            notificationUITestScenario = .appearance
+        } else {
+            notificationUITestScenario = nil
         }
 
         let workspaceRoot = isUITesting
@@ -179,7 +197,15 @@ struct AppDependencies {
                 try? makeIsolatedUITestPDFs(
                     count: arguments.contains("-uiTestTwentyBooks")
                         ? 20
-                        : (arguments.contains("-uiTestTwoBooks") ? 2 : 1)
+                        : (
+                            arguments.contains("-uiTestThreeBooks")
+                                ? 3
+                                : (
+                                    arguments.contains("-uiTestTwoBooks")
+                                        ? 2
+                                        : 1
+                                )
+                        )
                 )
             ) ?? []
         } else {
@@ -215,7 +241,8 @@ struct AppDependencies {
             },
             appVersion: appVersion,
             bootstrapMode: bootstrapMode,
-            bootstrapFixtureURLs: bootstrapFixtureURLs
+            bootstrapFixtureURLs: bootstrapFixtureURLs,
+            notificationUITestScenario: notificationUITestScenario
         )
     }
 

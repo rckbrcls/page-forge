@@ -60,10 +60,10 @@ final class SettingsUITests: XCTestCase {
                 .waitForExistence(timeout: 2)
         )
         XCTAssertTrue(
-            app.descendants(matching: .any)["feedback.shortcut"].exists
+            app.descendants(matching: .any)["notification.shortcut"].exists
         )
         XCTAssertTrue(
-            app.descendants(matching: .any)["feedback.shortcut"]
+            app.descendants(matching: .any)["notification.shortcut"]
                 .waitForNonExistence(timeout: 6)
         )
         XCTAssertFalse(app.staticTexts["Shortcut disabled."].exists)

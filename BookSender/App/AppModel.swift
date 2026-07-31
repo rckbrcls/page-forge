@@ -26,7 +26,6 @@ final class AppModel {
     private(set) var feedbackByScope: [FeedbackScope: ActionFeedback] = [:]
     private(set) var currentDiagnosticEvent: DiagnosticEvent?
     private(set) var diagnosticEventsByOperation: [UUID: DiagnosticEvent] = [:]
-    private(set) var currentCopyFeedback: ActionFeedback?
     var batch = BatchPresentation.empty
     var isShowingConfirmation = false
     var isShowingResetConfirmation = false
@@ -44,6 +43,7 @@ final class AppModel {
     )
 
     let windowCoordinator = WindowCoordinator()
+    let notificationCenter: FloatingNotificationCenter
 
     private let dependencies: AppDependencies
     private let pipeline: PipelineActor
@@ -55,38 +55,40 @@ final class AppModel {
     private let diagnosticService: DiagnosticService
     private let diagnosticFormatter: DiagnosticFormatter
     private let diagnosticClipboard: any DiagnosticClipboard
-    private let feedbackSleep: FeedbackSleep
     private var setupMutationVersion = 0
     @ObservationIgnored
     private var replacedTerminalFeedbackByScope:
         [FeedbackScope: ActionFeedback] = [:]
     @ObservationIgnored
-    private var feedbackExpiryTasks:
-        [FeedbackScope: Task<Void, Never>] = [:]
-    @ObservationIgnored
-    private var copyFeedbackExpiryTask: Task<Void, Never>?
+    private var feedbackDestinationByLifecycle:
+        [UUID: NotificationDestination] = [:]
     @ObservationIgnored
     nonisolated(unsafe) private var observationTask: Task<Void, Never>?
 
     init(dependencies: AppDependencies = .forCurrentInvocation()) {
         self.dependencies = dependencies
+        notificationCenter = FloatingNotificationCenter(
+            sleep: dependencies.feedbackSleep
+        )
         pipeline = dependencies.pipeline
         historyService = dependencies.historyService
         setupService = dependencies.setupService
         diagnosticService = dependencies.diagnosticService
         diagnosticFormatter = dependencies.diagnosticFormatter
         diagnosticClipboard = dependencies.diagnosticClipboard
-        feedbackSleep = dependencies.feedbackSleep
 
         let opening = feedbackService.acknowledged(
             scope: .application,
             action: .restoreApplication,
             title: "Opening Book Sender…"
         )
-        feedbackByScope[.application] = feedbackService.inProgress(
+        let openingProgress = feedbackService.inProgress(
             from: opening,
             title: "Opening Book Sender…"
         )
+        feedbackByScope[.application] = openingProgress
+        feedbackDestinationByLifecycle[openingProgress.id] = .main
+        notificationCenter.publish(openingProgress, destination: .main)
 
         observationTask = Task { [weak self, pipeline] in
             for await event in pipeline.events {
@@ -102,8 +104,6 @@ final class AppModel {
 
     deinit {
         observationTask?.cancel()
-        feedbackExpiryTasks.values.forEach { $0.cancel() }
-        copyFeedbackExpiryTask?.cancel()
     }
 
     var items: [BatchItemPresentation] {
@@ -189,6 +189,75 @@ final class AppModel {
         feedbackByScope[scope]
     }
 
+    func notificationFeedback(
+        for scope: FeedbackScope,
+        destination: NotificationDestination
+    ) -> ActionFeedback? {
+        notificationCenter.feedback(for: scope, destination: destination)
+    }
+
+    static func notificationDestination(
+        for scope: FeedbackScope,
+        preferred: NotificationDestination
+    ) -> NotificationDestination {
+        switch scope {
+        case .application, .batch, .batchItem, .delivery, .update, .history:
+            .main
+        case .shortcut:
+            .settings
+        case .deliverySetup, .diagnosticCopy:
+            preferred
+        }
+    }
+
+    @discardableResult
+    func performNotificationAction(
+        _ action: RecoveryAction,
+        destination: NotificationDestination
+    ) -> Bool {
+        switch action {
+        case .editSetup:
+            settingsTab = .delivery
+            notificationCenter.requestFocus(
+                destination: .settings,
+                action: action
+            )
+        case .chooseAnotherShortcut:
+            guard destination == .settings else { return false }
+            settingsTab = .shortcut
+            notificationCenter.requestFocus(
+                destination: .settings,
+                action: action
+            )
+        case .chooseAnotherFile, .reviewBook:
+            guard destination == .main else { return false }
+            sendBookTab = .send
+            notificationCenter.requestFocus(
+                destination: .main,
+                action: action
+            )
+        case .retryFailed:
+            guard destination == .main, failedCount > 0, !isSending else {
+                return false
+            }
+            requestRetryConfirmation()
+        case .confirmUnknownRetry:
+            guard destination == .main, hasDeliveryUnknown else {
+                return false
+            }
+            requestStartAnotherSend()
+        case .retryHistoryLoad:
+            guard destination == .main else { return false }
+            retryHistoryLoad()
+        case .retryHistoryClear:
+            guard destination == .main, !historySnapshot.records.isEmpty else {
+                return false
+            }
+            requestClearHistory()
+        }
+        return true
+    }
+
     func diagnosticEvent(for operationID: UUID) -> DiagnosticEvent? {
         diagnosticEventsByOperation[operationID]
     }
@@ -200,12 +269,15 @@ final class AppModel {
         apply(result)
     }
 
-    func saveSetup() {
+    func saveSetup(
+        destination: NotificationDestination = .main
+    ) {
         guard canSaveSetup else { return }
         let lifecycle = beginFeedback(
             scope: .deliverySetup,
             action: .saveDeliverySetup,
-            title: "Saving delivery setup…"
+            title: "Saving delivery setup…",
+            destination: destination
         )
         setupMessage = nil
         let keepsExistingCredential = setup != nil && setupDraft.appPassword.isEmpty
@@ -309,14 +381,17 @@ final class AppModel {
         }
     }
 
-    func deleteSetup() {
+    func deleteSetup(
+        destination: NotificationDestination = .settings
+    ) {
         guard canSaveSetup, let existing = setup else { return }
         isSavingSetup = true
         setupMutationVersion += 1
         let lifecycle = beginFeedback(
             scope: .deliverySetup,
             action: .deleteDeliverySetup,
-            title: "Deleting delivery setup…"
+            title: "Deleting delivery setup…",
+            destination: destination
         )
         Task {
             let clearFailure = await setupService.clear(existing)
@@ -445,31 +520,34 @@ final class AppModel {
         )
     }
 
-    func copyCurrentErrorDetails() {
-        copyErrorDetails(for: currentDiagnosticEvent)
+    func copyCurrentErrorDetails(
+        destination: NotificationDestination = .main
+    ) {
+        copyErrorDetails(
+            for: currentDiagnosticEvent,
+            destination: destination
+        )
     }
 
-    func copyErrorDetails(for event: DiagnosticEvent?) {
+    func copyErrorDetails(
+        for event: DiagnosticEvent?,
+        destination: NotificationDestination = .main
+    ) {
         guard let event else { return }
-        let lifecycle = feedbackService.inProgress(
-            from: feedbackService.acknowledged(
-                scope: .application,
-                action: .copyErrorDetails,
-                title: "Copying error details…"
-            ),
-            title: "Copying error details…"
+        let lifecycle = beginFeedback(
+            scope: .diagnosticCopy,
+            action: .copyErrorDetails,
+            title: "Copying error details…",
+            destination: destination
         )
-        currentCopyFeedback = lifecycle
         do {
             try diagnosticClipboard.write(diagnosticFormatter.format(event))
-            currentCopyFeedback = feedbackService.terminal(
-                from: lifecycle,
+            finishFeedback(
+                lifecycle,
                 state: .succeeded,
                 title: "Error details copied."
             )
-            scheduleCopyFeedbackExpiry()
         } catch {
-            copyFeedbackExpiryTask?.cancel()
             let failure = SanitizedFailure(
                 family: .filesystem,
                 code: .clipboardWrite,
@@ -483,12 +561,13 @@ final class AppModel {
                     )
                 )
             )
-            currentCopyFeedback = feedbackService.terminal(
-                from: lifecycle,
+            finishFeedback(
+                lifecycle,
                 state: .failed,
                 title: "Error details were not copied.",
                 message: "The original error remains visible.",
-                failure: failurePresentationService.presentation(for: failure)
+                failure: failure,
+                recordDiagnostic: false
             )
             recordFailure(
                 failure,
@@ -726,7 +805,8 @@ final class AppModel {
         let lifecycle = beginFeedback(
             scope: .shortcut,
             action: action,
-            title: state == .inProgress ? title : "Updating shortcut…"
+            title: state == .inProgress ? title : "Updating shortcut…",
+            destination: .settings
         )
         guard state.isTerminal else { return }
         finishFeedback(
@@ -821,6 +901,7 @@ final class AppModel {
                 title: "Book Sender ready."
             )
         }
+        publishNotificationUITestScenarioIfNeeded()
         if setup != nil, !dependencies.bootstrapFixtureURLs.isEmpty {
             _ = beginFeedback(
                 scope: .batch,
@@ -831,6 +912,158 @@ final class AppModel {
             )
             await pipeline.add(dependencies.bootstrapFixtureURLs)
         }
+    }
+
+    private func publishNotificationUITestScenarioIfNeeded() {
+        guard let scenario = dependencies.notificationUITestScenario else {
+            return
+        }
+        notificationCenter.remove(scope: .application, destination: .main)
+
+        switch scenario {
+        case .configurationMatrix:
+            publishUITestTerminal(
+                scope: .update,
+                action: .checkForUpdates,
+                state: .succeeded,
+                title: "Close-only notification",
+                message: "This message uses the longest permitted duration.",
+                configuration: FloatingNotificationConfiguration(
+                    icon: .none,
+                    lifetime: .temporary(seconds: 5),
+                    closePolicy: .shown
+                )
+            )
+            publishUITestTerminal(
+                scope: .deliverySetup,
+                action: .saveDeliverySetup,
+                state: .failed,
+                title: "Action-only notification",
+                message: "Use the typed recovery action.",
+                failure: SanitizedFailure(
+                    family: .credential,
+                    code: .credentialRead,
+                    message: "Review the saved delivery setup.",
+                    recoveryAction: .editSetup
+                ),
+                configuration: FloatingNotificationConfiguration(
+                    icon: .automatic,
+                    lifetime: .persistentUntilReplaced,
+                    closePolicy: .hidden,
+                    action: NotificationActionDescriptor(
+                        label: "Edit Setup",
+                        command: .editSetup,
+                        dismissalAfterActivation: .awaitReplacement
+                    )
+                )
+            )
+            publishUITestTerminal(
+                scope: .history,
+                action: .loadHistory,
+                state: .succeeded,
+                title: "No-control notification",
+                message: "The content remains aligned without empty controls.",
+                configuration: FloatingNotificationConfiguration(
+                    icon: .system("clock"),
+                    lifetime: .temporary(seconds: 4),
+                    closePolicy: .hidden
+                )
+            )
+            publishUITestTerminal(
+                scope: .batch,
+                action: .addBooks,
+                state: .failed,
+                title: "Action-and-close notification",
+                message: "The action precedes the dismiss control.",
+                failure: SanitizedFailure(
+                    family: .intake,
+                    code: .intakeUnsupported,
+                    message: "Choose another EPUB or PDF book.",
+                    recoveryAction: .chooseAnotherFile
+                ),
+                configuration: FloatingNotificationConfiguration(
+                    icon: .automatic,
+                    lifetime: .persistentUntilReplaced,
+                    closePolicy: .shown,
+                    action: NotificationActionDescriptor(
+                        label: "Choose Another Book",
+                        command: .chooseAnotherFile,
+                        dismissalAfterActivation: .keep
+                    )
+                )
+            )
+        case .stackAndQueue:
+            publishUITestStack()
+        case .appearance:
+            publishUITestTerminal(
+                scope: .update,
+                action: .checkForUpdates,
+                state: .succeeded,
+                title: "Adaptive notification",
+                message: "A longer supporting message wraps within the card while preserving legibility and the central workflow.",
+                configuration: FloatingNotificationConfiguration(
+                    icon: .automatic,
+                    lifetime: .temporary(seconds: 5),
+                    closePolicy: .shown
+                )
+            )
+        }
+    }
+
+    private func publishUITestStack() {
+        for (scope, action, title) in [
+            (FeedbackScope.deliverySetup, FeedbackAction.saveDeliverySetup, "Setup needs attention"),
+            (.history, .loadHistory, "History needs attention"),
+            (.batch, .sendBatch, "Batch needs attention"),
+            (.update, .checkForUpdates, "Queued update result"),
+        ] {
+            publishUITestTerminal(
+                scope: scope,
+                action: action,
+                state: scope == .update ? .succeeded : .cancelled,
+                title: title,
+                configuration: scope == .update
+                    ? FloatingNotificationConfiguration(
+                        lifetime: .temporary(seconds: 4),
+                        closePolicy: .shown
+                    )
+                    : FloatingNotificationConfiguration(
+                        lifetime: .persistentUntilReplaced,
+                        closePolicy: .shown
+                    )
+            )
+        }
+    }
+
+    private func publishUITestTerminal(
+        scope: FeedbackScope,
+        action: FeedbackAction,
+        state: FeedbackState,
+        title: String,
+        message: String? = nil,
+        failure: SanitizedFailure? = nil,
+        configuration: FloatingNotificationConfiguration
+    ) {
+        let acknowledged = feedbackService.acknowledged(
+            scope: scope,
+            action: action,
+            title: title
+        )
+        let terminal = feedbackService.terminal(
+            from: acknowledged,
+            state: state,
+            title: title,
+            message: message,
+            failure: failure.map {
+                failurePresentationService.presentation(for: $0)
+            }
+        )
+        feedbackByScope[scope] = terminal
+        notificationCenter.publish(
+            terminal,
+            destination: .main,
+            configuration: configuration
+        )
     }
 
     private func apply(_ result: SetupLoadResult) {
@@ -1177,12 +1410,16 @@ final class AppModel {
             for scope in Array(feedbackByScope.keys) {
                 switch scope {
                 case .batch, .batchItem, .delivery:
-                    cancelFeedbackExpiry(for: scope)
                     feedbackByScope.removeValue(forKey: scope)
                     replacedTerminalFeedbackByScope.removeValue(
                         forKey: scope
                     )
-                case .application, .deliverySetup, .shortcut, .update, .history:
+                    notificationCenter.remove(
+                        scope: scope,
+                        destination: .main
+                    )
+                case .application, .deliverySetup, .shortcut, .update, .history,
+                     .diagnosticCopy:
                     break
                 }
             }
@@ -1193,8 +1430,11 @@ final class AppModel {
                 currentDiagnosticEvent?.failure.evidence.context.operationID,
                oldItemIDs.contains(operationID) {
                 currentDiagnosticEvent = nil
-                currentCopyFeedback = nil
-                copyFeedbackExpiryTask?.cancel()
+                feedbackByScope.removeValue(forKey: .diagnosticCopy)
+                notificationCenter.remove(
+                    scope: .diagnosticCopy,
+                    destination: .main
+                )
             }
             let ready = feedbackService.terminal(
                 from: lifecycle,
@@ -1202,7 +1442,8 @@ final class AppModel {
                 title: "Ready for another send."
             )
             feedbackByScope[.batch] = ready
-            scheduleFeedbackExpiry(for: ready)
+            feedbackDestinationByLifecycle[ready.id] = .main
+            publishNotification(ready, destination: .main)
             if dependencies.shouldReintakeAfterReset,
                !dependencies.bootstrapFixtureURLs.isEmpty {
                 await pipeline.add(dependencies.bootstrapFixtureURLs)
@@ -1215,9 +1456,9 @@ final class AppModel {
         scope: FeedbackScope,
         action: FeedbackAction,
         title: String,
-        message: String? = nil
+        message: String? = nil,
+        destination preferredDestination: NotificationDestination = .main
     ) -> ActionFeedback {
-        cancelFeedbackExpiry(for: scope)
         if let current = feedbackByScope[scope], current.state.isTerminal {
             replacedTerminalFeedbackByScope[scope] = current
         } else {
@@ -1235,6 +1476,12 @@ final class AppModel {
             message: message
         )
         feedbackByScope[scope] = progress
+        let destination = Self.notificationDestination(
+            for: scope,
+            preferred: preferredDestination
+        )
+        feedbackDestinationByLifecycle[progress.id] = destination
+        publishNotification(progress, destination: destination)
         return progress
     }
 
@@ -1253,10 +1500,14 @@ final class AppModel {
             title: title,
             message: message
         )
-        feedbackByScope[scope] = feedbackService.reconcile(
+        let reconciled = feedbackService.reconcile(
             current: current,
             proposed: proposed
         )
+        feedbackByScope[scope] = reconciled
+        let destination = feedbackDestinationByLifecycle[current.id]
+            ?? Self.notificationDestination(for: scope, preferred: .main)
+        publishNotification(reconciled, destination: destination)
     }
 
     private func finishFeedback(
@@ -1285,6 +1536,11 @@ final class AppModel {
             failure: presentation,
             occurrenceCount: occurrenceCount
         )
+        let destination = feedbackDestinationByLifecycle[lifecycle.id]
+            ?? Self.notificationDestination(
+                for: lifecycle.scope,
+                preferred: .main
+            )
         replacedTerminalFeedbackByScope[lifecycle.scope] = nil
         if recordDiagnostic,
            let failure,
@@ -1298,80 +1554,26 @@ final class AppModel {
             )
         }
         let current = feedbackByScope[lifecycle.scope]
-        feedbackByScope[lifecycle.scope] = feedbackService.reconcile(
+        let reconciled = feedbackService.reconcile(
             current: current,
             proposed: proposed
         )
-        if let current = feedbackByScope[lifecycle.scope] {
-            scheduleFeedbackExpiry(for: current)
-        }
+        feedbackByScope[lifecycle.scope] = reconciled
+        publishNotification(reconciled, destination: destination)
+        feedbackDestinationByLifecycle.removeValue(forKey: lifecycle.id)
     }
 
-    private func scheduleFeedbackExpiry(
-        for feedback: ActionFeedback
+    private func publishNotification(
+        _ feedback: ActionFeedback,
+        destination: NotificationDestination
     ) {
-        cancelFeedbackExpiry(for: feedback.scope)
-        guard case .delayed(let duration) = feedback.dismissal else {
-            return
-        }
-        let scope = feedback.scope
-        let feedbackID = feedback.id
-        let sleep = feedbackSleep
-        feedbackExpiryTasks[scope] = Task { [weak self] in
-            do {
-                try await sleep(duration)
-            } catch {
-                return
-            }
-            guard !Task.isCancelled, let self else { return }
-            self.expireFeedback(scope: scope, feedbackID: feedbackID)
-        }
-    }
-
-    private func cancelFeedbackExpiry(
-        for scope: FeedbackScope
-    ) {
-        feedbackExpiryTasks.removeValue(forKey: scope)?.cancel()
-    }
-
-    private func expireFeedback(
-        scope: FeedbackScope,
-        feedbackID: UUID
-    ) {
-        guard let current = feedbackByScope[scope],
-              current.id == feedbackID,
-              case .delayed = current.dismissal
-        else {
-            return
-        }
-        feedbackByScope.removeValue(forKey: scope)
-        feedbackExpiryTasks.removeValue(forKey: scope)
-    }
-
-    private func scheduleCopyFeedbackExpiry() {
-        copyFeedbackExpiryTask?.cancel()
-        guard let feedback = currentCopyFeedback,
-              case .delayed(let duration) = feedback.dismissal
-        else {
-            return
-        }
-        let feedbackID = feedback.id
-        let sleep = feedbackSleep
-        copyFeedbackExpiryTask = Task { [weak self] in
-            do {
-                try await sleep(duration)
-            } catch {
-                return
-            }
-            guard !Task.isCancelled,
-                  let self,
-                  self.currentCopyFeedback?.id == feedbackID
-            else {
-                return
-            }
-            self.currentCopyFeedback = nil
-            self.copyFeedbackExpiryTask = nil
-        }
+        notificationCenter.publish(
+            feedback,
+            destination: destination,
+            configuration: feedbackService.notificationConfiguration(
+                for: feedback
+            )
+        )
     }
 
     private func recordFailure(

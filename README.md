@@ -18,11 +18,24 @@ per-book readiness and delivery states. Inside `Send Book`, the `Send` tab owns
 the active batch and the `History` tab shows a simple newest-first record of
 definitive SMTP submissions.
 
+Concise action feedback appears in a shared top-trailing floating notification
+host instead of moving forms, lists, empty states, or primary actions.
 Successful and informational acknowledgements disappear after four seconds.
-Active work, failures, cancellations, mixed results, and
-`Delivery Unknown` remain visible until replaced or deliberately cleared. A
-terminal batch exposes `Send More Books`, which clears only its temporary
-books and presentation state before the next intake.
+Active work remains until its state changes. Failures, cancellations, mixed
+results, and `Delivery Unknown` remain until replaced or dismissed. Dismissing
+a notification hides only that presentation; field validation, batch states,
+failure evidence, delivery uncertainty, and send history remain unchanged.
+
+Each window owns an independent stack of at most three visible notifications.
+Additional relevant results wait without evicting persistent recovery. A card
+may expose one typed action and an optional close control. Notification state is
+ephemeral and is never written to send history, preferences, diagnostics, or
+another persistence surface.
+
+A terminal batch exposes `Send More Books`, which clears only its temporary
+books and presentation state before the next intake. Adjacent book rows use
+near-full-width native dividers inside the existing batch card; the final row
+has no divider.
 
 Send history remains local, retains at most 500 records, and stores only a local
 identifier, the original book display name, and the provider-acceptance
@@ -63,6 +76,8 @@ built on the product baseline in
 [`specs/005-lightweight-macos-sender/spec.md`](specs/005-lightweight-macos-sender/spec.md),
 with transient feedback, repeated sends, and bounded local history defined by
 [`specs/009-transient-feedback-history/spec.md`](specs/009-transient-feedback-history/spec.md),
+with the reusable floating-feedback and batch-divider behavior defined by
+[`specs/010-floating-feedback-system/spec.md`](specs/010-floating-feedback-system/spec.md),
 and governed by
 [`.specify/memory/constitution.md`](.specify/memory/constitution.md).
 

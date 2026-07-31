@@ -9,6 +9,7 @@ enum FeedbackScope: Equatable, Hashable, Sendable {
     case delivery(UUID)
     case update
     case history
+    case diagnosticCopy
 
     var accessibilityIdentifier: String {
         switch self {
@@ -20,6 +21,7 @@ enum FeedbackScope: Equatable, Hashable, Sendable {
         case .delivery(let id): "delivery.\(id.uuidString)"
         case .update: "update"
         case .history: "history"
+        case .diagnosticCopy: "diagnosticCopy"
         }
     }
 }

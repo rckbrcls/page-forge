@@ -13,7 +13,7 @@ final class AccessibilityUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.staticTexts["Ready"].waitForExistence(timeout: 5))
-        let feedback = app.descendants(matching: .any)["feedback.batch"]
+        let feedback = app.descendants(matching: .any)["notification.batch"]
         XCTAssertTrue(feedback.exists)
         XCTAssertEqual(feedback.value as? String, "Succeeded")
         XCTAssertTrue(app.buttons["sendBook.dropTarget"].isHittable)
@@ -57,7 +57,7 @@ final class AccessibilityUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["This field is required."].exists)
         let setupFeedback = app.descendants(matching: .any)[
-            "feedback.deliverySetup"
+            "notification.deliverySetup"
         ]
         XCTAssertTrue(setupFeedback.exists)
         XCTAssertEqual(setupFeedback.value as? String, "Failed")
@@ -142,7 +142,7 @@ final class AccessibilityUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Ready"].exists)
         XCTAssertTrue(app.buttons["sendBook.send"].isEnabled)
         XCTAssertFalse(
-            app.descendants(matching: .any)["feedback.batch"].exists
+            app.descendants(matching: .any)["notification.batch"].exists
         )
     }
 
@@ -177,5 +177,38 @@ final class AccessibilityUITests: XCTestCase {
         app.typeKey(.escape, modifierFlags: [])
         XCTAssertTrue(reset.isHittable)
         XCTAssertTrue(app.staticTexts["Delivery Unknown"].exists)
+    }
+
+    func testNotificationExpiryPreservesUnderlyingKeyboardFocus() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-uiTesting",
+            "-resetSetup",
+            "-configuredSetup",
+            "-uiTestNotificationAppearance",
+        ]
+        app.launch()
+
+        XCTAssertTrue(
+            app.descendants(matching: .any)["notification.update"]
+                .waitForExistence(timeout: 2)
+        )
+        app.typeKey(.tab, modifierFlags: [])
+        let focusedBefore = app.descendants(matching: .any).matching(
+            NSPredicate(format: "hasKeyboardFocus == YES")
+        ).firstMatch
+        XCTAssertTrue(focusedBefore.exists)
+        let identifier = focusedBefore.identifier
+
+        XCTAssertTrue(
+            app.descendants(matching: .any)["notification.update"]
+                .waitForNonExistence(timeout: 6)
+        )
+        XCTAssertEqual(
+            app.descendants(matching: .any).matching(
+                NSPredicate(format: "hasKeyboardFocus == YES")
+            ).firstMatch.identifier,
+            identifier
+        )
     }
 }

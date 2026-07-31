@@ -4,7 +4,6 @@ import SwiftUI
 struct FailureDetailView: View {
     let presentation: FailurePresentation
     let diagnosticEvent: DiagnosticEvent?
-    let copyFeedback: ActionFeedback?
     let copyErrorDetails: () -> Void
     var performRecovery: ((RecoveryAction) -> Void)?
 
@@ -14,13 +13,11 @@ struct FailureDetailView: View {
     init(
         presentation: FailurePresentation,
         diagnosticEvent: DiagnosticEvent?,
-        copyFeedback: ActionFeedback? = nil,
         copyErrorDetails: @escaping () -> Void,
         performRecovery: ((RecoveryAction) -> Void)? = nil
     ) {
         self.presentation = presentation
         self.diagnosticEvent = diagnosticEvent
-        self.copyFeedback = copyFeedback
         self.copyErrorDetails = copyErrorDetails
         self.performRecovery = performRecovery
     }
@@ -90,9 +87,6 @@ struct FailureDetailView: View {
                         .accessibilityHint(recoveryHint(action))
                         .accessibilityIdentifier("failure.recovery")
                     }
-                }
-                if let copyFeedback {
-                    ActionFeedbackView(feedback: copyFeedback)
                 }
             }
         }

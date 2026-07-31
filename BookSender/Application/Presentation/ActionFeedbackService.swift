@@ -129,4 +129,55 @@ struct ActionFeedbackService: Sendable {
             return false
         }
     }
+
+    func notificationConfiguration(
+        for feedback: ActionFeedback,
+        icon: NotificationIcon = .automatic,
+        closePolicy: NotificationClosePolicy? = nil,
+        temporaryDuration: TimeInterval? = nil
+    ) -> FloatingNotificationConfiguration {
+        let defaults = FloatingNotificationConfiguration.defaultConfiguration(
+            for: feedback
+        )
+        let action = actionDescriptor(for: feedback)
+        let requestedLifetime: NotificationLifetime
+        if feedback.state == .succeeded {
+            requestedLifetime = .normalizedTemporary(
+                temporaryDuration ?? defaults.lifetime.temporaryDuration
+            )
+        } else {
+            requestedLifetime = defaults.lifetime
+        }
+        return FloatingNotificationConfiguration(
+            icon: icon,
+            lifetime: requestedLifetime,
+            closePolicy: closePolicy ?? defaults.closePolicy,
+            action: action
+        ).normalized(for: feedback)
+    }
+
+    private func actionDescriptor(
+        for feedback: ActionFeedback
+    ) -> NotificationActionDescriptor? {
+        guard let recovery = feedback.failure?.action else { return nil }
+        return NotificationActionDescriptor(
+            label: feedback.failure?.actionTitle
+                ?? actionLabel(for: recovery),
+            command: recovery,
+            dismissalAfterActivation: .awaitReplacement
+        )
+    }
+
+    private func actionLabel(for action: RecoveryAction) -> String {
+        switch action {
+        case .editSetup: "Edit Setup"
+        case .chooseAnotherFile: "Choose Another Book"
+        case .reviewBook: "Review Book"
+        case .retryFailed: "Retry Failed"
+        case .confirmUnknownRetry: "Review Before Retrying"
+        case .chooseAnotherShortcut: "Choose Another Shortcut"
+        case .retryHistoryLoad: "Retry"
+        case .retryHistoryClear: "Retry Clear"
+        }
+    }
 }

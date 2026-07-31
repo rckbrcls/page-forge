@@ -36,6 +36,8 @@ actor ControlledFeedbackSleeper {
     private var continuations:
         [UUID: CheckedContinuation<Void, any Error>] = [:]
     private(set) var requestedDurations: [TimeInterval] = []
+    private(set) var completedRequestCount = 0
+    private(set) var cancelledRequestCount = 0
 
     func sleep(for duration: TimeInterval) async throws {
         let id = UUID()
@@ -58,6 +60,7 @@ actor ControlledFeedbackSleeper {
     func resumeAll() {
         let pending = continuations.values
         continuations.removeAll()
+        completedRequestCount += pending.count
         for continuation in pending {
             continuation.resume()
         }
@@ -68,9 +71,20 @@ actor ControlledFeedbackSleeper {
     }
 
     private func cancel(_ id: UUID) {
-        continuations.removeValue(forKey: id)?.resume(
-            throwing: CancellationError()
-        )
+        guard let continuation = continuations.removeValue(forKey: id) else {
+            return
+        }
+        cancelledRequestCount += 1
+        continuation.resume(throwing: CancellationError())
+    }
+}
+
+@MainActor
+func makeFloatingNotificationCenter(
+    sleeper: ControlledFeedbackSleeper
+) -> FloatingNotificationCenter {
+    FloatingNotificationCenter { duration in
+        try await sleeper.sleep(for: duration)
     }
 }
 
@@ -500,7 +514,8 @@ struct TestDependencyGraph {
                 feedbackSleep: feedbackSleep,
                 appVersion: DiagnosticTestFixtures.safeAppVersion,
                 bootstrapMode: .production,
-                bootstrapFixtureURLs: []
+                bootstrapFixtureURLs: [],
+                notificationUITestScenario: nil
             ),
             credentials: credentials,
             preferences: preferences,

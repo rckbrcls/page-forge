@@ -16,19 +16,33 @@ struct ActionFeedbackExpiryTests {
             }
         )
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft = validDraft()
 
         model.saveSetup()
         try await eventually {
-            model.feedback(for: .deliverySetup)?.state == .succeeded
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            )?.state == .succeeded
         }
-        #expect(model.feedback(for: .deliverySetup) != nil)
+        #expect(
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            ) != nil
+        )
+        #expect(model.feedback(for: .deliverySetup)?.state == .succeeded)
         #expect(await sleeper.requestedDurations.contains(4))
 
         await sleeper.resumeAll()
         try await eventually {
-            model.feedback(for: .deliverySetup) == nil
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            ) == nil
         }
+        #expect(model.feedback(for: .deliverySetup)?.state == .succeeded)
     }
 
     @Test
@@ -43,13 +57,19 @@ struct ActionFeedbackExpiryTests {
             }
         )
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
 
         model.addBooks([])
-        let failureID = try #require(model.feedback(for: .batch)?.id)
+        let failureID = try #require(
+            model.notificationFeedback(for: .batch, destination: .main)?.id
+        )
         await sleeper.resumeAll()
         await Task.yield()
 
-        #expect(model.feedback(for: .batch)?.id == failureID)
+        #expect(
+            model.notificationFeedback(for: .batch, destination: .main)?.id
+                == failureID
+        )
         #expect(model.feedback(for: .batch)?.state == .failed)
     }
 
@@ -65,30 +85,49 @@ struct ActionFeedbackExpiryTests {
             }
         )
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         try await eventually { model.hasResolvedInitialSetup }
         try await eventuallyAsync {
             await gate.pendingCount() == 1
         }
         await gate.resumeFirst()
         try await eventually {
-            model.feedback(for: .application) == nil
+            model.notificationFeedback(
+                for: .application,
+                destination: .main
+            ) == nil
         }
         model.setupDraft = validDraft()
         model.saveSetup()
         try await eventually {
-            model.feedback(for: .deliverySetup)?.state == .succeeded
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            )?.state == .succeeded
         }
         let firstID = try #require(
-            model.feedback(for: .deliverySetup)?.id
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            )?.id
         )
 
         model.saveSetup()
         try await eventually {
-            model.feedback(for: .deliverySetup)?.state == .succeeded
-                && model.feedback(for: .deliverySetup)?.id != firstID
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            )?.state == .succeeded
+                && model.notificationFeedback(
+                    for: .deliverySetup,
+                    destination: .main
+                )?.id != firstID
         }
         let replacementID = try #require(
-            model.feedback(for: .deliverySetup)?.id
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            )?.id
         )
         try await eventuallyAsync {
             await gate.pendingCount() == 2
@@ -96,12 +135,21 @@ struct ActionFeedbackExpiryTests {
 
         await gate.resumeFirst()
         await Task.yield()
-        #expect(model.feedback(for: .deliverySetup)?.id == replacementID)
+        #expect(
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            )?.id == replacementID
+        )
 
         await gate.resumeFirst()
         try await eventually {
-            model.feedback(for: .deliverySetup) == nil
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            ) == nil
         }
+        #expect(model.feedback(for: .deliverySetup)?.id == replacementID)
     }
 
     @Test
@@ -116,13 +164,20 @@ struct ActionFeedbackExpiryTests {
             }
         )
         let model = AppModel(dependencies: graph.dependencies)
+        model.notificationCenter.attach(.main)
         model.setupDraft = validDraft()
 
         model.saveSetup()
         model.acknowledgeUpdateCheck()
         try await eventually {
-            model.feedback(for: .deliverySetup)?.state == .succeeded
-                && model.feedback(for: .update)?.state == .succeeded
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            )?.state == .succeeded
+                && model.notificationFeedback(
+                    for: .update,
+                    destination: .main
+                )?.state == .succeeded
         }
         try await eventuallyAsync {
             await sleeper.pendingCount() >= 2
@@ -132,9 +187,17 @@ struct ActionFeedbackExpiryTests {
         #expect(await sleeper.requestedDurations.allSatisfy { $0 <= 5 })
         await sleeper.resumeAll()
         try await eventually {
-            model.feedback(for: .deliverySetup) == nil
-                && model.feedback(for: .update) == nil
+            model.notificationFeedback(
+                for: .deliverySetup,
+                destination: .main
+            ) == nil
+                && model.notificationFeedback(
+                    for: .update,
+                    destination: .main
+                ) == nil
         }
+        #expect(model.feedback(for: .deliverySetup)?.state == .succeeded)
+        #expect(model.feedback(for: .update)?.state == .succeeded)
     }
 
     private func eventually(

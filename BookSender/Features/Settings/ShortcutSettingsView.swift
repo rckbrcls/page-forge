@@ -25,17 +25,17 @@ struct ShortcutSettingsView: View {
                     .accessibilityIdentifier("settings.shortcut.enabled")
             }
 
-            if let feedback = model.feedback(for: .shortcut) {
-                ActionFeedbackView(feedback: feedback)
-                if let failure = feedback.failure {
-                    FailureDetailView(
-                        presentation: failure,
-                        diagnosticEvent: model.currentDiagnosticEvent,
-                        copyFeedback: model.currentCopyFeedback,
-                        copyErrorDetails: model.copyCurrentErrorDetails,
-                        performRecovery: handleRecovery
-                    )
-                }
+            if let failure = shortcutFeedback?.failure {
+                FailureDetailView(
+                    presentation: failure,
+                    diagnosticEvent: model.currentDiagnosticEvent,
+                    copyErrorDetails: {
+                        model.copyCurrentErrorDetails(
+                            destination: .settings
+                        )
+                    },
+                    performRecovery: handleRecovery
+                )
             }
 
             Spacer(minLength: 0)
@@ -43,6 +43,14 @@ struct ShortcutSettingsView: View {
         .padding(20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .accessibilityIdentifier("settings.shortcut.content")
+        .onAppear {
+            consumeFocusRequestIfNeeded(
+                model.notificationCenter.focusRequest
+            )
+        }
+        .onChange(of: model.notificationCenter.focusRequest) { _, request in
+            consumeFocusRequestIfNeeded(request)
+        }
     }
 
     private var enabledBinding: Binding<Bool> {
@@ -58,5 +66,23 @@ struct ShortcutSettingsView: View {
         if action == .chooseAnotherShortcut {
             isShortcutFocused = true
         }
+    }
+
+    private func consumeFocusRequestIfNeeded(
+        _ request: NotificationFocusRequest?
+    ) {
+        guard let request,
+              request.destination == .settings,
+              request.action == .chooseAnotherShortcut
+        else { return }
+        isShortcutFocused = true
+        model.notificationCenter.consumeFocusRequest(id: request.id)
+    }
+
+    private var shortcutFeedback: ActionFeedback? {
+        model.notificationFeedback(
+            for: .shortcut,
+            destination: .settings
+        )
     }
 }
